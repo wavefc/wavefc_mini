@@ -14,7 +14,7 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
-    font-family:'Galmuri11','Galmuri9',monospace;color:var(--ink);
+    font-family:'Galmuri11','Galmuri9',monospace;color:var(--ink);font-size:13px;
     image-rendering:pixelated;-webkit-font-smoothing:none;
     display:flex;align-items:flex-start;justify-content:center;
     min-height:100vh;padding:2vh 2vw;transition:background .3s;
@@ -45,7 +45,7 @@
   .mainimg{width:100%;aspect-ratio:16/9;object-fit:contain;display:block;border:1px solid var(--line);background:#0d1b2a;image-rendering:auto;}
   .img-cap{font-family:'Galmuri9';font-size:9px;color:#8aa;text-align:center;margin-top:4px;}
   .moodbox{margin:6px 8px;padding:6px 8px;border:1px solid var(--line);font-family:'Galmuri9';font-size:10px;color:#5a7585;text-align:center;}
-  .intro{padding:8px 12px;font-size:11px;line-height:1.7;color:#3a5566;border-top:1px dashed var(--line);}
+  .intro{padding:8px 12px;font-size:13px;line-height:1.7;color:#3a5566;border-top:1px dashed var(--line);}
   .loginbox{margin:6px 8px 10px;border:1px solid var(--line);font-family:'Galmuri9';font-size:10px;}
   .loginbox .t{background:#eaf4fb;padding:3px 6px;color:#5a7585;border-bottom:1px solid var(--line);}
   .loginbox .b{padding:7px 6px;}
@@ -56,7 +56,7 @@
 
   .center{flex:1;min-width:0;min-height:560px;background:#fff;border:1px solid var(--line);padding:16px;}
   .news-h{font-family:'Galmuri9';font-size:13px;color:var(--news);border-bottom:2px solid var(--news);padding-bottom:4px;margin-bottom:8px;}
-  .news-list{list-style:none;margin:0 0 12px;padding:0;font-size:11px;line-height:2;}
+  .news-list{list-style:none;margin:0 0 12px;padding:0;font-size:13px;line-height:2;}
   .news-list li:before{content:"[공지] ";color:var(--frame);font-family:'Galmuri9';font-size:10px;}
 
   /* ===== 미니룸: 16:9 이미지 + 우측 새소식 패널 ===== */
@@ -85,7 +85,7 @@
   .mr-right{flex:1;min-width:0;border:2px solid #2176a8;background:#eaf4fb;display:flex;flex-direction:column;}
   .mr-news-h{background:var(--frame);color:#fff;font-family:'Galmuri9';font-size:12px;padding:6px 8px;}
   .feed-list{padding:6px;display:flex;flex-direction:column;gap:4px;}
-  .feed-item{background:#fff;border:1px solid var(--line);padding:6px 8px;cursor:pointer;display:flex;gap:6px;align-items:baseline;font-size:12px;}
+  .feed-item{background:#fff;border:1px solid var(--line);padding:7px 9px;cursor:pointer;display:flex;gap:6px;align-items:baseline;font-size:13px;}
   .feed-item:hover{background:#f0f8ff;}
   .feed-item.on{border-color:var(--frame);background:#dff0fb;}
   .feed-label{font-family:'Galmuri9';font-size:9px;color:#fff;padding:2px 4px;border-radius:3px;flex-shrink:0;white-space:nowrap;}
@@ -100,12 +100,12 @@
   /* 미니룸 아래 일촌평 댓글 섹션 */
   .guest-h{font-family:'Galmuri9';font-size:12px;color:var(--news);margin:14px 0 6px;border-bottom:1px dashed var(--line);padding-bottom:4px;}
   .guest-list{display:flex;flex-direction:column;gap:6px;}
-  .guest{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--line);background:#f7fbfe;padding:7px 9px;font-size:12px;}
+  .guest{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--line);background:#f7fbfe;padding:8px 10px;font-size:13px;}
   .guest .gface{font-size:22px;flex-shrink:0;line-height:1;}
   .guest .gtxt{line-height:1.5;color:#3a5566;word-break:break-all;padding-top:2px;}
   .guest .gtime{font-family:'Galmuri9';font-size:9px;color:#9ab;margin-left:6px;}
   .guest .del{margin-left:auto;color:#c0392b;cursor:pointer;font-size:9px;font-family:'Galmuri9';flex-shrink:0;}
-  .cmt{display:flex;align-items:flex-start;gap:6px;background:rgba(255,255,255,.85);border:1px solid var(--line);padding:5px 7px;font-size:11px;}
+  .cmt{display:flex;align-items:flex-start;gap:6px;background:rgba(255,255,255,.85);border:1px solid var(--line);padding:6px 8px;font-size:13px;}
   .cmt .face{font-size:20px;flex-shrink:0;line-height:1;}
   .cmt .txt{line-height:1.5;color:#3a5566;word-break:break-all;}
   .cmt .del{margin-left:auto;color:#c0392b;cursor:pointer;font-size:9px;font-family:'Galmuri9';}
@@ -119,7 +119,7 @@
   .cmt-locked{margin-top:10px;padding:10px;border:1px dashed var(--line);font-family:'Galmuri9';font-size:10px;color:#8aa;text-align:center;}
 
   .page-h{font-family:'Galmuri14';font-size:16px;color:var(--frame-dark);border-bottom:2px solid var(--frame);padding-bottom:6px;margin:0 0 12px;}
-  table.lst{width:100%;border-collapse:collapse;font-size:11px;}
+  table.lst{width:100%;border-collapse:collapse;font-size:13px;}
   table.lst th,table.lst td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
   table.lst th{background:#eaf4fb;color:var(--frame-dark);font-family:'Galmuri9';font-size:10px;}
   table.lst tr:nth-child(even) td{background:#f7fbfe;}
@@ -143,12 +143,32 @@
   }
   .manner-box ul li{font-size:16px;font-weight:600;color:#7a2a4d;margin-bottom:6px;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
-  .member-card{border:1px solid var(--line);padding:8px;text-align:center;font-size:11px;background:#f7fbfe;}
+  .member-card{border:1px solid var(--line);padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
   .member-card .av{font-size:26px;line-height:1;height:44px;display:flex;align-items:center;justify-content:center;}
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
   .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
   .rank-legend{font-family:'Galmuri9';font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
+  /* QnA */
+  .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:12px;margin-bottom:14px;border-radius:4px;}
+  .qna-ask-h{font-family:'Galmuri9';font-size:13px;color:var(--frame-dark);margin-bottom:8px;}
+  .qna-input{width:100%;box-sizing:border-box;font-family:'Pretendard',sans-serif;font-size:13px;padding:8px;border:1px solid #c9d6df;border-radius:3px;resize:vertical;}
+  .qna-send{margin-top:8px;font-family:'Galmuri9';cursor:pointer;background:var(--frame);color:#fff;border:none;padding:8px 18px;border-radius:3px;font-size:13px;}
+  .qna-send:disabled{opacity:.5;cursor:default;}
+  .qna-send.sm{padding:5px 12px;font-size:12px;margin-top:6px;}
+  .qna-thinking{margin-top:8px;font-family:'Pretendard',sans-serif;font-size:13px;color:#2176a8;}
+  .qna-kbinfo{font-family:'Pretendard',sans-serif;font-size:12px;color:#5a7585;margin-bottom:10px;}
+  .qna-list{display:flex;flex-direction:column;gap:10px;}
+  .qna-thread{background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 12px;}
+  .qna-q{font-family:'Pretendard',sans-serif;font-size:14px;color:var(--frame-dark);font-weight:700;margin-bottom:6px;line-height:1.5;}
+  .qna-a{font-family:'Pretendard',sans-serif;font-size:13px;color:#3a5566;line-height:1.7;white-space:pre-wrap;}
+  .qna-a.wait{color:#b08a4a;font-style:italic;}
+  .qna-badge{font-family:'Galmuri9';font-size:10px;padding:2px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
+  .qna-badge.ok{background:#2e8b3d;color:#fff;}
+  .qna-badge.wait{background:#e3a857;color:#fff;}
+  .qna-src{font-size:11px;color:#8aa;margin-left:6px;}
+  .qna-del{font-size:11px;color:#c0392b;cursor:pointer;margin-left:8px;font-family:'Galmuri9';}
+  .qna-admin{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
   /* 달력 */
   .cal-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px;}
   .cal-bar button{font-family:'Galmuri9';cursor:pointer;background:var(--frame);color:#fff;border:none;padding:4px 10px;}
@@ -163,7 +183,7 @@
   .cal-cell.sun .cal-d{color:#c0392b;}.cal-cell.sat .cal-d{color:#2176a8;}
   .cal-cell[onclick]{cursor:pointer;}
   .cal-cell[onclick]:hover{background:#f0f8ff;}
-  .cal-ev{color:#fff;font-family:'Pretendard',sans-serif;font-size:10px;padding:2px 4px;border-radius:3px;margin-bottom:2px;line-height:1.3;word-break:break-all;}
+  .cal-ev{color:#fff;font-family:'Pretendard',sans-serif;font-size:13px;padding:3px 5px;border-radius:3px;margin-bottom:2px;line-height:1.35;word-break:break-all;}
   .cal-addbtn{font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:6px 12px;}
   /* 출석표 */
   .att-table th,.att-table td{padding:6px 8px;white-space:nowrap;}
@@ -274,6 +294,8 @@
       <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정공지<span class="lock" id="lk2">🔒</span></button>
       <button class="tab-btn" data-page="attend" onclick="go('attend',this)">출석현황<span class="lock" id="lk4">🔒</span></button>
       <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
+      <button class="tab-btn" data-page="activity" onclick="go('activity',this)">활동현황<span class="lock" id="lk5">🔒</span></button>
+      <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
       <div class="minicards"><div class="c c1">WAVE</div><div class="c c2">FC</div></div>
     </div>
   </div>
@@ -290,6 +312,7 @@
   <!-- 관리 -->
   <div class="admin" id="adminPanel">
     <b>⚙ 관리 모드</b> <span class="status" id="dbStatus">연결 중…</span>
+    <div style="font-family:'Galmuri9';font-size:10px;color:#2176a8;margin:2px 0;">권한: <span id="adminLevelLabel"></span> <a href="#" onclick="adminLogout();return false;" style="color:#c0392b;">[관리잠금]</a></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🙋 가입 승인 대기</b></div>
     <div id="pendingList" style="font-size:10px;">없음</div>
@@ -297,13 +320,33 @@
     <div><b>👥 회원 등급 관리</b> (👑임원 / 🌊일반)</div>
     <div id="memberManage" style="font-size:10px;">승인된 회원 없음</div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
-    <div><b>🔑 관리자 비밀번호 변경</b></div>
-    <input id="newAdminPw" placeholder="새 관리자 비밀번호"><button onclick="changeAdminPw()">변경</button>
+    <div><b>👤 멤버 명단 관리</b> (실제 뛰는 멤버)</div>
+    <input id="newMemName" placeholder="이름">
+    <select id="newMemRole" style="width:100%;font-family:'Galmuri9';font-size:11px;padding:4px;border:1px solid #c9d6df;margin:3px 0;">
+      <option value="member">🌊 회원</option>
+      <option value="exec">👑 임원</option>
+    </select>
+    <input id="newMemNumber" placeholder="등번호 (예: 10)" inputmode="numeric">
+    <input id="newMemJoin" placeholder="가입날짜 (예: 2026-06-01)">
+    <button onclick="addRosterMember()">멤버 추가</button>
+    <div id="rosterListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <div class="admin-a1only">
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>🔑 관리자1 비밀번호 변경</b> (대표·전체권한)</div>
+    <input id="newAdminPw" placeholder="새 관리자1 비밀번호"><button onclick="changeAdminPw(1)">변경</button>
+    <div style="margin-top:6px;"><b>🔑 관리자2 비밀번호 변경</b> (회원·출석만)</div>
+    <input id="newAdminPw2" placeholder="새 관리자2 비밀번호"><button onclick="changeAdminPw(2)">변경</button>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>💬 미니룸 말풍선</b> (이미지 위에 표시)</div>
     <input id="newBubble" placeholder="말풍선 문구 (비우면 숨김)">
     <button onclick="setBubble()">말풍선 적용</button>
     <button onclick="clearBubble()" style="background:#c0392b;">지우기</button>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>📚 QnA 지식베이스</b> (AI봇은 이 내용 안에서만 답변)</div>
+    <input id="newKbQ" placeholder="질문 (예: 회비는 얼마인가요?)">
+    <textarea id="newKbA" rows="2" placeholder="답변 (예: 월 2만원입니다)"></textarea>
+    <button onclick="addKbItem()">지식 추가</button>
+    <div id="kbListAdmin" style="font-size:10px;margin-top:6px;"></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>📷 대표 이미지 추가</b> (여러 장이면 자동 슬라이드)</div>
     <input id="newImgUrl" placeholder="이미지 주소 (https://...)">
@@ -321,9 +364,7 @@
     <input id="newLogDate" placeholder="날짜 (예: 26년 6월 2일)">
     <textarea id="newLogText" rows="2" placeholder="훈련 내용/결과"></textarea><button onclick="addLog()">일지 추가</button>
     <div style="margin-top:6px;font-size:10px;color:#8aa;">📅 일정공지(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
-    <div style="margin-top:6px;"><b>👤 멤버 직접 추가</b></div>
-    <input id="newMemName" placeholder="이름">
-    <input id="newMemPos" placeholder="포지션"><button onclick="addMember()">추가</button>
+    </div>
   </div>
 
   <div class="taskbar"><span class="start">⊞ 시작</span><span>WAVE FC.exe</span><span class="clock" id="clock">오후 6:00</span></div>
@@ -357,11 +398,16 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const ROOT=db.ref('wavefc_site');
 
+/* ===== QnA AI봇 설정 =====
+   Cloudflare Worker 주소를 여기에 넣으세요.
+   비워두면(""), AI 자동답변 없이 질문이 '답변대기'로만 기록됩니다. */
+const QNA_WORKER_URL="";
+
 const FACES=["🙂","😎","😆","🥳","😤","🤩","😼","🐯","🐶","🦊","⚽","🔥"];
 const RANK_ICON={
   exec:"data:image/png;base64,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",
   member:"data:image/png;base64,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",
-  guest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACIklEQVR4nO2a7VHDMAyG7abDBFghwAABhqV0AEpXoHSZJPzqXc5xY0mWLOfs518/Iqmq9NpRbAwzbddPUrRdP3HHu+M2uDWKT8Aee4FEGcb4v56PNsYeOgHGGPP387X6+cPzG/oail+fHyykBECY/zPaVbNG8RpQE8BhZJr4K3wcR3abPlg04PHlPfgdV7BCovj0+hEVExQ2EVxbjtzPoKIYu8RBKF4DghWguYRRfGOrBtQCEhuQkA3KxokSF1kDYvozdG3KqqsaMH+h1e+cfrE3S4sW8PUeR8+HcP0Ow2CapomyAYk7qAG3XV6KNXkO9sdTqRoA7T/OQURWWqMxnJQcnK7F6fNbfAvUBGgHoE1NgHYA2tQEaAegTfRILOeZPwTQvUBo6Hk5HYy1uI0hdkgqBbgCJG6GbjY1q6hqAPYCyeGFBCEfIk+HKTY4NMG18fv9aXa79SLPqgWu56ON1RqsjawSoIHY+QAKGqvBIgEpBqA+IANN7NDT94DVteGtgNQD0HtATpnci9X3vs9G8RpQfAKyEkGXFKK41xK9EFJPqKJtpBpp+6hnhQUgaYB7gstai54HUPxIQEqAu8G4nA4swczJVZsWtF0/jeO4iX73UbwGFJ8AkZOikGHGZnocC3SfkMs4vbaApvMUJ0FDiCQA0t+UvQPkVDoW9gRA/qG26yeJnSOF4jWg+ASwt0AuyxsUERHUetJLofgWqAnQDkCbf0utwOfeV3k5AAAAAElFTkSuQmCC"
+  guest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACMElEQVR4nO2dQU7EMAxFKepR4Aawh5PDHm4AdykroCOI5CjOPFd9bzWbaTN6+pbrZtrlBuLu4Wn7/vzx9oKs4f7x+efz5/vrQqzhljip/KIAmHXky/sycnQiv2VGmTIBMAqAGSpBe0Y6mX03knXMCJHjt9aWhQmAUQCMAmAUAKMAmLQuKEJvRzGjO5rd1fRiAmAUABMqQTNmPr1zlZE1ZJWd/Rqy5kImAEYBMN1dUIX5Se/xs2ZK+/NmlSMTAKMAmGYJyup8srqFyHFm36Hbl7KscmQCYBQAcxGXVoRHOp/Z+21G1pzFyG83ATAKgGl2Qa0IRy6CqG1+1BbHVncUwQTAKABm7b14icRtxtj2iNsgI2s2ATAKgFlHOoeRTmkEqtsZobVmEwCjABgFwCgARgEwCoBRAIwCYNJ2R0fmQvIXEwCjAJjuEkRtC4ys4YgzIhMAowAYBcAoAEYBMCUe1pF1rmt2R1nnMgEwCoBRAIwCYBQAs2zb9u+4uMLMJ4uRjiVrj5P7goqiAJjQhVhrh/PZ7nbNeMCICYBRAMxa7RFeM6j8gBETAKMAmJX6S2kFZv+733/KHwAFwEzZmlh5LtTCl/icFAXApMWuwnN7WlR+wIgJgFEAzJTYVStHFV5Z2MIEwCgAZnocI3eFekvTyOjYEiQXKABm+kt8qt3Qb53XC7GTogCYq75HrEWFN2JQmAAYBcAoAEYBMAqAKdEFVbhrRmECYBQAowAYBcAoAOYLhq7JD5m4adQAAAAASUVORK5CYII="
 };
 const RANK_NAME={exec:"임원",member:"일반 회원",guest:"방문객"};
 function rankOf(userKey){
@@ -372,6 +418,19 @@ function rankOf(userKey){
 function rankImg(rank,size){
   size=size||18;
   return '<img src="'+RANK_ICON[rank]+'" alt="'+RANK_NAME[rank]+'" title="'+RANK_NAME[rank]+'" style="width:'+size+'px;height:'+size+'px;vertical-align:middle;image-rendering:pixelated;">';
+}
+// 등번호 유니폼 (WAVE FC 다크 유니폼 SVG, 번호 동적)
+function jerseyImg(num,size){
+  size=size||34;
+  const n=(num===undefined||num===null||num==='')?'':String(num);
+  const fs=n.length>=2?13:16;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}" style="vertical-align:middle;">
+    <path d="M13 6 L20 9 L27 6 L34 11 L30 17 L30 35 L10 35 L10 17 L6 11 Z" fill="#16263b" stroke="#0d1726" stroke-width="1.2"/>
+    <path d="M13 6 L20 9 L27 6 L24 11 L20 12 L16 11 Z" fill="#0d1726"/>
+    <path d="M10 17 L6 11 L8 9 L13 13 Z M30 17 L34 11 L32 9 L27 13 Z" fill="#1f3a5c"/>
+    <text x="20" y="27" font-family="'Pretendard',sans-serif" font-weight="800" font-size="${fs}" fill="#dfe9f5" text-anchor="middle">${esc(n)}</text>
+  </svg>`;
+  return svg;
 }
 let selFace=FACES[0];
 
@@ -385,9 +444,16 @@ const DEFAULT={
   comments:[],
   users:{},
   adminpw:"wave1234",
+  adminpw2:"wave5678",
+  roster:[],
   bubble:"WAVE FC 미니홈피에 오신 걸 환영합니다!",
   visits:1,
-  mood:"오늘도 한 골 넣고 가자…⚽"
+  mood:"오늘도 한 골 넣고 가자…⚽",
+  qna_kb:[
+    {q:"WAVE FC는 언제 모이나요?",a:"WAVE FC는 매주 정기적으로 모여 풋살을 합니다. 정확한 일정은 '일정공지' 메뉴에서 확인할 수 있어요.",ts:0},
+    {q:"풋살은 몇 명이 하나요?",a:"풋살은 보통 한 팀당 5명(골키퍼 1명 포함)으로, 5대5로 경기합니다.",ts:0}
+  ],
+  qna_threads:[]
 };
 let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
@@ -415,8 +481,12 @@ ROOT.on('value',snap=>{
     schedules:v.schedules||[],
     members:v.members||[],comments:v.comments||[],users:v.users||{},
     adminpw:v.adminpw||DEFAULT.adminpw,
+    adminpw2:v.adminpw2||DEFAULT.adminpw2,
+    roster:v.roster||[],
     bubble:(v.bubble!==undefined?v.bubble:DEFAULT.bubble),
-    visits:v.visits||1,mood:v.mood||DEFAULT.mood};
+    visits:v.visits||1,mood:v.mood||DEFAULT.mood,
+    qna_kb:v.qna_kb||DEFAULT.qna_kb,
+    qna_threads:v.qna_threads||[]};
   }
   setStatus(true);renderAll();
 },()=>setStatus(false));
@@ -485,13 +555,13 @@ function modalSubmit(){
 /* 자물쇠 표시 */
 function updateLocks(){
   const show=isMember()?'none':'inline';
-  ['lk1','lk2','lk3','lk4'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
+  ['lk1','lk2','lk3','lk4','lk5','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
 }
 
 function renderAll(){
   document.getElementById('totalCnt').textContent=DATA.visits.toLocaleString();
   document.getElementById('moodBox').textContent=DATA.mood;
-  startSlideshow();renderImgAdmin();renderPending();renderNoticeAdmin();renderLoginBox();updateLocks();
+  startSlideshow();renderImgAdmin();renderPending();renderNoticeAdmin();renderRosterAdmin();renderKbAdmin();renderLoginBox();updateLocks();applyAdminLevel();
   renderPage(currentPage);
 }
 
@@ -505,7 +575,7 @@ function showImg(it){document.getElementById('mainImg').src=it.url;document.getE
 
 function go(page,btn){
   // 권한 체크
-  if(['diary','cal','attend','member'].includes(page) && !isMember()){
+  if(['diary','cal','attend','member','activity','qna'].includes(page) && !isMember()){
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     if(btn) btn.classList.add('active');
     currentPage=page;
@@ -522,13 +592,15 @@ function go(page,btn){
 }
 function renderPage(page){
   const c=document.getElementById('centerArea');
-  if(['diary','cal','attend','member'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
+  if(['diary','cal','attend','member','activity','qna'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
   else if(page==='rule')c.innerHTML=pageRule();
   else if(page==='diary')c.innerHTML=pageDiary();
   else if(page==='cal')c.innerHTML=pageCalendar();
   else if(page==='attend')c.innerHTML=pageAttend();
   else if(page==='member')c.innerHTML=pageMember();
+  else if(page==='activity')c.innerHTML=pageActivity();
+  else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   if(page==='home')bindCommentForm();
 }
 function lockedView(){
@@ -683,7 +755,7 @@ function pageCalendar(){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${etypeColor(e.etype)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.memo||'')}">${e.time?'<b>'+esc(e.time)+'</b> ':''}${esc(e.etype)}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${etypeColor(e.etype)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<b>'+esc(e.time)+'</b> ':''}${esc(e.etype)}${e.place?'<br>📍'+esc(e.place):''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
       <div class="cal-d">${d}</div>${evHtml}</div>`;
   }
@@ -713,10 +785,11 @@ function openCalAdd(dateKey){
   if(rankOf(me)!=='exec') return;
   const etype=prompt('일정 종류 (정기훈련/친선경기/특별훈련/회식/기타)','정기훈련');
   if(!etype) return;
-  const time=prompt('시간 (예: 19:00, 비워도 됨)','19:00')||'';
-  const memo=prompt('메모/장소 (선택)','')||'';
+  const time=prompt('시간 (예: 20:00-22:00, 비워도 됨)','20:00-22:00')||'';
+  const place=prompt('장소 (예: ○○풋살장, 선택)','')||'';
+  const memo=prompt('메모 (선택)','')||'';
   const arr=DATA.calendar.slice();
-  arr.push({date:dateKey,etype:etype.trim(),time:time.trim(),memo:memo.trim(),ts:Date.now()});
+  arr.push({date:dateKey,etype:etype.trim(),time:time.trim(),place:place.trim(),memo:memo.trim(),ts:Date.now()});
   ROOT.child('calendar').set(arr);
 }
 function delCalEvent(i){
@@ -733,8 +806,8 @@ function pageAttend(){
     ...Object.values(DATA.users).filter(u=>u.approved).map(u=>u.name),
     ...DATA.members.map(m=>m.name)
   ];
-  // 출석 세션(날짜)들
-  const sessions=DATA.attendance; // [{date, present:{이름:true/false}}]
+  // 출석 세션(날짜)들 - 항상 날짜순 정렬
+  const sessions=sortAttendance(DATA.attendance); // [{date, present:{이름:true/false}}]
   if(sessions.length===0 && !isExec){
     return `<div class="page-h">✅ 출석 현황</div><div style="padding:20px;color:#8aa;">아직 등록된 출석 기록이 없어요.</div>`;
   }
@@ -761,17 +834,32 @@ function pageAttend(){
     ${rows||'<tr><td colspan=3>회원이 없습니다</td></tr>'}</table></div>
     ${isExec?'<div style="font-family:Galmuri9;font-size:10px;color:#8aa;margin-top:6px;">○/× 칸을 클릭하면 출석/결석이 바뀝니다</div>':''}`;
 }
+function attDateKey(d){
+  // "6/9" "6/14" "2026-6-2" 등에서 정렬용 숫자 추출
+  const s=String(d).trim();
+  const parts=s.split(/[\/\.\-]/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  if(parts.length>=3){ // 연-월-일
+    return parts[0]*10000+parts[1]*100+parts[2];
+  }
+  if(parts.length===2){ // 월/일
+    return parts[0]*100+parts[1];
+  }
+  return parts[0]||0;
+}
+function sortAttendance(arr){
+  return arr.slice().sort((a,b)=>attDateKey(a.date)-attDateKey(b.date));
+}
 function addAttendSession(){
   if(rankOf(me)!=='exec') return;
   const date=prompt('출석일 (예: 6/14)');
   if(!date) return;
   const arr=DATA.attendance.slice();
   arr.push({date:date.trim(),present:{}});
-  ROOT.child('attendance').set(arr);
+  ROOT.child('attendance').set(sortAttendance(arr));
 }
 function toggleAttend(si,name){
   if(rankOf(me)!=='exec') return;
-  const arr=JSON.parse(JSON.stringify(DATA.attendance));
+  const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   arr[si].present[name]=!arr[si].present[name];
   ROOT.child('attendance').set(arr);
@@ -779,45 +867,226 @@ function toggleAttend(si,name){
 function delAttendSession(si){
   if(rankOf(me)!=='exec') return;
   if(!confirm('이 출석일을 삭제할까요?')) return;
-  const arr=DATA.attendance.slice();arr.splice(si,1);ROOT.child('attendance').set(arr);
+  const arr=sortAttendance(DATA.attendance);arr.splice(si,1);ROOT.child('attendance').set(arr);
 }
 function pageMember(){
-  // 가입 회원(승인된)들을 등급과 함께
+  // 실제 뛰는 멤버 명단(roster) 기반
+  const all=DATA.roster.slice();
+  all.sort((a,b)=>{
+    const ra=a.role==='exec'?0:1, rb=b.role==='exec'?0:1;
+    if(ra!==rb) return ra-rb;
+    return (parseInt(a.number)||999)-(parseInt(b.number)||999);
+  });
+  const cards=all.map(m=>{
+    const rank=m.role==='exec'?'exec':'member';
+    return `<div class="member-card ${rank==='exec'?'is-exec':''}">
+      <div class="av">${m.number?jerseyImg(m.number,46):rankImg(rank,40)}</div>
+      <div class="nm">${rankImg(rank,16)} ${esc(m.name)}</div>
+      <div class="po">${RANK_NAME[rank]}${m.number?' · #'+esc(m.number):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
+    </div>`;
+  }).join('');
+  const legend=`<div class="rank-legend">
+    ${rankImg('exec',18)} 임원 &nbsp; ${rankImg('member',18)} 회원 &nbsp; 등번호가 있으면 유니폼으로 표시됩니다</div>`;
+  return `<div class="page-h">👕 멤버 현황 (${all.length}명)</div>
+    ${legend}
+    <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
+}
+function pageActivity(){
+  // 로그인 가입 회원들의 활동 현황
   const approvedUsers=Object.entries(DATA.users)
     .filter(([k,u])=>u.approved)
     .map(([k,u])=>({name:u.name,rank:u.role==='exec'?'exec':'member'}));
-  // 관리에서 직접 추가한 멤버는 일반 회원 등급으로
-  const manualMembers=DATA.members.map(m=>({name:m.name,rank:'member',pos:m.pos}));
-  const all=[...approvedUsers,...manualMembers];
-  // 임원 먼저 정렬
-  all.sort((a,b)=>(a.rank==='exec'?0:1)-(b.rank==='exec'?0:1));
-
-  const cards=all.map(m=>`
+  approvedUsers.sort((a,b)=>(a.rank==='exec'?0:1)-(b.rank==='exec'?0:1));
+  const cards=approvedUsers.map(m=>`
     <div class="member-card ${m.rank==='exec'?'is-exec':''}">
       <div class="av">${rankImg(m.rank,40)}</div>
       <div class="nm">${esc(m.name)}</div>
-      <div class="po">${RANK_NAME[m.rank]}${m.pos?' · '+esc(m.pos):''}</div>
+      <div class="po">${RANK_NAME[m.rank]}</div>
     </div>`).join('');
-
   const legend=`<div class="rank-legend">
     ${rankImg('exec',18)} 임원 &nbsp; ${rankImg('member',18)} 일반 회원 &nbsp; ${rankImg('guest',18)} 방문객</div>`;
-
-  return `<div class="page-h">👥 멤버 현황 (${all.length}명)</div>
+  return `<div class="page-h">🙋 활동 현황 (가입회원 ${approvedUsers.length}명)</div>
     ${legend}
-    <div class="member-grid">${cards||'멤버 없음'}</div>`;
+    <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 가입 회원이 없어요.</div>'}</div>`;
+}
+
+/* ===== QnA (AI 봇 + 미답변 기록) ===== */
+function pageQna(){
+  const isExec=rankOf(me)==='exec';
+  const a1=adminLevel()===1;
+  // 원본 인덱스 부여 후 최신순 정렬
+  const threads=(DATA.qna_threads||[]).map((t,idx)=>Object.assign({},t,{_origIdx:idx}))
+    .sort((x,y)=>(y.ts||0)-(x.ts||0));
+
+  // 질문 입력창
+  const askBox=`
+    <div class="qna-ask">
+      <div class="qna-ask-h">⚽ 풋살이나 WAVE FC에 대해 무엇이든 물어보세요</div>
+      <textarea id="qnaInput" class="qna-input" rows="2" placeholder="예) 풋살 규칙이 궁금해요 / 회비는 얼마인가요?"></textarea>
+      <button class="qna-send" id="qnaSendBtn" onclick="submitQna()">질문하기</button>
+      <div id="qnaThinking" class="qna-thinking" style="display:none;">🤖 AI봇이 답변을 찾고 있어요…</div>
+    </div>`;
+
+  // 질문/답변 스레드 목록
+  const items=threads.map((t,i)=>{
+    const answered=t.answer&&t.answer.trim();
+    const badge=answered
+      ? '<span class="qna-badge ok">답변완료</span>'
+      : '<span class="qna-badge wait">답변대기</span>';
+    const src=answered
+      ? (t.source==='ai'?'<span class="qna-src">🤖 AI봇</span>':'<span class="qna-src">🙋 관리자</span>')
+      : '';
+    // 관리자1: 미답변 질문에 직접 답변 작성
+    const adminAnswer=(a1 && !answered)
+      ? `<div class="qna-admin">
+           <textarea id="qnaAnsByOrig${t._origIdx}" data-ans-orig="${t._origIdx}" class="qna-input" rows="2" placeholder="여기에 답변을 작성하면 지식베이스에 추가됩니다"></textarea>
+           <button class="qna-send sm" onclick="answerQna(${t._origIdx})">답변 등록 + 지식추가</button>
+         </div>`
+      : '';
+    const delBtn=isExec?`<span class="qna-del" onclick="delQnaThread(${t._origIdx})">삭제</span>`:'';
+    return `
+      <div class="qna-thread">
+        <div class="qna-q"><b>Q.</b> ${esc(t.q)} ${badge} ${delBtn}</div>
+        ${answered?`<div class="qna-a"><b>A.</b> ${esc(t.answer)} ${src}</div>`:'<div class="qna-a wait">아직 등록된 답변이 없어요. 관리자가 곧 답변을 준비할게요!</div>'}
+        ${adminAnswer}
+      </div>`;
+  }).join('');
+
+  // 관리자1 지식베이스 관리 안내
+  const kbInfo=a1
+    ? `<div class="qna-kbinfo">📚 현재 지식베이스 항목 <b>${(DATA.qna_kb||[]).length}개</b> · 관리(⚙)에서 추가/삭제할 수 있어요.</div>`
+    : '';
+
+  return `<div class="page-h">💬 QnA</div>
+    ${askBox}
+    ${kbInfo}
+    <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">아직 등록된 질문이 없어요. 첫 질문을 남겨보세요!</div>'}</div>`;
+}
+
+function bindQnaForm(){
+  const inp=document.getElementById('qnaInput');
+  if(inp){
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ submitQna(); }
+    });
+  }
+}
+
+// 지식베이스를 프롬프트로 구성, AI는 이 안에서만 답함
+function buildQnaKbText(){
+  const kb=DATA.qna_kb||[];
+  if(!kb.length) return '(등록된 지식 없음)';
+  return kb.map((item,i)=>`[${i+1}] Q: ${item.q}\n    A: ${item.a}`).join('\n');
+}
+
+async function submitQna(){
+  const inp=document.getElementById('qnaInput');
+  const btn=document.getElementById('qnaSendBtn');
+  const thinking=document.getElementById('qnaThinking');
+  if(!inp) return;
+  const question=inp.value.trim();
+  if(!question){ inp.focus(); return; }
+  if(btn) btn.disabled=true;
+  if(thinking) thinking.style.display='block';
+
+  let answer='', source='';
+  // Worker 주소가 설정돼 있을 때만 AI 자동답변 시도
+  if(QNA_WORKER_URL){
+    try{
+      const res=await fetch(QNA_WORKER_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          question:question,
+          kb:buildQnaKbText()
+        })
+      });
+      if(res.ok){
+        const data=await res.json();
+        answer=(data.answer||'').trim();
+        if(answer==='NO_ANSWER' || /^NO_ANSWER/.test(answer)) { answer=''; }
+        if(answer) source='ai';
+      }
+    }catch(err){
+      answer='';
+    }
+  }
+
+  // 스레드 저장: 답이 있으면 answered, 없으면 미답변으로 기록
+  const arr=(DATA.qna_threads||[]).slice();
+  arr.push({
+    q:question,
+    answer:answer||'',
+    source:source||'',
+    by:(me&&DATA.users[me]?DATA.users[me].name:'회원'),
+    ts:Date.now()
+  });
+  ROOT.child('qna_threads').set(arr);
+
+  if(inp) inp.value='';
+  if(btn) btn.disabled=false;
+  if(thinking) thinking.style.display='none';
+  // 화면 갱신은 ROOT.on이 처리하지만, qna 페이지 재렌더 보장
+  if(currentPage==='qna'){ const c=document.getElementById('centerArea'); c.innerHTML=pageQna(); bindQnaForm(); }
+}
+
+// 관리자1이 미답변 질문에 답변 등록 → 스레드 갱신 + 지식베이스 추가
+function answerQna(origIdx){
+  if(adminLevel()!==1) return alert('관리자1만 답변을 등록할 수 있어요.');
+  // origIdx 기준 textarea 찾기: 정렬 화면에서 매핑된 id 사용
+  const ta=document.querySelector(`[data-ans-orig="${origIdx}"]`)||document.getElementById('qnaAnsByOrig'+origIdx);
+  let val='';
+  if(ta){ val=ta.value.trim(); }
+  else {
+    // fallback: prompt
+    val=(prompt('이 질문에 대한 답변을 입력하세요')||'').trim();
+  }
+  if(!val) return;
+  const arr=(DATA.qna_threads||[]).slice();
+  if(!arr[origIdx]) return;
+  arr[origIdx].answer=val;
+  arr[origIdx].source='admin';
+  ROOT.child('qna_threads').set(arr);
+  // 지식베이스에도 추가
+  const kb=(DATA.qna_kb||[]).slice();
+  kb.push({q:arr[origIdx].q, a:val, ts:Date.now()});
+  ROOT.child('qna_kb').set(kb);
+}
+
+function delQnaThread(origIdx){
+  if(rankOf(me)!=='exec') return;
+  if(!confirm('이 질문을 삭제할까요?')) return;
+  const arr=(DATA.qna_threads||[]).slice();
+  arr.splice(origIdx,1);
+  ROOT.child('qna_threads').set(arr);
 }
 
 /* 관리 */
+function adminLevel(){ return parseInt(sessionStorage.getItem('wavefc_admin')||'0',10); }
 function toggleAdmin(){
   const panel=document.getElementById('adminPanel');
   if(panel.classList.contains('show')){panel.classList.remove('show');return;}
-  // 이미 인증된 세션이면 통과
-  if(sessionStorage.getItem('wavefc_admin')==='1'){panel.classList.add('show');return;}
-  const saved=(DATA.adminpw||'wave1234');
+  if(adminLevel()>0){panel.classList.add('show');applyAdminLevel();return;}
   const inp=prompt('관리자 비밀번호를 입력하세요');
   if(inp===null) return;
-  if(inp===saved){sessionStorage.setItem('wavefc_admin','1');panel.classList.add('show');}
-  else alert('비밀번호가 틀립니다');
+  if(inp===(DATA.adminpw||'wave1234')){
+    sessionStorage.setItem('wavefc_admin','1'); // 관리자1 (대표, 전체 권한)
+    panel.classList.add('show'); applyAdminLevel(); renderAll();
+  } else if(inp===(DATA.adminpw2||'wave5678')){
+    sessionStorage.setItem('wavefc_admin','2'); // 관리자2 (회원·출석만)
+    panel.classList.add('show'); applyAdminLevel(); renderAll();
+  } else {
+    alert('비밀번호가 틀립니다');
+  }
+}
+function adminLogout(){sessionStorage.removeItem('wavefc_admin');document.getElementById('adminPanel').classList.remove('show');renderAll();}
+// 관리자2는 회원관리·출석만, 나머지 섹션 숨김
+function applyAdminLevel(){
+  const lv=adminLevel();
+  const onlyA1=document.querySelectorAll('.admin-a1only');
+  onlyA1.forEach(el=>{ el.style.display = (lv===1)?'':'none'; });
+  const lbl=document.getElementById('adminLevelLabel');
+  if(lbl) lbl.textContent = lv===1?'관리자1 (대표·전체권한)':(lv===2?'관리자2 (회원·출석 관리)':'');
 }
 function renderPending(){
   // 승인 대기
@@ -852,12 +1121,20 @@ function approveUser(k,role){
 }
 function setRole(k,role){ROOT.child('users/'+k+'/role').set(role);}
 function rejectUser(k){if(confirm('이 회원을 삭제할까요?'))ROOT.child('users/'+k).remove();}
-function changeAdminPw(){
-  const np=document.getElementById('newAdminPw').value;
-  if(!np)return alert('새 비밀번호를 입력하세요');
-  ROOT.child('adminpw').set(np);
-  document.getElementById('newAdminPw').value='';
-  alert('관리자 비밀번호가 변경되었습니다');
+function changeAdminPw(level){
+  if(level===2){
+    const np=document.getElementById('newAdminPw2').value;
+    if(!np)return alert('새 비밀번호를 입력하세요');
+    ROOT.child('adminpw2').set(np);
+    document.getElementById('newAdminPw2').value='';
+    alert('관리자2 비밀번호가 변경되었습니다');
+  }else{
+    const np=document.getElementById('newAdminPw').value;
+    if(!np)return alert('새 비밀번호를 입력하세요');
+    ROOT.child('adminpw').set(np);
+    document.getElementById('newAdminPw').value='';
+    alert('관리자1 비밀번호가 변경되었습니다');
+  }
 }
 
 function addImage(){const url=document.getElementById('newImgUrl').value.trim();const cap=document.getElementById('newImgCap').value.trim();if(!url)return alert('이미지 주소 입력');const a=DATA.images.slice();a.push({url,cap});ROOT.child('images').set(a);document.getElementById('newImgUrl').value='';document.getElementById('newImgCap').value='';}
@@ -899,7 +1176,54 @@ function addLog(){
   document.getElementById('newLogText').value='';
 }
 function delLog(i){const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').set(a);}
-function addMember(){const n=document.getElementById('newMemName').value.trim();const p=document.getElementById('newMemPos').value.trim();if(!n)return;const a=DATA.members.slice();a.push({name:n,pos:p});ROOT.child('members').set(a);document.getElementById('newMemName').value='';document.getElementById('newMemPos').value='';}
+function addRosterMember(){
+  const name=document.getElementById('newMemName').value.trim();
+  const role=document.getElementById('newMemRole').value;
+  const number=document.getElementById('newMemNumber').value.trim();
+  const join=document.getElementById('newMemJoin').value.trim();
+  if(!name)return alert('이름을 입력하세요');
+  const a=DATA.roster.slice();
+  a.push({name,role,number,join});
+  ROOT.child('roster').set(a);
+  document.getElementById('newMemName').value='';
+  document.getElementById('newMemNumber').value='';
+  document.getElementById('newMemJoin').value='';
+}
+function delRosterMember(i){const a=DATA.roster.slice();a.splice(i,1);ROOT.child('roster').set(a);}
+function renderRosterAdmin(){
+  const el=document.getElementById('rosterListAdmin');
+  if(!el)return;
+  el.innerHTML=DATA.roster.length
+    ? DATA.roster.map((m,i)=>`<div>${m.role==='exec'?'👑':'🌊'} ${m.number?'#'+esc(m.number)+' ':''}${esc(m.name)}${m.join?' ('+esc(m.join)+')':''} <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a></div>`).join('')
+    : '등록된 멤버 없음';
+}
+
+function addKbItem(){
+  if(adminLevel()!==1) return alert('관리자1만 지식을 추가할 수 있어요.');
+  const q=document.getElementById('newKbQ').value.trim();
+  const a=document.getElementById('newKbA').value.trim();
+  if(!q||!a) return alert('질문과 답변을 모두 입력하세요.');
+  const kb=(DATA.qna_kb||[]).slice();
+  kb.push({q,a,ts:Date.now()});
+  ROOT.child('qna_kb').set(kb);
+  document.getElementById('newKbQ').value='';
+  document.getElementById('newKbA').value='';
+}
+function delKbItem(i){
+  if(adminLevel()!==1) return;
+  if(!confirm('이 지식 항목을 삭제할까요?')) return;
+  const kb=(DATA.qna_kb||[]).slice();
+  kb.splice(i,1);
+  ROOT.child('qna_kb').set(kb);
+}
+function renderKbAdmin(){
+  const el=document.getElementById('kbListAdmin');
+  if(!el)return;
+  el.innerHTML=(DATA.qna_kb||[]).length
+    ? DATA.qna_kb.map((item,i)=>`<div style="margin-bottom:3px;"><b>Q.</b> ${esc(item.q)} <a href="#" onclick="delKbItem(${i});return false;" style="color:#c0392b;">[삭제]</a><br><span style="color:#5a7585;">A. ${esc(item.a)}</span></div>`).join('')
+    : '등록된 지식 없음';
+}
+
 
 function setBg(name){document.body.className='bg-'+name;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
