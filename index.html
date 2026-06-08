@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAVE FC 미니홈피</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Galmuri11&family=Galmuri9&family=Galmuri14&display=swap');
+  :root{
+    --frame:#3aa0d8;--frame-dark:#2176a8;--tab:#4aaee2;--tab-active:#1c6fa0;
+    --ink:#2a3b47;--line:#bfe0f2;--pink:#ff7fae;--news:#d94b8c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Galmuri11','Galmuri9',monospace;color:var(--ink);
+    image-rendering:pixelated;-webkit-font-smoothing:none;
+    display:flex;align-items:flex-start;justify-content:center;
+    min-height:100vh;padding:2vh 2vw;transition:background .3s;
+  }
+  body.bg-grid{background-color:#d9dde0;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:24px 24px;}
+  body.bg-futsal{background-color:#1f8a4c;background-image:repeating-linear-gradient(0deg,#1f8a4c 0 48px,#23994f 48px 96px);}
+  body.bg-pitch{background-color:#2e8b3d;background-image:repeating-linear-gradient(90deg,#2e8b3d 0 40px,#34a046 40px 80px);}
+  body.bg-ball{background-color:#eef1f4;background-image:radial-gradient(circle,#2a3b47 6px,transparent 7px),radial-gradient(circle,#2a3b47 6px,transparent 7px);background-size:60px 60px;background-position:0 0,30px 30px;}
+  body.bg-night{background-color:#16213a;background-image:radial-gradient(circle,#fff 1px,transparent 2px),radial-gradient(circle,#fff 1px,transparent 2px);background-size:50px 50px,80px 80px;background-position:0 0,25px 40px;}
+
+  .window{width:96vw;max-width:1600px;background:#fff;border:2px solid #5a6b77;box-shadow:6px 6px 0 rgba(0,0,0,.25);}
+  .titlebar{background:linear-gradient(#5b7c92,#3f5a6e);color:#fff;font-family:'Galmuri9';font-size:11px;padding:5px 8px;display:flex;align-items:center;gap:6px;}
+  .titlebar .dots{display:flex;gap:4px;margin-left:auto;}
+  .titlebar .dots span{width:11px;height:11px;background:#cdd7df;border:1px solid #2a3b47;display:inline-block;}
+  .urlbar{background:#e8edf1;border-bottom:2px solid #5a6b77;padding:5px 8px;font-family:'Galmuri9';font-size:11px;display:flex;align-items:center;gap:6px;}
+  .urlbar .addr{flex:1;background:#fff;border:1px solid #9fb2bf;padding:3px 8px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .urlbar .who{color:var(--frame-dark);font-family:'Galmuri9';font-size:10px;}
+
+  .mini{background:var(--frame);padding:10px;display:flex;gap:10px;}
+  .panel{background:#fff;border:1px solid var(--line);}
+  .left{width:240px;flex-shrink:0;}
+  .left .head{padding:8px 10px 6px;border-bottom:1px dashed var(--line);}
+  .today{font-family:'Galmuri9';font-size:10px;color:#6a8595;}
+  .today b{color:var(--news);}
+  .logo{font-family:'Galmuri14';font-size:20px;color:var(--frame-dark);margin:4px 0 2px;letter-spacing:-1px;}
+  .logo small{font-family:'Galmuri9';font-size:9px;color:#9ab;vertical-align:super;}
+  .mainimg-wrap{padding:8px;}
+  .mainimg{width:100%;height:200px;object-fit:cover;display:block;border:1px solid var(--line);background:#eef4f8;image-rendering:pixelated;}
+  .img-cap{font-family:'Galmuri9';font-size:9px;color:#8aa;text-align:center;margin-top:4px;}
+  .moodbox{margin:6px 8px;padding:6px 8px;border:1px solid var(--line);font-family:'Galmuri9';font-size:10px;color:#5a7585;text-align:center;}
+  .intro{padding:8px 12px;font-size:11px;line-height:1.7;color:#3a5566;border-top:1px dashed var(--line);}
+  .loginbox{margin:6px 8px 10px;border:1px solid var(--line);font-family:'Galmuri9';font-size:10px;}
+  .loginbox .t{background:#eaf4fb;padding:3px 6px;color:#5a7585;border-bottom:1px solid var(--line);}
+  .loginbox .b{padding:7px 6px;}
+  .loginbox input{width:100%;font-family:'Galmuri9';font-size:10px;padding:3px;margin:2px 0;border:1px solid #c9d6df;}
+  .loginbox button{font-family:'Galmuri9';font-size:10px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:4px 8px;margin-top:3px;}
+  .loginbox .link{color:var(--frame-dark);cursor:pointer;text-decoration:underline;font-size:9px;}
+  .loginbox .me{color:var(--frame-dark);font-weight:bold;}
+
+  .center{flex:1;min-width:0;min-height:560px;background:#fff;border:1px solid var(--line);padding:16px;}
+  .news-h{font-family:'Galmuri9';font-size:13px;color:var(--news);border-bottom:2px solid var(--news);padding-bottom:4px;margin-bottom:8px;}
+  .news-list{list-style:none;margin:0 0 12px;padding:0;font-size:11px;line-height:2;}
+  .news-list li:before{content:"[공지] ";color:var(--frame);font-family:'Galmuri9';font-size:10px;}
+
+  .room{border:1px solid var(--line);background:#eaf4fb;background-image:radial-gradient(circle,#cfe6f5 2px,transparent 3px);background-size:18px 18px;min-height:200px;padding:24px 8px 8px;position:relative;}
+  .room .tag{position:absolute;top:6px;left:8px;font-family:'Galmuri9';font-size:11px;color:var(--frame-dark);}
+  .room .farewell{position:absolute;top:6px;right:8px;font-family:'Galmuri9';font-size:10px;color:var(--pink);}
+  .comments{display:flex;flex-direction:column;gap:6px;}
+  .cmt{display:flex;align-items:flex-start;gap:6px;background:rgba(255,255,255,.85);border:1px solid var(--line);padding:5px 7px;font-size:11px;}
+  .cmt .face{font-size:20px;flex-shrink:0;line-height:1;}
+  .cmt .txt{line-height:1.5;color:#3a5566;word-break:break-all;}
+  .cmt .del{margin-left:auto;color:#c0392b;cursor:pointer;font-size:9px;font-family:'Galmuri9';}
+  .cmt-form{margin-top:10px;border:1px solid var(--line);background:#fff;padding:8px;}
+  .cmt-form .faces{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+  .cmt-form .faces span{font-size:20px;cursor:pointer;padding:2px 4px;border:1px solid transparent;border-radius:4px;}
+  .cmt-form .faces span.sel{border-color:var(--frame);background:#eaf4fb;}
+  .cmt-form .row{display:flex;gap:6px;}
+  .cmt-form input{flex:1;font-family:'Galmuri11';font-size:11px;padding:5px;border:1px solid #c9d6df;}
+  .cmt-form button{font-family:'Galmuri9';font-size:10px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:5px 12px;}
+  .cmt-locked{margin-top:10px;padding:10px;border:1px dashed var(--line);font-family:'Galmuri9';font-size:10px;color:#8aa;text-align:center;}
+
+  .page-h{font-family:'Galmuri14';font-size:16px;color:var(--frame-dark);border-bottom:2px solid var(--frame);padding-bottom:6px;margin:0 0 12px;}
+  table.lst{width:100%;border-collapse:collapse;font-size:11px;}
+  table.lst th,table.lst td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
+  table.lst th{background:#eaf4fb;color:var(--frame-dark);font-family:'Galmuri9';font-size:10px;}
+  table.lst tr:nth-child(even) td{background:#f7fbfe;}
+  .rule-box{font-size:11px;line-height:1.9;}
+  .rule-box h4{font-family:'Galmuri9';font-size:12px;color:var(--news);margin:14px 0 4px;}
+  .rule-box ul{margin:0;padding-left:18px;}
+  .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+  .member-card{border:1px solid var(--line);padding:8px;text-align:center;font-size:11px;background:#f7fbfe;}
+  .member-card .av{font-size:26px;}
+  .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
+  .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
+  .locked-msg{text-align:center;padding:40px 16px;font-size:12px;color:#8aa;line-height:2;}
+  .locked-msg .ic{font-size:36px;}
+
+  .right{width:100px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;}
+  .tab-btn{background:var(--tab);color:#fff;border:1px solid var(--tab-active);font-family:'Galmuri9';font-size:12px;padding:11px 4px;cursor:pointer;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.15);position:relative;}
+  .tab-btn:hover{background:#5fc0f0;}
+  .tab-btn.active{background:var(--tab-active);box-shadow:inset 2px 2px 0 rgba(0,0,0,.2);}
+  .tab-btn .lock{position:absolute;top:2px;right:3px;font-size:9px;}
+  .minicards{margin-top:6px;border:1px solid var(--tab-active);background:#fff;padding:5px;}
+  .minicards .c{font-family:'Galmuri9';font-size:9px;text-align:center;padding:6px 2px;color:#fff;margin-bottom:4px;}
+  .minicards .c1{background:#7fb3e0;}.minicards .c2{background:#e08fb5;}
+
+  .taskbar{background:linear-gradient(#3f5a6e,#2a3b47);color:#fff;font-family:'Galmuri9';font-size:10px;padding:4px 8px;display:flex;align-items:center;gap:8px;}
+  .taskbar .start{background:#2e8b3d;padding:2px 10px;border:1px solid #fff;}
+  .taskbar .clock{margin-left:auto;}
+  .bgbar{background:#eaf4fb;border-top:1px solid var(--line);padding:6px 8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-family:'Galmuri9';font-size:10px;}
+  .bgbar b{color:var(--frame-dark);margin-right:4px;}
+  .bgbar button{font-family:'Galmuri9';font-size:10px;cursor:pointer;background:#fff;border:1px solid var(--frame);color:var(--frame-dark);padding:3px 8px;}
+  .bgbar button:hover{background:var(--frame);color:#fff;}
+
+  .admin{background:#fffbe6;border:1px dashed #d9b34b;padding:8px;margin-top:8px;font-size:11px;display:none;}
+  .admin.show{display:block;}
+  .admin input,.admin textarea{width:100%;font-family:'Galmuri9';font-size:11px;padding:4px;border:1px solid #c9d6df;margin:3px 0;}
+  .admin button{font-family:'Galmuri9';font-size:10px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:5px 10px;margin-top:4px;}
+  .admin .pending{background:#fff;border:1px solid #d9b34b;padding:5px;margin:3px 0;display:flex;align-items:center;gap:6px;}
+  .admin .pending button{margin:0;padding:3px 8px;}
+  .admin .pending .rej{background:#c0392b;}
+  .gearbtn{cursor:pointer;}
+  .status{font-family:'Galmuri9';font-size:9px;color:#8aa;}
+
+  /* 모달 */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;border:2px solid #5a6b77;width:300px;max-width:90%;box-shadow:6px 6px 0 rgba(0,0,0,.3);}
+  .modal .mh{background:linear-gradient(#5b7c92,#3f5a6e);color:#fff;font-family:'Galmuri9';font-size:11px;padding:6px 10px;display:flex;}
+  .modal .mh .x{margin-left:auto;cursor:pointer;}
+  .modal .mb{padding:14px;font-size:11px;}
+  .modal label{display:block;font-family:'Galmuri9';font-size:10px;color:#5a7585;margin:8px 0 2px;}
+  .modal input{width:100%;font-family:'Galmuri11';font-size:12px;padding:6px;border:1px solid #c9d6df;}
+  .modal .go{width:100%;font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:8px;margin-top:12px;}
+  .modal .hint{font-family:'Galmuri9';font-size:9px;color:#8aa;margin-top:8px;line-height:1.6;}
+
+  @media(min-width:1100px){
+    .center{padding:24px 28px;min-height:640px;}
+    .news-list{font-size:13px;}
+    .rule-box{font-size:13px;line-height:2.1;}
+    table.lst{font-size:13px;}
+    table.lst th,table.lst td{padding:9px 12px;}
+    .page-h{font-size:19px;}
+    .cmt{font-size:13px;}
+    .member-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+    .member-card{padding:12px;font-size:13px;}
+    .member-card .av{font-size:34px;}
+    .room{min-height:300px;}
+  }
+  @media(max-width:680px){
+    .mini{flex-direction:column;}.left{width:100%;}
+    .right{width:100%;flex-direction:row;flex-wrap:wrap;}
+    .tab-btn{flex:1;min-width:70px;}.minicards{display:none;}
+  }
+</style>
+</head>
+<body class="bg-grid">
+
+<div class="window">
+  <div class="titlebar"><span>WAVE FC 미니홈피</span><div class="dots"><span></span><span></span><span></span></div></div>
+  <div class="urlbar">
+    <span>◀ ▶ ⟳</span>
+    <span class="addr" id="urlAddr">http://www.cyworld.com/wave_fc</span>
+    <span class="who" id="whoAmI"></span>
+    <span class="gearbtn" onclick="toggleAdmin()" title="관리">⚙</span>
+  </div>
+
+  <div class="mini">
+    <!-- 왼쪽 -->
+    <div class="left panel">
+      <div class="head">
+        <div class="today">TODAY <b id="todayCnt">1</b> | TOTAL <span id="totalCnt">1</span></div>
+        <div class="logo">WAVE FC<small>™</small></div>
+      </div>
+      <div class="mainimg-wrap">
+        <img class="mainimg" id="mainImg" alt="대표 이미지" src="">
+        <div class="img-cap" id="imgCap">⚽ 우리들의 풋살 기록</div>
+      </div>
+      <div class="moodbox" id="moodBox">오늘도 한 골 넣고 가자…⚽</div>
+      <div class="intro">매주 모이는 풋살팀<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 골 넣으러 가자!</div>
+      <div class="loginbox" id="loginBox">
+        <div class="t">▼ 회원 ▼</div>
+        <div class="b" id="loginInner"></div>
+      </div>
+    </div>
+
+    <div class="center" id="centerArea"></div>
+
+    <div class="right">
+      <button class="tab-btn active" data-page="home" onclick="go('home',this)">홈</button>
+      <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
+      <button class="tab-btn" data-page="diary" onclick="go('diary',this)">훈련일지<span class="lock" id="lk1">🔒</span></button>
+      <button class="tab-btn" data-page="notice" onclick="go('notice',this)">훈련공지<span class="lock" id="lk2">🔒</span></button>
+      <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
+      <div class="minicards"><div class="c c1">WAVE</div><div class="c c2">FC</div></div>
+    </div>
+  </div>
+
+  <div class="bgbar">
+    <b>🎨 미니룸 배경</b>
+    <button onclick="setBg('grid')">기본그리드</button>
+    <button onclick="setBg('futsal')">풋살장</button>
+    <button onclick="setBg('pitch')">축구장</button>
+    <button onclick="setBg('ball')">축구공</button>
+    <button onclick="setBg('night')">야간경기</button>
+  </div>
+
+  <!-- 관리 -->
+  <div class="admin" id="adminPanel">
+    <b>⚙ 관리 모드</b> <span class="status" id="dbStatus">연결 중…</span>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>🙋 가입 승인 대기</b></div>
+    <div id="pendingList" style="font-size:10px;">없음</div>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>📷 대표 이미지 추가</b> (여러 장이면 자동 슬라이드)</div>
+    <input id="newImgUrl" placeholder="이미지 주소 (https://...)">
+    <input id="newImgCap" placeholder="이미지 설명">
+    <button onclick="addImage()">이미지 추가</button>
+    <div id="imgListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>📢 공지(홈) 추가</b></div>
+    <input id="newNotice" placeholder="공지 내용"><button onclick="addNotice()">추가</button>
+    <div style="margin-top:6px;"><b>📅 훈련공지 추가</b></div>
+    <input id="newSchedDate" placeholder="날짜/시간 (예: 6/14(토) 19:00)">
+    <input id="newSchedPlace" placeholder="장소"><button onclick="addSchedule()">추가</button>
+    <div style="margin-top:6px;"><b>📝 훈련일지 추가</b></div>
+    <input id="newLogDate" placeholder="날짜">
+    <textarea id="newLogText" rows="2" placeholder="훈련 내용/결과"></textarea><button onclick="addLog()">추가</button>
+    <div style="margin-top:6px;"><b>👤 멤버 직접 추가</b></div>
+    <input id="newMemName" placeholder="이름">
+    <input id="newMemPos" placeholder="포지션"><button onclick="addMember()">추가</button>
+  </div>
+
+  <div class="taskbar"><span class="start">⊞ 시작</span><span>WAVE FC.exe</span><span class="clock" id="clock">오후 6:00</span></div>
+</div>
+
+<!-- 로그인/가입 모달 -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="mh"><span id="modalTitle">로그인</span><span class="x" onclick="closeModal()">✕</span></div>
+    <div class="mb">
+      <label>이름</label><input id="mName" placeholder="이름">
+      <label>비밀번호</label><input id="mPw" type="password" placeholder="비밀번호">
+      <button class="go" id="modalGo" onclick="modalSubmit()">로그인</button>
+      <div class="hint" id="modalHint"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyDUj9HrX_G5ooaBqLSL_9gES8xYu8Bv-CI",authDomain:"wave-b0878.firebaseapp.com",databaseURL:"https://wave-b0878-default-rtdb.firebaseio.com",projectId:"wave-b0878",storageBucket:"wave-b0878.firebasestorage.app",messagingSenderId:"871858545436",appId:"1:871858545436:web:99f1676417170ab8b6d0d9"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const ROOT=db.ref('wavefc_site');
+
+const FACES=["🙂","😎","😆","🥳","😤","🤩","😼","🐯","🐶","🦊","⚽","🔥"];
+let selFace=FACES[0];
+
+const DEFAULT={
+  images:[{url:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="#2e8b3d"/><rect x="20" y="20" width="280" height="200" fill="none" stroke="#fff" stroke-width="4"/><circle cx="160" cy="120" r="40" fill="none" stroke="#fff" stroke-width="4"/><line x1="160" y1="20" x2="160" y2="220" stroke="#fff" stroke-width="4"/><circle cx="160" cy="120" r="8" fill="#fff"/><text x="160" y="60" font-size="18" fill="#fff" text-anchor="middle" font-family="monospace">WAVE FC</text></svg>'),cap:"⚽ WAVE FC 풋살장"}],
+  notices:["WAVE FC 미니홈피 오픈! 회원가입 후 훈련정보를 확인하세요 :)"],
+  schedules:[{date:"매주 토 19:00",place:"정기 풋살 모임"}],
+  logs:[{date:"오픈",text:"훈련일지가 여기에 쌓입니다."}],
+  members:[],
+  comments:[],
+  users:{},
+  visits:1,
+  mood:"오늘도 한 골 넣고 가자…⚽"
+};
+let DATA=JSON.parse(JSON.stringify(DEFAULT));
+let imgIndex=0,imgTimer=null;
+let me=localStorage.getItem('wavefc_user')||null; // 로그인된 이름
+
+ROOT.on('value',snap=>{
+  const v=snap.val();
+  if(!v){ROOT.set(DEFAULT);DATA=JSON.parse(JSON.stringify(DEFAULT));}
+  else{
+    DATA={images:v.images||DEFAULT.images,notices:v.notices||[],schedules:v.schedules||[],
+    logs:v.logs||[],members:v.members||[],comments:v.comments||[],users:v.users||{},
+    visits:v.visits||1,mood:v.mood||DEFAULT.mood};
+  }
+  setStatus(true);renderAll();
+},()=>setStatus(false));
+
+function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
+function countVisit(){ROOT.child('visits').transaction(c=>(c||0)+1);}
+countVisit();
+
+/* 로그인 상태 헬퍼 */
+function isMember(){
+  if(!me) return false;
+  const u=DATA.users[me];
+  return u && u.approved===true;
+}
+function renderLoginBox(){
+  const box=document.getElementById('loginInner');
+  const who=document.getElementById('whoAmI');
+  if(isMember()){
+    box.innerHTML=`<span class="me">★ ${esc(me)} 님</span><br><span class="link" onclick="logout()">로그아웃</span>`;
+    who.textContent='👤 '+me;
+  }else{
+    box.innerHTML=`비회원입니다.<br><button onclick="openModal('login')">로그인</button> <button onclick="openModal('signup')">가입</button>`;
+    who.textContent='';
+    if(me && DATA.users[me] && !DATA.users[me].approved){
+      box.innerHTML=`<span style="color:#d9853b;">${esc(me)} 님<br>승인 대기 중…</span><br><span class="link" onclick="logout()">취소</span>`;
+    }
+  }
+}
+function logout(){me=null;localStorage.removeItem('wavefc_user');renderLoginBox();updateLocks();renderPage(currentPage);}
+
+/* 모달 */
+let modalMode='login';
+function openModal(mode){
+  modalMode=mode;
+  document.getElementById('modalTitle').textContent=mode==='login'?'로그인':'회원가입';
+  document.getElementById('modalGo').textContent=mode==='login'?'로그인':'가입 신청';
+  document.getElementById('modalHint').textContent=mode==='login'
+    ?'승인된 회원만 로그인됩니다.'
+    :'가입 신청 후 대표(관리자)가 승인하면 로그인할 수 있습니다.';
+  document.getElementById('mName').value='';document.getElementById('mPw').value='';
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('show');}
+function modalSubmit(){
+  const name=document.getElementById('mName').value.trim();
+  const pw=document.getElementById('mPw').value;
+  if(!name||!pw) return alert('이름과 비밀번호를 입력하세요');
+  const key=name.replace(/[.#$\[\]\/]/g,'_');
+  if(modalMode==='signup'){
+    if(DATA.users[key]) return alert('이미 같은 이름이 있습니다');
+    ROOT.child('users/'+key).set({name:name,pw:pw,approved:false});
+    alert('가입 신청 완료! 관리자 승인 후 로그인하세요.');
+    me=key;localStorage.setItem('wavefc_user',key);
+    closeModal();renderLoginBox();
+  }else{
+    const u=DATA.users[key];
+    if(!u) return alert('가입되지 않은 이름입니다');
+    if(u.pw!==pw) return alert('비밀번호가 틀립니다');
+    if(!u.approved) {me=key;localStorage.setItem('wavefc_user',key);renderLoginBox();return alert('아직 승인 대기 중입니다');}
+    me=key;localStorage.setItem('wavefc_user',key);
+    closeModal();renderLoginBox();updateLocks();renderPage(currentPage);
+  }
+}
+
+/* 자물쇠 표시 */
+function updateLocks(){
+  const show=isMember()?'none':'inline';
+  ['lk1','lk2','lk3'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
+}
+
+function renderAll(){
+  document.getElementById('totalCnt').textContent=DATA.visits.toLocaleString();
+  document.getElementById('moodBox').textContent=DATA.mood;
+  startSlideshow();renderImgAdmin();renderPending();renderLoginBox();updateLocks();
+  renderPage(currentPage);
+}
+
+function startSlideshow(){
+  clearInterval(imgTimer);
+  const imgs=DATA.images.length?DATA.images:DEFAULT.images;
+  imgIndex=imgIndex%imgs.length;showImg(imgs[imgIndex]);
+  if(imgs.length>1){imgTimer=setInterval(()=>{imgIndex=(imgIndex+1)%imgs.length;showImg(imgs[imgIndex]);},4000);}
+}
+function showImg(it){document.getElementById('mainImg').src=it.url;document.getElementById('imgCap').textContent=it.cap||'⚽ WAVE FC';}
+
+let currentPage='home';
+function go(page,btn){
+  // 권한 체크
+  if(['diary','notice','member'].includes(page) && !isMember()){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    currentPage=page;
+    document.getElementById('urlAddr').textContent='http://www.cyworld.com/wave_fc/'+page;
+    document.getElementById('centerArea').innerHTML=lockedView();
+    return;
+  }
+  currentPage=page;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
+  document.getElementById('urlAddr').textContent='http://www.cyworld.com/wave_fc/'+page;
+  renderPage(page);
+}
+function renderPage(page){
+  const c=document.getElementById('centerArea');
+  if(['diary','notice','member'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
+  if(page==='home')c.innerHTML=pageHome();
+  else if(page==='rule')c.innerHTML=pageRule();
+  else if(page==='diary')c.innerHTML=pageDiary();
+  else if(page==='notice')c.innerHTML=pageNotice();
+  else if(page==='member')c.innerHTML=pageMember();
+  if(page==='home')bindCommentForm();
+}
+function lockedView(){
+  return `<div class="locked-msg"><div class="ic">🔒</div>
+    이 페이지는 <b>WAVE FC 회원</b>만 볼 수 있어요.<br>
+    왼쪽에서 <b>로그인</b>하거나 <b>가입 신청</b> 후<br>관리자 승인을 받아주세요.<br><br>
+    <button onclick="openModal('login')" style="font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:7px 16px;">로그인</button>
+    <button onclick="openModal('signup')" style="font-family:'Galmuri9';font-size:11px;cursor:pointer;background:#fff;border:1px solid var(--frame);color:var(--frame-dark);padding:7px 16px;">가입 신청</button>
+    </div>`;
+}
+
+/* 홈 + 일촌평 */
+function pageHome(){
+  const notices=DATA.notices.map(n=>`<li>${esc(n)}</li>`).join('');
+  const cmts=DATA.comments.map((c,i)=>{
+    const canDel=isMember()&&(c.by===me||me==='admin');
+    return `<div class="cmt"><span class="face">${c.face}</span><span class="txt">${esc(c.text)}</span>${canDel?`<span class="del" onclick="delComment(${i})">삭제</span>`:''}</div>`;
+  }).join('') || '<div style="font-size:11px;color:#8aa;text-align:center;padding:14px;">아직 일촌평이 없어요. 첫 댓글을 남겨보세요!</div>';
+
+  let form;
+  if(isMember()){
+    form=`<div class="cmt-form">
+      <div class="faces" id="facePick">${FACES.map(f=>`<span onclick="pickFace('${f}',this)" class="${f===selFace?'sel':''}">${f}</span>`).join('')}</div>
+      <div class="row"><input id="cmtText" maxlength="40" placeholder="익명 한 줄 일촌평 (40자)"><button onclick="addComment()">달기</button></div>
+    </div>`;
+  }else{
+    form=`<div class="cmt-locked">🔒 일촌평은 로그인한 회원만 달 수 있어요</div>`;
+  }
+  return `
+    <div class="news-h">Updated News · 공지</div>
+    <ul class="news-list">${notices}</ul>
+    <div class="room">
+      <span class="tag">⚽ Mini-Room · 일촌평</span>
+      <span class="farewell">다 같이 가보자고…⚽</span>
+      <div class="comments">${cmts}</div>
+      ${form}
+    </div>`;
+}
+function pickFace(f,el){selFace=f;document.querySelectorAll('#facePick span').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');}
+function bindCommentForm(){const t=document.getElementById('cmtText');if(t)t.addEventListener('keydown',e=>{if(e.key==='Enter')addComment();});}
+function addComment(){
+  if(!isMember())return;
+  const t=document.getElementById('cmtText').value.trim();
+  if(!t)return;
+  const arr=DATA.comments.slice();
+  arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
+  ROOT.child('comments').set(arr);
+  document.getElementById('cmtText').value='';
+}
+function delComment(i){const arr=DATA.comments.slice();arr.splice(i,1);ROOT.child('comments').set(arr);}
+
+function pageRule(){
+  return `<div class="page-h">⚽ 풋살 기본 규칙</div><div class="rule-box">
+    <h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul>
+    <h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul>
+    <h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>
+    <h4>④ WAVE FC 매너</h4><ul><li>늦으면 단톡방에 미리 공유</li><li>과한 몸싸움보다 즐기는 풋살</li><li>경기 후 장비·쓰레기 함께 정리</li></ul></div>`;
+}
+function pageDiary(){
+  const rows=DATA.logs.map(l=>`<tr><td style="width:90px;">${esc(l.date)}</td><td style="text-align:left;">${esc(l.text)}</td></tr>`).join('');
+  return `<div class="page-h">📝 훈련 일지</div><table class="lst"><tr><th>날짜</th><th>내용</th></tr>${rows||'<tr><td colspan=2>일지 없음</td></tr>'}</table>`;
+}
+function pageNotice(){
+  const rows=DATA.schedules.map(s=>`<tr><td>${esc(s.date)}</td><td>${esc(s.place)}</td></tr>`).join('');
+  return `<div class="page-h">📅 훈련 공지 / 일정</div><table class="lst"><tr><th>날짜/시간</th><th>장소</th></tr>${rows||'<tr><td colspan=2>일정 없음</td></tr>'}</table>`;
+}
+function pageMember(){
+  // 승인된 가입 회원 + 직접 추가 멤버 합치기
+  const approved=Object.values(DATA.users).filter(u=>u.approved).map(u=>({name:u.name,pos:'회원'}));
+  const all=DATA.members.concat(approved);
+  const cards=all.map(m=>`<div class="member-card"><div class="av">🧍</div><div class="nm">${esc(m.name)}</div><div class="po">${esc(m.pos||'')}</div></div>`).join('');
+  return `<div class="page-h">👥 멤버 현황 (${all.length}명)</div><div class="member-grid">${cards||'멤버 없음'}</div>`;
+}
+
+/* 관리 */
+function toggleAdmin(){document.getElementById('adminPanel').classList.toggle('show');}
+function renderPending(){
+  const el=document.getElementById('pendingList');
+  const pend=Object.entries(DATA.users).filter(([k,u])=>!u.approved);
+  if(pend.length===0){el.innerHTML='없음';return;}
+  el.innerHTML=pend.map(([k,u])=>`<div class="pending">${esc(u.name)}<button onclick="approveUser('${k}')">승인</button><button class="rej" onclick="rejectUser('${k}')">거절</button></div>`).join('');
+}
+function approveUser(k){ROOT.child('users/'+k+'/approved').set(true);}
+function rejectUser(k){if(confirm('가입을 거절(삭제)할까요?'))ROOT.child('users/'+k).remove();}
+
+function addImage(){const url=document.getElementById('newImgUrl').value.trim();const cap=document.getElementById('newImgCap').value.trim();if(!url)return alert('이미지 주소 입력');const a=DATA.images.slice();a.push({url,cap});ROOT.child('images').set(a);document.getElementById('newImgUrl').value='';document.getElementById('newImgCap').value='';}
+function delImage(i){const a=DATA.images.slice();a.splice(i,1);if(!a.length)a.push(DEFAULT.images[0]);ROOT.child('images').set(a);}
+function renderImgAdmin(){document.getElementById('imgListAdmin').innerHTML=DATA.images.map((im,i)=>`<div>• ${esc(im.cap||im.url.slice(0,28))} <a href="#" onclick="delImage(${i});return false;" style="color:#c0392b;">[삭제]</a></div>`).join('');}
+function addNotice(){const t=document.getElementById('newNotice').value.trim();if(!t)return;const a=DATA.notices.slice();a.unshift(t);ROOT.child('notices').set(a);document.getElementById('newNotice').value='';}
+function addSchedule(){const d=document.getElementById('newSchedDate').value.trim();const p=document.getElementById('newSchedPlace').value.trim();if(!d)return;const a=DATA.schedules.slice();a.unshift({date:d,place:p});ROOT.child('schedules').set(a);document.getElementById('newSchedDate').value='';document.getElementById('newSchedPlace').value='';}
+function addLog(){const d=document.getElementById('newLogDate').value.trim();const t=document.getElementById('newLogText').value.trim();if(!t)return;const a=DATA.logs.slice();a.unshift({date:d,text:t});ROOT.child('logs').set(a);document.getElementById('newLogDate').value='';document.getElementById('newLogText').value='';}
+function addMember(){const n=document.getElementById('newMemName').value.trim();const p=document.getElementById('newMemPos').value.trim();if(!n)return;const a=DATA.members.slice();a.push({name:n,pos:p});ROOT.child('members').set(a);document.getElementById('newMemName').value='';document.getElementById('newMemPos').value='';}
+
+function setBg(name){document.body.className='bg-'+name;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function tick(){const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,'0');const ap=h<12?'오전':'오후';if(h>12)h-=12;if(h===0)h=12;document.getElementById('clock').textContent=`${ap} ${h}:${m}`;}
+tick();setInterval(tick,10000);
+renderPage('home');
+</script>
+</body>
+</html>
