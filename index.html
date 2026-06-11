@@ -15,6 +15,9 @@
   }
   /* WAVE FC 전체 글꼴: DosStory 우선 적용 (숫자 유니폼 등 SVG는 영향 없음) */
   *, *::before, *::after{ font-family:'DosStory','Galmuri11','Galmuri9',monospace !important; }
+  /* DosStory는 두께가 두꺼워 보여서 전반적으로 normal로 통일, 강조는 600까지만 */
+  *{ font-weight:normal; }
+  b, strong, .logo, .page-h, .nm, th{ font-weight:600 !important; }
   :root{
     --frame:#3aa0d8;--frame-dark:#2176a8;--tab:#4aaee2;--tab-active:#1c6fa0;
     --ink:#2a3b47;--line:#bfe0f2;--pink:#ff7fae;--news:#d94b8c;
@@ -47,7 +50,7 @@
   .left .head{padding:8px 10px 6px;border-bottom:1px dashed var(--line);}
   .today{font-family:'Galmuri9';font-size:10px;color:#6a8595;}
   .today b{color:var(--news);}
-  .logo{font-family:'Galmuri14';font-size:34px;font-weight:bold;color:var(--frame-dark);margin:6px 0 4px;letter-spacing:0;text-shadow:2px 2px 0 #cfe6f5;line-height:1.1;}
+  .logo{font-family:'DosStory','Galmuri14' !important;font-size:32px;font-weight:600;color:var(--frame-dark);margin:6px 0 4px;letter-spacing:0;line-height:1.1;}
   .logo small{font-family:'Galmuri9';font-size:9px;color:#9ab;vertical-align:super;}
   .mainimg-wrap{padding:8px;}
   .mainimg{width:100%;aspect-ratio:16/9;object-fit:contain;display:block;border:1px solid var(--line);background:#0d1b2a;image-rendering:auto;}
@@ -162,6 +165,7 @@
   .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
   .member-card.is-rest{border:2px solid #b8c0c7;background:#f1f3f5;opacity:.78;}
   .member-card .badge-status{font-family:'Galmuri9';font-size:8px;padding:1px 5px;border-radius:7px;color:#fff;display:inline-block;margin-bottom:2px;}
+  .member-card .mc-badgeslot{height:18px;line-height:18px;margin-bottom:2px;}
   .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}.badge-exec{background:#d99a2b;}
   .member-card .av{font-size:26px;line-height:1;height:44px;display:flex;align-items:center;justify-content:center;}
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
@@ -187,23 +191,37 @@
   .qna-src{font-size:11px;color:#8aa;margin-left:6px;}
   .qna-del{font-size:11px;color:#c0392b;cursor:pointer;margin-left:8px;font-family:'Galmuri9';}
   .qna-admin{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+  /* 훈련일지 게시판 */
+  .diary-list{display:flex;flex-direction:column;gap:8px;}
+  .diary-item{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .diary-item.editing{border:2px solid var(--frame);padding:10px 12px;}
+  .diary-head{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;}
+  .diary-head:hover{background:#f0f8ff;}
+  .diary-arrow{color:var(--frame);font-size:12px;}
+  .diary-title{flex:1;font-size:15px;color:var(--frame-dark);font-weight:600;}
+  .diary-d{font-size:12px;color:#8aa;white-space:nowrap;}
+  .diary-body{padding:0 14px 14px;font-size:14px;color:#3a5566;border-top:1px dashed var(--line);}
+  .diary-date{font-size:12px;color:#8aa;margin:8px 0;}
+  .diary-img{max-width:260px;width:100%;border:1px solid #c9d6df;border-radius:5px;cursor:zoom-in;display:block;}
+  .diary-img:hover{filter:brightness(1.03);}
   /* 달력 */
-  .cal-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px;}
-  .cal-bar button{font-family:'Galmuri9';cursor:pointer;background:var(--frame);color:#fff;border:none;padding:4px 10px;}
-  .cal-bar b{font-family:'Pretendard',sans-serif;font-size:16px;color:var(--frame-dark);}
-  .cal-legend{font-family:'Pretendard',sans-serif;font-size:11px;color:#5a7585;margin-bottom:8px;}
+  .cal-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:15px;}
+  .cal-bar button{cursor:pointer;background:var(--frame);color:#fff;border:none;padding:5px 12px;font-size:14px;}
+  .cal-bar b{font-size:20px;color:var(--frame-dark);font-weight:600;}
+  .cal-legend{font-size:13px;color:#5a7585;margin-bottom:8px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--line);border:1px solid var(--line);}
-  .cal-h{background:#eaf4fb;text-align:center;font-family:'Galmuri9';font-size:11px;padding:6px 0;color:var(--frame-dark);}
+  .cal-h{background:#eaf4fb;text-align:center;font-size:13px;padding:7px 0;color:var(--frame-dark);}
   .cal-h.sun{color:#c0392b;}.cal-h.sat{color:#2176a8;}
   .cal-cell{background:#fff;min-height:74px;padding:3px;font-size:11px;vertical-align:top;}
   .cal-cell.empty{background:#f4f7f9;}
-  .cal-cell .cal-d{font-family:'Galmuri9';font-size:11px;color:#5a7585;margin-bottom:2px;}
+  .cal-cell .cal-d{font-size:13px;color:#5a7585;margin-bottom:2px;}
   .cal-cell.sun .cal-d{color:#c0392b;}.cal-cell.sat .cal-d{color:#2176a8;}
   .cal-cell[onclick]{cursor:pointer;}
   .cal-cell[onclick]:hover{background:#f0f8ff;}
-  .cal-ev{color:#fff;font-family:'Pretendard',sans-serif;font-size:13px;padding:3px 5px;border-radius:3px;margin-bottom:2px;line-height:1.35;word-break:break-all;}
-  .cal-place{display:inline-block;background:rgba(255,255,255,.25);padding:0 4px;border-radius:3px;font-size:12px;margin-top:1px;}
-  .cal-addbtn{font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:6px 12px;}
+  .cal-ev{color:#fff;font-size:14px;padding:4px 6px;border-radius:3px;margin-bottom:2px;line-height:1.4;word-break:break-all;}
+  .cal-place{display:inline-block;background:rgba(255,255,255,.3);padding:1px 5px;border-radius:3px;font-size:13px;margin-top:2px;}
+  .cal-time{display:inline-block;background:rgba(0,0,0,.18);padding:0 4px;border-radius:3px;font-size:13px;}
+  .cal-addbtn{font-size:13px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:7px 14px;}
   /* 출석표 */
   .att-table th,.att-table td{padding:6px 8px;white-space:nowrap;}
   .att-table td{font-size:13px;}
@@ -216,7 +234,7 @@
   .tab-btn.active{background:var(--tab-active);box-shadow:inset 2px 2px 0 rgba(0,0,0,.2);}
   .tab-btn .lock{position:absolute;top:2px;right:3px;font-size:9px;}
   .minicards{margin-top:6px;border:1px solid var(--tab-active);background:#fff;padding:6px;}
-  .minicards .mc-title{font-size:11px;font-weight:bold;text-align:center;color:var(--frame-dark);margin-bottom:5px;}
+  .minicards .mc-title{font-size:11px;font-weight:600;text-align:center;color:var(--frame-dark);margin-bottom:5px;white-space:nowrap;letter-spacing:-0.5px;}
   .minicards .c{display:block;font-size:12px;font-weight:bold;text-align:center;padding:8px 2px;color:#fff;margin-bottom:5px;text-decoration:none;border-radius:4px;line-height:1.3;transition:transform .1s,filter .1s;}
   .minicards .c:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 2px 0 rgba(0,0,0,.15);}
   .minicards .mc-sub{font-size:9px;font-weight:normal;opacity:.92;}
@@ -382,10 +400,13 @@
     <div id="kbListAdmin" style="font-size:10px;margin-top:6px;"></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🪪 프로필 사진</b> (왼쪽 상단, 미니룸과 별개)</div>
-    <input id="newProfileUrl" placeholder="프로필 이미지 주소 (https://...)">
+    <div style="font-size:10px;color:#5a7585;margin:2px 0 4px;">📎 파일 첨부 또는 이미지 주소 중 하나만 쓰면 돼요</div>
+    <input type="file" id="newProfileFile" accept="image/*" onchange="onProfileFile(event)" style="font-size:10px;margin:3px 0;">
+    <input id="newProfileUrl" placeholder="또는 이미지 주소 (https://...)">
     <input id="newProfileCap" placeholder="프로필 설명 (예: WAVE FC 라커룸)">
     <button onclick="setProfile()">프로필 적용</button>
     <button onclick="clearProfile()" style="background:#c0392b;">초기화</button>
+    <div id="profilePreview" style="margin-top:6px;"></div>
     <div id="profileInfoAdmin" style="font-size:10px;margin-top:6px;color:#5a7585;"></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>📷 미니룸 이미지 추가</b> (여러 장이면 자동 슬라이드)</div>
@@ -400,10 +421,7 @@
     <label style="font-size:10px;"><input type="checkbox" id="newNoticePin" style="width:auto;"> 상단 고정(홈 최상단)</label>
     <button onclick="addNotice()">공지 추가</button>
     <div id="noticeListAdmin" style="font-size:10px;margin-top:6px;"></div>
-    <div style="margin-top:6px;"><b>📝 훈련일지 추가</b></div>
-    <input id="newLogDate" placeholder="날짜 (예: 26년 6월 2일)">
-    <textarea id="newLogText" rows="2" placeholder="훈련 내용/결과"></textarea><button onclick="addLog()">일지 추가</button>
-    <div style="margin-top:6px;font-size:10px;color:#8aa;">📅 일정안내(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
+    <div style="margin-top:6px;font-size:10px;color:#8aa;">📝 훈련일지는 '훈련일지' 메뉴에서 작성·수정합니다.<br>📅 일정안내(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
     </div>
   </div>
 
@@ -689,6 +707,8 @@ function go(page,btn){
     return;
   }
   currentPage=page;
+  noticeEditing=null;
+  diaryEditing=null;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -862,9 +882,9 @@ function pageRule(){
     </div>`;
 }
 /* ===== 공지사항 게시판 ===== */
+var noticeEditing=null; // 인라인 편집 중인 공지 인덱스
 function pageNotice(){
   const isExec=rankOf(me)==='exec';
-  // 고정공지 먼저, 그다음 최신순
   const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
     .sort((a,b)=>{
       const ap=a.pinned?1:0,bp=b.pinned?1:0;
@@ -882,6 +902,18 @@ function pageNotice(){
   const items=list.map(n=>{
     const t=n.ts?new Date(n.ts):null;
     const tstr=t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
+    // 편집 중인 공지는 입력 폼으로 표시 (글 자리에서 바로 수정)
+    if(isExec && noticeEditing===n._i){
+      return `
+      <div class="qna-thread editing" style="margin-bottom:10px;border:2px solid var(--frame);">
+        <input id="ntEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(n.title||'')}" placeholder="공지 제목">
+        <textarea id="ntEditText" class="qna-input" rows="5">${esc(n.text||'')}</textarea>
+        <div style="margin-top:8px;">
+          <button class="qna-send sm" onclick="saveNotice(${n._i})">저장</button>
+          <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelNotice()">취소</button>
+        </div>
+      </div>`;
+    }
     const adminBtns = isExec ? `
       <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
         <button class="qna-send sm" onclick="editNotice(${n._i})">수정</button>
@@ -909,28 +941,156 @@ function addNoticeBoard(){
   a.unshift({title:title||text.slice(0,20),text:text,pinned:pin,ts:Date.now()});
   ROOT.child('notices').set(a);
 }
-function editNotice(i){
+function editNotice(i){           // 인라인 편집 모드 진입
+  if(rankOf(me)!=='exec') return;
+  noticeEditing=i;
+  renderPage('notice');
+}
+function cancelNotice(){
+  noticeEditing=null;
+  renderPage('notice');
+}
+function saveNotice(i){
   if(rankOf(me)!=='exec') return;
   const a=JSON.parse(JSON.stringify(DATA.notices));
   if(!a[i])return;
-  const nt=prompt('공지 제목 수정',a[i].title||'');
-  if(nt===null)return;
-  const tx=prompt('공지 내용 수정',a[i].text||'');
-  if(tx===null)return;
-  a[i].title=nt.trim()||tx.trim().slice(0,20);
-  a[i].text=tx.trim();
-  ROOT.child('notices').set(a);
+  const nt=document.getElementById('ntEditTitle').value.trim();
+  const tx=document.getElementById('ntEditText').value.trim();
+  a[i].title=nt||tx.slice(0,20);
+  a[i].text=tx;
+  noticeEditing=null;
+  ROOT.child('notices').set(a); // 저장 후 onValue가 화면 갱신
 }
 function delNoticeBoard(i){
   if(rankOf(me)!=='exec') return;
   if(!confirm('이 공지를 삭제할까요?')) return;
   const a=DATA.notices.slice();a.splice(i,1);ROOT.child('notices').set(a);
 }
+var diaryOpen=null;     // 펼쳐진 일지 인덱스
+var diaryEditing=null;  // 인라인 편집 중인 일지 인덱스
+var _diaryFileData=null;// 첨부 이미지 base64 임시
 function pageDiary(){
   const isExec=rankOf(me)==='exec';
-  const rows=DATA.logs.map((l,i)=>`<tr><td style="width:90px;">${esc(l.date||'')}</td><td style="text-align:left;">${esc(l.text||'')}</td>${isExec?`<td style="width:40px;"><span class="del" style="color:#c0392b;cursor:pointer;" onclick="delLog(${i})">삭제</span></td>`:''}</tr>`).join('');
-  return `<div class="page-h">📝 훈련 일지</div><table class="lst"><tr><th>날짜</th><th>내용</th>${isExec?'<th></th>':''}</tr>${rows||'<tr><td colspan=3>일지 없음</td></tr>'}</table>`;
+  const list=DATA.logs.map((l,i)=>Object.assign({},l,{_i:i}))
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  // 작성 폼(임원만)
+  const writeBox = isExec ? `
+    <div class="qna-ask" style="margin-bottom:14px;">
+      <div class="qna-ask-h">✏ 새 훈련일지 작성</div>
+      <input id="lgDate" class="qna-input" style="margin-bottom:6px;" placeholder="날짜 (예: 2026.06.09)">
+      <input id="lgTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 6월 2일 정기훈련)">
+      <textarea id="lgText" class="qna-input" rows="4" placeholder="훈련 내용/결과"></textarea>
+      <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 사진 첨부(선택)</div>
+      <input type="file" id="lgFile" accept="image/*" onchange="onDiaryFile(event)" style="font-size:11px;">
+      <div id="lgPreview" style="margin-top:6px;"></div>
+      <button class="qna-send" onclick="addDiary()">일지 등록</button>
+    </div>` : '';
+  const items=list.map(l=>{
+    const opened = diaryOpen===l._i;
+    // 편집 모드
+    if(isExec && diaryEditing===l._i){
+      return `
+      <div class="diary-item editing">
+        <input id="lgEditDate" class="qna-input" style="margin-bottom:6px;" value="${esc(l.date||'')}" placeholder="날짜">
+        <input id="lgEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(l.title||'')}" placeholder="제목">
+        <textarea id="lgEditText" class="qna-input" rows="6">${esc(l.text||'')}</textarea>
+        <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 사진 ${l.img?'(첨부됨 — 새로 올리면 교체)':'첨부(선택)'}</div>
+        <input type="file" id="lgEditFile" accept="image/*" onchange="onDiaryFile(event)" style="font-size:11px;">
+        <div id="lgPreview" style="margin-top:6px;">${l.img?'<img src="'+l.img+'" style="max-width:160px;border:1px solid #c9d6df;border-radius:4px;">':''}</div>
+        <div style="margin-top:8px;">
+          <button class="qna-send sm" onclick="saveDiary(${l._i})">저장</button>
+          <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelDiary()">취소</button>
+          ${l.img?`<button class="qna-send sm" style="background:#c0392b;" onclick="removeDiaryImg(${l._i})">사진삭제</button>`:''}
+        </div>
+      </div>`;
+    }
+    const title = l.title || ('훈련일지'+(l.date?' '+l.date:''));
+    const body = opened ? `
+      <div class="diary-body">
+        ${l.date?'<div class="diary-date">📅 '+esc(l.date)+'</div>':''}
+        <div style="white-space:pre-wrap;line-height:1.6;">${esc(l.text||'')}</div>
+        ${l.img?`<div style="margin-top:8px;"><img src="${l.img}" class="diary-img" onclick="openImgModal('${l._i}')" title="클릭하면 크게 보기"></div>`:''}
+        ${isExec?`<div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
+          <button class="qna-send sm" onclick="editDiary(${l._i})">수정</button>
+          <button class="qna-send sm" style="background:#c0392b;" onclick="delDiary(${l._i})">삭제</button>
+        </div>`:''}
+      </div>` : '';
+    return `
+      <div class="diary-item">
+        <div class="diary-head" onclick="toggleDiary(${l._i})">
+          <span class="diary-arrow">${opened?'▼':'▶'}</span>
+          <span class="diary-title">${l.img?'📷 ':''}${esc(title)}</span>
+          ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
+        </div>
+        ${body}
+      </div>`;
+  }).join('');
+  return `<div class="page-h">📝 훈련 일지</div>
+    ${writeBox}
+    <div class="diary-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 훈련일지가 없어요.</div>'}</div>`;
 }
+function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('diary'); }
+function onDiaryFile(ev){
+  const f=ev.target.files&&ev.target.files[0];
+  if(!f)return;
+  if(!/^image\//.test(f.type)) return alert('이미지 파일만 첨부할 수 있어요.');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const max=900; let w=img.width,h=img.height;
+      if(w>max){ h=Math.round(h*max/w); w=max; }
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      _diaryFileData=cv.toDataURL('image/jpeg',0.82);
+      const pv=document.getElementById('lgPreview');
+      if(pv) pv.innerHTML='<img src="'+_diaryFileData+'" style="max-width:160px;border:1px solid #c9d6df;border-radius:4px;"><div style="font-size:10px;color:#2e8b3d;">✓ 첨부됨</div>';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+function addDiary(){
+  if(rankOf(me)!=='exec') return alert('임원만 작성할 수 있어요.');
+  const d=document.getElementById('lgDate').value.trim();
+  const t=document.getElementById('lgTitle').value.trim();
+  const tx=document.getElementById('lgText').value.trim();
+  if(!t&&!tx) return alert('제목이나 내용을 입력하세요.');
+  const a=DATA.logs.slice();
+  a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,img:_diaryFileData||'',ts:Date.now()});
+  _diaryFileData=null;
+  ROOT.child('logs').set(a);
+}
+function editDiary(i){ if(rankOf(me)!=='exec')return; diaryEditing=i; _diaryFileData=null; renderPage('diary'); }
+function cancelDiary(){ diaryEditing=null; _diaryFileData=null; renderPage('diary'); }
+function saveDiary(i){
+  if(rankOf(me)!=='exec') return;
+  const a=JSON.parse(JSON.stringify(DATA.logs));
+  if(!a[i])return;
+  a[i].date=document.getElementById('lgEditDate').value.trim();
+  a[i].title=document.getElementById('lgEditTitle').value.trim()||('훈련일지'+(a[i].date?' '+a[i].date:''));
+  a[i].text=document.getElementById('lgEditText').value.trim();
+  if(_diaryFileData) a[i].img=_diaryFileData; // 새 사진 올렸으면 교체
+  diaryEditing=null; _diaryFileData=null;
+  ROOT.child('logs').set(a);
+}
+function removeDiaryImg(i){
+  if(rankOf(me)!=='exec') return;
+  const a=JSON.parse(JSON.stringify(DATA.logs));
+  if(!a[i])return; a[i].img=''; ROOT.child('logs').set(a);
+}
+function delDiary(i){
+  if(rankOf(me)!=='exec') return;
+  if(!confirm('이 훈련일지를 삭제할까요?')) return;
+  const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').set(a);
+}
+function openImgModal(i){
+  const l=DATA.logs[i]; if(!l||!l.img)return;
+  const ov=document.getElementById('imgModalOverlay');
+  document.getElementById('imgModalImg').src=l.img;
+  ov.style.display='flex';
+}
+function closeImgModal(){ document.getElementById('imgModalOverlay').style.display='none'; }
 
 /* ===== 일정공지 (달력) ===== */
 const ETYPES=[
@@ -941,6 +1101,13 @@ const ETYPES=[
   {k:'기타',c:'#5a7585'}
 ];
 function etypeColor(t){const e=ETYPES.find(x=>x.k===t);return e?e.c:'#5a7585';}
+// 풋살장(장소)별 색상 우선, 없으면 일정종류 색
+function eventColor(e){
+  const place=(e.place||'').replace(/\s/g,'');
+  if(/BJ/i.test(place)) return '#2e8b3d';      // BJ풋살장 = 초록
+  if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#e84a8a'; // FC스퀘어 = 핑크
+  return etypeColor(e.etype);
+}
 function pageCalendar(){
   const now=new Date();
   if(calYear===null){calYear=now.getFullYear();calMonth=now.getMonth();}
@@ -963,7 +1130,7 @@ function pageCalendar(){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${etypeColor(e.etype)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<b>'+esc(e.time)+'</b> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(e.time)+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
       <div class="cal-d">${d}</div>${evHtml}</div>`;
   }
@@ -975,12 +1142,23 @@ function pageCalendar(){
       <button onclick="calNav(-1)">◀</button>
       <b>${y}년 ${m+1}월</b>
       <button onclick="calNav(1)">▶</button>
-      <span style="margin-left:auto;font-family:'Galmuri9';font-size:10px;color:#8aa;">${isExec?'날짜 클릭 → 일정 추가':'일정은 임원만 등록'}</span>
+      <span style="margin-left:auto;font-size:12px;color:#8aa;">${isExec?'날짜 클릭 → 일정 추가':'일정은 임원만 등록'}</span>
     </div>
-    <div class="cal-legend">${legend}</div>
+    <div class="cal-legend">${legend}
+      <div style="margin-top:4px;">📍장소색:
+        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2e8b3d;display:inline-block;"></i>BJ풋살장</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;"><i style="width:11px;height:11px;background:#e84a8a;display:inline-block;"></i>FC스퀘어</span>
+      </div>
+    </div>
     <div class="cal-grid">
       <div class="cal-h sun">일</div><div class="cal-h">월</div><div class="cal-h">화</div><div class="cal-h">수</div><div class="cal-h">목</div><div class="cal-h">금</div><div class="cal-h sat">토</div>
       ${cells}
+    </div>
+    <div class="place-info">
+      <div class="place-info-h">📍 풋살장 위치 안내</div>
+      <div class="place-row"><b style="color:#2e8b3d;">BJ풋살장</b> 마산회원구 삼호천길 352</div>
+      <div class="place-row"><b style="color:#2176a8;">내서스포츠</b> 마산회원구 내서읍 호원로 177</div>
+      <div class="place-row"><b style="color:#e84a8a;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
     </div>`;
 }
 function calNav(delta){
@@ -1162,7 +1340,7 @@ function pageMember(){
     else if(st==='rest') roleLabel='휴식 멤버';
     else roleLabel='일반 회원';
     return `<div class="member-card ${cls}">
-      ${topBadge?('<div>'+topBadge+'</div>'):''}
+      <div class="mc-badgeslot">${topBadge||''}</div>
       <div class="av">${av}</div>
       <div class="nm">${rankImg(rank,16)} ${esc(m.name)}</div>
       <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
@@ -1429,13 +1607,40 @@ function changeAdminPw(level){
 }
 
 function addImage(){const url=document.getElementById('newImgUrl').value.trim();const cap=document.getElementById('newImgCap').value.trim();if(!url)return alert('이미지 주소 입력');const a=DATA.images.slice();a.push({url,cap});ROOT.child('images').set(a);document.getElementById('newImgUrl').value='';document.getElementById('newImgCap').value='';}
+var _profileFileData=null; // 첨부 파일 base64 임시 저장
+function onProfileFile(ev){
+  const f=ev.target.files&&ev.target.files[0];
+  if(!f)return;
+  if(!/^image\//.test(f.type)) return alert('이미지 파일만 첨부할 수 있어요.');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    // 너무 큰 사진은 가로 480px로 줄여 저장(용량 절감)
+    const img=new Image();
+    img.onload=function(){
+      const max=480;
+      let w=img.width,h=img.height;
+      if(w>max){ h=Math.round(h*max/w); w=max; }
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      _profileFileData=cv.toDataURL('image/jpeg',0.85);
+      const pv=document.getElementById('profilePreview');
+      if(pv) pv.innerHTML='<img src="'+_profileFileData+'" style="max-width:100%;border:1px solid #c9d6df;border-radius:4px;"><div style="font-size:10px;color:#2e8b3d;">✓ 첨부됨 — [프로필 적용]을 누르세요</div>';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+}
 function setProfile(){
   const url=document.getElementById('newProfileUrl').value.trim();
   const cap=document.getElementById('newProfileCap').value.trim();
-  if(!url) return alert('프로필 이미지 주소를 입력하세요');
-  ROOT.child('profile').set({url:url,cap:cap||'WAVE FC'});
+  const src=_profileFileData||url; // 첨부파일이 있으면 우선
+  if(!src) return alert('파일을 첨부하거나 이미지 주소를 입력하세요');
+  ROOT.child('profile').set({url:src,cap:cap||'WAVE FC'});
   document.getElementById('newProfileUrl').value='';
   document.getElementById('newProfileCap').value='';
+  const ff=document.getElementById('newProfileFile'); if(ff) ff.value='';
+  const pv=document.getElementById('profilePreview'); if(pv) pv.innerHTML='';
+  _profileFileData=null;
   alert('프로필 사진이 적용되었습니다');
 }
 function clearProfile(){
@@ -1601,5 +1806,8 @@ function tick(){const d=new Date();let h=d.getHours();const m=String(d.getMinute
 tick();setInterval(tick,10000);
 renderPage('home');
 </script>
+<div id="imgModalOverlay" onclick="closeImgModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="imgModalImg" src="" style="max-width:92vw;max-height:92vh;border:3px solid #fff;border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.5);">
+</div>
 </body>
 </html>
