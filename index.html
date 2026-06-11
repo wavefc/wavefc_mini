@@ -149,8 +149,12 @@
   }
   .manner-box ul li{font-size:16px;font-weight:600;color:#7a2a4d;margin-bottom:6px;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
-  .member-card{border:1px solid var(--line);padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
+  .member-card{border:2px solid #6ab8e8;padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
+  .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
+  .member-card.is-rest{border:2px solid #b8c0c7;background:#f1f3f5;opacity:.78;}
+  .member-card .badge-status{font-family:'Galmuri9';font-size:8px;padding:1px 5px;border-radius:7px;color:#fff;display:inline-block;margin-bottom:2px;}
+  .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}
   .member-card .av{font-size:26px;line-height:1;height:44px;display:flex;align-items:center;justify-content:center;}
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
   .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
@@ -332,7 +336,12 @@
       <option value="member">🌊 회원</option>
       <option value="exec">👑 임원</option>
     </select>
-    <input id="newMemNumber" placeholder="등번호 (예: 10)" inputmode="numeric">
+    <select id="newMemStatus" style="width:100%;font-family:'Galmuri9';font-size:11px;padding:4px;border:1px solid #c9d6df;margin:3px 0;">
+      <option value="active">🔵 일반(활동중)</option>
+      <option value="honor">⚫ 명예회원(★)</option>
+      <option value="rest">⚪ 휴식 멤버</option>
+    </select>
+    <input id="newMemNumber" placeholder="등번호 (없으면 비워두기)" inputmode="numeric">
     <input id="newMemJoin" placeholder="가입날짜 (예: 2026-06-01)">
     <button onclick="addRosterMember()">멤버 추가</button>
     <div id="rosterListAdmin" style="font-size:10px;margin-top:6px;"></div>
@@ -984,24 +993,67 @@ function delAttendSession(si){
   if(!confirm('이 출석일을 삭제할까요?')) return;
   const arr=sortAttendance(DATA.attendance);arr.splice(si,1);ROOT.child('attendance').set(arr);
 }
+// 멤버 상태 정규화 (기존 데이터 호환: number가 ★→명예, -→번호없음)
+function memStatus(m){
+  if(m.status) return m.status; // 'active' | 'honor' | 'rest'
+  if(m.number==='★') return 'honor';
+  return 'active';
+}
+function memNumber(m){
+  // 표시용 등번호: ★/- 같은 옛 표기는 번호 아님
+  if(!m.number) return '';
+  if(m.number==='★'||m.number==='-') return '';
+  return m.number;
+}
+// 정렬 가중치: 임원 → 번호있는회원 → 번호없는회원(-) → 휴식 → 명예(★)
+function memSortKey(m){
+  const st=memStatus(m);
+  const num=memNumber(m);
+  const hasNum=num!=='';
+  if(m.role==='exec') return [0, hasNum?(parseInt(num)||999):999, m.name];
+  if(st==='active' && hasNum) return [1, parseInt(num)||999, m.name];
+  if(st==='active' && !hasNum) return [2, 999, m.name];   // -
+  if(st==='rest') return [3, hasNum?(parseInt(num)||999):999, m.name];
+  if(st==='honor') return [4, 999, m.name];               // ★
+  return [5,999,m.name];
+}
 function pageMember(){
-  // 실제 뛰는 멤버 명단(roster) 기반
   const all=DATA.roster.slice();
   all.sort((a,b)=>{
-    const ra=a.role==='exec'?0:1, rb=b.role==='exec'?0:1;
-    if(ra!==rb) return ra-rb;
-    return (parseInt(a.number)||999)-(parseInt(b.number)||999);
+    const ka=memSortKey(a), kb=memSortKey(b);
+    if(ka[0]!==kb[0]) return ka[0]-kb[0];
+    if(ka[1]!==kb[1]) return ka[1]-kb[1];
+    return String(ka[2]).localeCompare(String(kb[2]),'ko');
   });
   const cards=all.map(m=>{
-    const rank=m.role==='exec'?'exec':'member';
-    return `<div class="member-card ${rank==='exec'?'is-exec':''}">
-      <div class="av">${m.number?jerseyImg(m.number,46):rankImg(rank,40)}</div>
+    const st=memStatus(m);
+    const num=memNumber(m);
+    const isExec=m.role==='exec';
+    const rank=isExec?'exec':'member';
+    // 카드 클래스: 임원 > 명예 > 휴식 > 일반
+    let cls='', statusBadge='';
+    if(isExec) cls='is-exec';
+    else if(st==='honor'){ cls='is-honor'; statusBadge='<span class="badge-status badge-honor">명예회원</span>'; }
+    else if(st==='rest'){ cls='is-rest'; statusBadge='<span class="badge-status badge-rest">휴식 중</span>'; }
+    // 아바타: 번호 있으면 유니폼, 없으면 등급 아이콘(명예는 ★ 유니폼 느낌)
+    let av;
+    if(num) av=jerseyImg(num,46);
+    else if(st==='honor') av=jerseyImg('★',46);
+    else av=rankImg(rank,40);
+    // 직책 표기
+    let roleLabel = isExec?'임원':(st==='honor'?'명예회원':(st==='rest'?'휴식 멤버':'일반 회원'));
+    return `<div class="member-card ${cls}">
+      ${statusBadge?('<div>'+statusBadge+'</div>'):''}
+      <div class="av">${av}</div>
       <div class="nm">${rankImg(rank,16)} ${esc(m.name)}</div>
-      <div class="po">${RANK_NAME[rank]}${m.number?' · #'+esc(m.number):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
+      <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
     </div>`;
   }).join('');
   const legend=`<div class="rank-legend">
-    ${rankImg('exec',18)} 임원 &nbsp; ${rankImg('member',18)} 회원 &nbsp; 등번호가 있으면 유니폼으로 표시됩니다</div>`;
+    ${rankImg('exec',18)} 임원 &nbsp; ${rankImg('member',18)} 회원 &nbsp;
+    <span style="display:inline-block;width:11px;height:11px;border:2px solid #2a2a2a;background:#e9e9ee;vertical-align:middle;"></span> 명예회원 &nbsp;
+    <span style="display:inline-block;width:11px;height:11px;border:2px solid #b8c0c7;background:#f1f3f5;vertical-align:middle;"></span> 휴식 &nbsp;
+    · 등번호가 있으면 유니폼으로 표시</div>`;
   return `<div class="page-h">👕 멤버 현황 (${all.length}명)</div>
     ${legend}
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
@@ -1318,23 +1370,71 @@ function delLog(i){const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').se
 function addRosterMember(){
   const name=document.getElementById('newMemName').value.trim();
   const role=document.getElementById('newMemRole').value;
-  const number=document.getElementById('newMemNumber').value.trim();
+  const status=document.getElementById('newMemStatus').value;
+  let number=document.getElementById('newMemNumber').value.trim();
   const join=document.getElementById('newMemJoin').value.trim();
   if(!name)return alert('이름을 입력하세요');
+  if(number==='-'||number==='★') number=''; // 옛 표기는 빈값으로
   const a=DATA.roster.slice();
-  a.push({name,role,number,join});
+  a.push({name,role,status,number,join});
   ROOT.child('roster').set(a);
   document.getElementById('newMemName').value='';
   document.getElementById('newMemNumber').value='';
   document.getElementById('newMemJoin').value='';
 }
-function delRosterMember(i){const a=DATA.roster.slice();a.splice(i,1);ROOT.child('roster').set(a);}
+function delRosterMember(i){if(!confirm('이 멤버를 삭제할까요?'))return;const a=DATA.roster.slice();a.splice(i,1);ROOT.child('roster').set(a);}
+// 멤버 상태 변경 (active/honor/rest)
+function setMemberStatus(i,status){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  a[i].status=status;
+  if(status==='honor'){ a[i].number=''; } // 명예회원은 등번호 비움(★ 표시)
+  ROOT.child('roster').set(a);
+}
+// 멤버 역할 변경 (member/exec)
+function setMemberRole(i,role){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;a[i].role=role;ROOT.child('roster').set(a);
+}
+// 등번호 추가/수정
+function editMemberNumber(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const cur=(a[i].number&&a[i].number!=='★'&&a[i].number!=='-')?a[i].number:'';
+  const v=prompt(`${a[i].name} 등번호를 입력하세요 (없애려면 비워두고 확인)`,cur);
+  if(v===null)return; // 취소
+  let num=v.trim();
+  if(num==='-'||num==='★') num='';
+  a[i].number=num;
+  ROOT.child('roster').set(a);
+}
 function renderRosterAdmin(){
   const el=document.getElementById('rosterListAdmin');
   if(!el)return;
-  el.innerHTML=DATA.roster.length
-    ? DATA.roster.map((m,i)=>`<div>${m.role==='exec'?'👑':'🌊'} ${m.number?'#'+esc(m.number)+' ':''}${esc(m.name)}${m.join?' ('+esc(m.join)+')':''} <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a></div>`).join('')
-    : '등록된 멤버 없음';
+  if(!DATA.roster.length){el.innerHTML='등록된 멤버 없음';return;}
+  el.innerHTML=DATA.roster.map((m,i)=>{
+    const st=memStatus(m);
+    const num=memNumber(m);
+    const roleIcon=m.role==='exec'?'👑':'🌊';
+    const stLabel=st==='honor'?'⚫명예':(st==='rest'?'⚪휴식':'🔵일반');
+    // 상태 전환 버튼: 현재 상태 빼고 보여줌
+    const stBtns=[
+      st!=='active'?`<a href="#" onclick="setMemberStatus(${i},'active');return false;" style="color:#2176a8;">[활동]</a>`:'',
+      st!=='honor'?`<a href="#" onclick="setMemberStatus(${i},'honor');return false;" style="color:#2a2a2a;">[명예]</a>`:'',
+      st!=='rest'?`<a href="#" onclick="setMemberStatus(${i},'rest');return false;" style="color:#7a868e;">[휴식]</a>`:''
+    ].join(' ');
+    const roleBtn=m.role==='exec'
+      ? `<a href="#" onclick="setMemberRole(${i},'member');return false;" style="color:#2176a8;">[일반직]</a>`
+      : `<a href="#" onclick="setMemberRole(${i},'exec');return false;" style="color:#e0a93b;">[임원]</a>`;
+    return `<div style="padding:3px 0;border-bottom:1px dotted #e8d8a8;">
+      ${roleIcon} ${stLabel} ${num?'#'+esc(num)+' ':'(번호없음) '}${esc(m.name)}${m.join?' ('+esc(m.join)+')':''}<br>
+      <span style="font-size:9px;">
+        <a href="#" onclick="editMemberNumber(${i});return false;" style="color:#2e8b3d;">[등번호수정]</a>
+        ${roleBtn} ${stBtns}
+        <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a>
+      </span>
+    </div>`;
+  }).join('');
 }
 
 function addKbItem(){
