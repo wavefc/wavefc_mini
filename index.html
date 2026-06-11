@@ -7,6 +7,14 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Galmuri11&family=Galmuri9&family=Galmuri14&display=swap');
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+  @font-face {
+    font-family: 'DosStory';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+  }
+  /* WAVE FC 전체 글꼴: DosStory 우선 적용 (숫자 유니폼 등 SVG는 영향 없음) */
+  *, *::before, *::after{ font-family:'DosStory','Galmuri11','Galmuri9',monospace !important; }
   :root{
     --frame:#3aa0d8;--frame-dark:#2176a8;--tab:#4aaee2;--tab-active:#1c6fa0;
     --ink:#2a3b47;--line:#bfe0f2;--pink:#ff7fae;--news:#d94b8c;
@@ -14,8 +22,8 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
-    font-family:'Galmuri11','Galmuri9',monospace;color:var(--ink);font-size:13px;
-    image-rendering:pixelated;-webkit-font-smoothing:none;
+    font-family:'DosStory','Galmuri11','Galmuri9',monospace;color:var(--ink);font-size:14px;
+    -webkit-font-smoothing:antialiased;
     display:flex;align-items:flex-start;justify-content:center;
     min-height:100vh;padding:2vh 2vw;transition:background .3s;
   }
@@ -30,7 +38,7 @@
   .titlebar .dots{display:flex;gap:4px;margin-left:auto;}
   .titlebar .dots span{width:11px;height:11px;background:#cdd7df;border:1px solid #2a3b47;display:inline-block;}
   .urlbar{background:#e8edf1;border-bottom:2px solid #5a6b77;padding:5px 8px;font-family:'Galmuri9';font-size:11px;display:flex;align-items:center;gap:6px;}
-  .urlbar .addr{flex:1;background:#fff;border:1px solid #9fb2bf;padding:3px 8px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .urlbar .addr{flex:1;background:#fff;border:1px solid #9fb2bf;padding:3px 8px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;user-select:none;-webkit-user-select:none;cursor:default;}
   .urlbar .who{color:var(--frame-dark);font-family:'Galmuri9';font-size:10px;}
 
   .mini{background:var(--frame);padding:10px;display:flex;gap:10px;}
@@ -154,7 +162,7 @@
   .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
   .member-card.is-rest{border:2px solid #b8c0c7;background:#f1f3f5;opacity:.78;}
   .member-card .badge-status{font-family:'Galmuri9';font-size:8px;padding:1px 5px;border-radius:7px;color:#fff;display:inline-block;margin-bottom:2px;}
-  .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}
+  .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}.badge-exec{background:#d99a2b;}
   .member-card .av{font-size:26px;line-height:1;height:44px;display:flex;align-items:center;justify-content:center;}
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
   .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
@@ -194,6 +202,7 @@
   .cal-cell[onclick]{cursor:pointer;}
   .cal-cell[onclick]:hover{background:#f0f8ff;}
   .cal-ev{color:#fff;font-family:'Pretendard',sans-serif;font-size:13px;padding:3px 5px;border-radius:3px;margin-bottom:2px;line-height:1.35;word-break:break-all;}
+  .cal-place{display:inline-block;background:rgba(255,255,255,.25);padding:0 4px;border-radius:3px;font-size:12px;margin-top:1px;}
   .cal-addbtn{font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:6px 12px;}
   /* 출석표 */
   .att-table th,.att-table td{padding:6px 8px;white-space:nowrap;}
@@ -206,9 +215,12 @@
   .tab-btn:hover{background:#5fc0f0;}
   .tab-btn.active{background:var(--tab-active);box-shadow:inset 2px 2px 0 rgba(0,0,0,.2);}
   .tab-btn .lock{position:absolute;top:2px;right:3px;font-size:9px;}
-  .minicards{margin-top:6px;border:1px solid var(--tab-active);background:#fff;padding:5px;}
-  .minicards .c{font-family:'Galmuri9';font-size:9px;text-align:center;padding:6px 2px;color:#fff;margin-bottom:4px;}
-  .minicards .c1{background:#7fb3e0;}.minicards .c2{background:#e08fb5;}
+  .minicards{margin-top:6px;border:1px solid var(--tab-active);background:#fff;padding:6px;}
+  .minicards .mc-title{font-size:11px;font-weight:bold;text-align:center;color:var(--frame-dark);margin-bottom:5px;}
+  .minicards .c{display:block;font-size:12px;font-weight:bold;text-align:center;padding:8px 2px;color:#fff;margin-bottom:5px;text-decoration:none;border-radius:4px;line-height:1.3;transition:transform .1s,filter .1s;}
+  .minicards .c:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 2px 0 rgba(0,0,0,.15);}
+  .minicards .mc-sub{font-size:9px;font-weight:normal;opacity:.92;}
+  .minicards .c1{background:#d63384;}.minicards .c2{background:#e02b2b;}
 
   .taskbar{background:linear-gradient(#3f5a6e,#2a3b47);color:#fff;font-family:'Galmuri9';font-size:10px;padding:4px 8px;display:flex;align-items:center;gap:8px;}
   .taskbar .start{background:#2e8b3d;padding:2px 10px;border:1px solid #fff;}
@@ -258,7 +270,7 @@
   @media(max-width:680px){
     .mini{flex-direction:column;}.left{width:100%;}
     .right{width:100%;flex-direction:row;flex-wrap:wrap;}
-    .tab-btn{flex:1;min-width:70px;}.minicards{display:none;}
+    .tab-btn{flex:1;min-width:70px;}
     .minisection{flex-direction:column;}
     .mr-left{flex:1 1 auto;max-width:100%;}
     .cal-cell{min-height:54px;}
@@ -300,13 +312,18 @@
     <div class="right">
       <button class="tab-btn active" data-page="home" onclick="go('home',this)">홈</button>
       <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
+      <button class="tab-btn" data-page="notice" onclick="go('notice',this)">공지사항</button>
       <button class="tab-btn" data-page="diary" onclick="go('diary',this)">훈련일지<span class="lock" id="lk1">🔒</span></button>
-      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정공지<span class="lock" id="lk2">🔒</span></button>
+      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정안내<span class="lock" id="lk2">🔒</span></button>
       <button class="tab-btn" data-page="attend" onclick="go('attend',this)">출석현황<span class="lock" id="lk4">🔒</span></button>
       <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
       <button class="tab-btn" data-page="activity" onclick="go('activity',this)">활동현황<span class="lock" id="lk5">🔒</span></button>
       <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
-      <div class="minicards"><div class="c c1">WAVE</div><div class="c c2">FC</div></div>
+      <div class="minicards">
+        <div class="mc-title">WAVE 더 구경하기</div>
+        <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener">📷 WAVE<br><span class="mc-sub">인스타그램</span></a>
+        <a class="c c2" href="https://www.youtube.com/@WAVE_FC" target="_blank" rel="noopener">▶ FC<br><span class="mc-sub">유튜브</span></a>
+      </div>
     </div>
   </div>
 
@@ -342,6 +359,7 @@
       <option value="rest">⚪ 휴식 멤버</option>
     </select>
     <input id="newMemNumber" placeholder="등번호 (없으면 비워두기)" inputmode="numeric">
+    <input id="newMemTitle" placeholder="직책 (예: 회장, 회계부장 / 없으면 비워두기)">
     <input id="newMemJoin" placeholder="가입날짜 (예: 2026-06-01)">
     <button onclick="addRosterMember()">멤버 추가</button>
     <div id="rosterListAdmin" style="font-size:10px;margin-top:6px;"></div>
@@ -385,7 +403,7 @@
     <div style="margin-top:6px;"><b>📝 훈련일지 추가</b></div>
     <input id="newLogDate" placeholder="날짜 (예: 26년 6월 2일)">
     <textarea id="newLogText" rows="2" placeholder="훈련 내용/결과"></textarea><button onclick="addLog()">일지 추가</button>
-    <div style="margin-top:6px;font-size:10px;color:#8aa;">📅 일정공지(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
+    <div style="margin-top:6px;font-size:10px;color:#8aa;">📅 일정안내(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
     </div>
   </div>
 
@@ -526,7 +544,7 @@ const DEFAULT={
   visits:1,
   mood:"오늘도 즐겁게 뛰어보자…⚽",
   qna_kb:[
-    {q:"WAVE FC는 언제 모이나요?",a:"WAVE FC는 매주 정기적으로 모여 풋살을 합니다. 정확한 일정은 '일정공지' 메뉴에서 확인할 수 있어요.",ts:0},
+    {q:"WAVE FC는 언제 모이나요?",a:"WAVE FC는 매주 정기적으로 모여 풋살을 합니다. 정확한 일정은 '일정안내' 메뉴에서 확인할 수 있어요.",ts:0},
     {q:"풋살은 몇 명이 하나요?",a:"풋살은 보통 한 팀당 5명(골키퍼 1명 포함)으로, 5대5로 경기합니다.",ts:0}
   ],
   qna_threads:[]
@@ -682,6 +700,7 @@ function renderPage(page){
   if(['diary','cal','attend','member','activity','qna'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
   else if(page==='rule')c.innerHTML=pageRule();
+  else if(page==='notice')c.innerHTML=pageNotice();
   else if(page==='diary')c.innerHTML=pageDiary();
   else if(page==='cal')c.innerHTML=pageCalendar();
   else if(page==='attend')c.innerHTML=pageAttend();
@@ -762,7 +781,7 @@ function pageHome(){
     ? top.map((it,idx)=>`<div class="feed-item ${idx===feedSel?'on':''}" onclick="feedSel=${idx};renderPage('home')">
         <span class="feed-label ${feedColor(it)}">${it.label}</span>
         <span class="feed-title">${esc(it.title)}</span></div>`).join('')
-    : '<div style="color:#5a7585;font-size:12px;padding:14px;line-height:1.6;">다가오는 일정이 아직 없어요.<br>일정공지에서 정기훈련을 등록해보세요 :)</div>';
+    : '<div style="color:#5a7585;font-size:12px;padding:14px;line-height:1.6;">다가오는 일정이 아직 없어요.<br>일정안내에서 정기훈련을 등록해보세요 :)</div>';
   // 선택된 글 본문
   const cur=top[feedSel]||top[0];
   const detail = cur
@@ -842,6 +861,71 @@ function pageRule(){
       </ul>
     </div>`;
 }
+/* ===== 공지사항 게시판 ===== */
+function pageNotice(){
+  const isExec=rankOf(me)==='exec';
+  // 고정공지 먼저, 그다음 최신순
+  const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
+    .sort((a,b)=>{
+      const ap=a.pinned?1:0,bp=b.pinned?1:0;
+      if(ap!==bp)return bp-ap;
+      return (b.ts||0)-(a.ts||0);
+    });
+  const writeBox = isExec ? `
+    <div class="qna-ask" style="margin-bottom:14px;">
+      <div class="qna-ask-h">✏ 새 공지 작성</div>
+      <input id="ntTitle" class="qna-input" style="margin-bottom:6px;" placeholder="공지 제목">
+      <textarea id="ntText" class="qna-input" rows="3" placeholder="공지 내용"></textarea>
+      <label style="display:block;font-size:12px;margin:6px 0;"><input type="checkbox" id="ntPin"> 상단 고정</label>
+      <button class="qna-send" onclick="addNoticeBoard()">공지 등록</button>
+    </div>` : '';
+  const items=list.map(n=>{
+    const t=n.ts?new Date(n.ts):null;
+    const tstr=t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
+    const adminBtns = isExec ? `
+      <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
+        <button class="qna-send sm" onclick="editNotice(${n._i})">수정</button>
+        <button class="qna-send sm" style="background:${n.pinned?'#9aa6ae':'#2e8b3d'};" onclick="togglePin(${n._i})">${n.pinned?'고정해제':'상단고정'}</button>
+        <button class="qna-send sm" style="background:#c0392b;" onclick="delNoticeBoard(${n._i})">삭제</button>
+      </div>` : '';
+    return `
+      <div class="qna-thread" style="margin-bottom:10px;">
+        <div class="qna-q">${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}<span class="qna-src" style="float:right;">${tstr}</span></div>
+        <div class="qna-a" style="white-space:pre-wrap;">${esc(n.text||'')}</div>
+        ${adminBtns}
+      </div>`;
+  }).join('');
+  return `<div class="page-h">📢 공지사항</div>
+    ${writeBox}
+    <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 공지가 없어요.</div>'}</div>`;
+}
+function addNoticeBoard(){
+  if(rankOf(me)!=='exec') return alert('임원만 공지를 작성할 수 있어요.');
+  const title=document.getElementById('ntTitle').value.trim();
+  const text=document.getElementById('ntText').value.trim();
+  const pin=document.getElementById('ntPin').checked;
+  if(!title&&!text) return alert('제목이나 내용을 입력하세요.');
+  const a=DATA.notices.slice();
+  a.unshift({title:title||text.slice(0,20),text:text,pinned:pin,ts:Date.now()});
+  ROOT.child('notices').set(a);
+}
+function editNotice(i){
+  if(rankOf(me)!=='exec') return;
+  const a=JSON.parse(JSON.stringify(DATA.notices));
+  if(!a[i])return;
+  const nt=prompt('공지 제목 수정',a[i].title||'');
+  if(nt===null)return;
+  const tx=prompt('공지 내용 수정',a[i].text||'');
+  if(tx===null)return;
+  a[i].title=nt.trim()||tx.trim().slice(0,20);
+  a[i].text=tx.trim();
+  ROOT.child('notices').set(a);
+}
+function delNoticeBoard(i){
+  if(rankOf(me)!=='exec') return;
+  if(!confirm('이 공지를 삭제할까요?')) return;
+  const a=DATA.notices.slice();a.splice(i,1);ROOT.child('notices').set(a);
+}
 function pageDiary(){
   const isExec=rankOf(me)==='exec';
   const rows=DATA.logs.map((l,i)=>`<tr><td style="width:90px;">${esc(l.date||'')}</td><td style="text-align:left;">${esc(l.text||'')}</td>${isExec?`<td style="width:40px;"><span class="del" style="color:#c0392b;cursor:pointer;" onclick="delLog(${i})">삭제</span></td>`:''}</tr>`).join('');
@@ -879,14 +963,14 @@ function pageCalendar(){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${etypeColor(e.etype)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<b>'+esc(e.time)+'</b> ':''}${esc(e.etype)}${e.place?'<br>📍'+esc(e.place):''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${etypeColor(e.etype)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<b>'+esc(e.time)+'</b> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
       <div class="cal-d">${d}</div>${evHtml}</div>`;
   }
 
   const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
 
-  return `<div class="page-h">📅 일정 공지</div>
+  return `<div class="page-h">📅 일정 안내</div>
     <div class="cal-bar">
       <button onclick="calNav(-1)">◀</button>
       <b>${y}년 ${m+1}월</b>
@@ -910,7 +994,7 @@ function openCalAdd(dateKey){
   const etype=prompt('일정 종류 (정기훈련/친선경기/특별훈련/회식/기타)','정기훈련');
   if(!etype) return;
   const time=prompt('시간 (예: 20:00-22:00, 비워도 됨)','20:00-22:00')||'';
-  const place=prompt('장소 (예: ○○풋살장, 선택)','')||'';
+  const place=prompt('장소 (예: 진해풋살장 / 달력에 함께 표시됩니다)','')||'';
   const memo=prompt('메모 (선택)','')||'';
   const arr=DATA.calendar.slice();
   arr.push({date:dateKey,etype:etype.trim(),time:time.trim(),place:place.trim(),memo:memo.trim(),ts:Date.now()});
@@ -925,29 +1009,54 @@ function delCalEvent(i){
 /* ===== 출석현황 (○/× 체크) ===== */
 function pageAttend(){
   const isExec=rankOf(me)==='exec';
-  // 회원 목록 = 승인된 user + 직접추가 멤버
-  const members=[
-    ...Object.values(DATA.users).filter(u=>u.approved).map(u=>u.name),
-    ...DATA.members.map(m=>m.name)
-  ];
-  // 출석 세션(날짜)들 - 항상 날짜순 정렬
-  const sessions=sortAttendance(DATA.attendance); // [{date, present:{이름:true/false}}]
+  // 출석 대상 = 멤버현황(roster)의 임원 + 일반회원 + 휴식 (명예회원 제외)
+  const roster=DATA.roster.filter(m=>{
+    const st=memStatus(m);
+    return st!=='honor'; // 명예회원은 출석 대상 아님
+  });
+  // 정렬: 활동(임원·일반) 먼저 가나다순 → 휴식 회원 가나다순(맨 아래)
+  const members=roster.slice().sort((a,b)=>{
+    const ra=memStatus(a)==='rest'?1:0, rb=memStatus(b)==='rest'?1:0;
+    if(ra!==rb) return ra-rb;
+    return String(a.name).localeCompare(String(b.name),'ko');
+  });
+
+  const sessions=sortAttendance(DATA.attendance);
   if(sessions.length===0 && !isExec){
     return `<div class="page-h">✅ 출석 현황</div><div style="padding:20px;color:#8aa;">아직 등록된 출석 기록이 없어요.</div>`;
   }
-  // 헤더(날짜들)
   const dateHeads=sessions.map((s,si)=>`<th>${esc(s.date)}${isExec?`<br><span class="del" style="color:#c0392b;cursor:pointer;font-size:9px;" onclick="delAttendSession(${si})">삭제</span>`:''}</th>`).join('');
-  // 각 회원 행
-  const rows=members.map(name=>{
+
+  // 출석 표시: 'O'(출석)/'X'(결석)/'R'(휴식중). 휴식 멤버는 기본 R
+  function markHtml(state){
+    if(state==='O') return '<span style="color:#2e8b3d;font-weight:bold;font-size:15px;">○</span>';
+    if(state==='R') return '<span style="color:#9aa6ae;font-size:11px;">휴식중</span>';
+    return '<span style="color:#c0392b;font-weight:bold;font-size:15px;">×</span>';
+  }
+  const rows=members.map(m=>{
+    const name=m.name;
+    const isRest=memStatus(m)==='rest';
     const cells=sessions.map((s,si)=>{
-      const v=(s.present&&s.present[name])||false;
-      const mark=v?'<span style="color:#2e8b3d;font-weight:bold;">○</span>':'<span style="color:#c0392b;">×</span>';
-      return `<td ${isExec?`style="cursor:pointer;" onclick="toggleAttend(${si},'${name.replace(/'/g,"\\'")}')"`:''}>${mark}</td>`;
+      // 저장값: true=O, 'R'=휴식, 그외/false=X.  휴식멤버는 미설정 시 R
+      let raw=(s.present&&s.present[name]);
+      let state;
+      if(raw===true) state='O';
+      else if(raw==='R') state='R';
+      else if(raw===false||raw==='X') state='X';
+      else state=isRest?'R':'X'; // 미설정 기본값
+      return `<td ${isExec?`style="cursor:pointer;" onclick="cycleAttend(${si},'${name.replace(/'/g,"\\'")}')"`:''}>${markHtml(state)}</td>`;
     }).join('');
-    // 출석률
-    const cnt=sessions.filter(s=>s.present&&s.present[name]).length;
-    const rate=sessions.length?Math.round(cnt/sessions.length*100):0;
-    return `<tr><td style="font-weight:bold;color:var(--frame-dark);">${esc(name)}</td>${cells}<td>${rate}%</td></tr>`;
+    // 출석률(O 개수 / 휴식 제외한 세션 수)
+    let oCnt=0, denom=0;
+    sessions.forEach(s=>{
+      const raw=(s.present&&s.present[name]);
+      const st = raw===true?'O':(raw==='R'?'R':(raw===false||raw==='X'?'X':(isRest?'R':'X')));
+      if(st==='R') return; // 휴식은 분모 제외
+      denom++; if(st==='O') oCnt++;
+    });
+    const rate=denom?Math.round(oCnt/denom*100):0;
+    const tag=isRest?' <span style="font-size:9px;color:#9aa6ae;">(휴식)</span>':'';
+    return `<tr><td style="font-weight:bold;color:var(--frame-dark);white-space:nowrap;">${esc(name)}${tag}</td>${cells}<td>${rate}%</td></tr>`;
   }).join('');
 
   const addBtn=isExec?`<button class="cal-addbtn" onclick="addAttendSession()">+ 출석일 추가</button>`:'';
@@ -955,8 +1064,8 @@ function pageAttend(){
     ${addBtn}
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th>이름</th>${dateHeads||'<th>날짜없음</th>'}<th>출석률</th></tr>
-    ${rows||'<tr><td colspan=3>회원이 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-family:Galmuri9;font-size:10px;color:#8aa;margin-top:6px;">○/× 칸을 클릭하면 출석/결석이 바뀝니다</div>':''}`;
+    ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
+    ${isExec?'<div style="font-size:11px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → 휴식중 순으로 바뀝니다</div>':''}`;
 }
 function attDateKey(d){
   // "6/9" "6/14" "2026-6-2" 등에서 정렬용 숫자 추출
@@ -981,11 +1090,18 @@ function addAttendSession(){
   arr.push({date:date.trim(),present:{}});
   ROOT.child('attendance').set(sortAttendance(arr));
 }
-function toggleAttend(si,name){
+function cycleAttend(si,name){
   if(rankOf(me)!=='exec') return;
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
-  arr[si].present[name]=!arr[si].present[name];
+  const cur=arr[si].present[name];
+  // 현재 상태 → 다음 상태: O(true) → X('X') → 휴식('R') → O
+  let next;
+  if(cur===true) next='X';
+  else if(cur==='X'||cur===false) next='R';
+  else if(cur==='R') next=true;
+  else next=true; // 미설정 → O
+  arr[si].present[name]=next;
   ROOT.child('attendance').set(arr);
 }
 function delAttendSession(si){
@@ -1031,19 +1147,22 @@ function pageMember(){
     const isExec=m.role==='exec';
     const rank=isExec?'exec':'member';
     // 카드 클래스: 임원 > 명예 > 휴식 > 일반
-    let cls='', statusBadge='';
-    if(isExec) cls='is-exec';
-    else if(st==='honor'){ cls='is-honor'; statusBadge='<span class="badge-status badge-honor">명예회원</span>'; }
-    else if(st==='rest'){ cls='is-rest'; statusBadge='<span class="badge-status badge-rest">휴식 중</span>'; }
-    // 아바타: 번호 있으면 유니폼, 없으면 등급 아이콘(명예는 ★ 유니폼 느낌)
+    let cls='', topBadge='';
+    if(isExec){ cls='is-exec'; if(m.title) topBadge='<span class="badge-status badge-exec">'+esc(m.title)+'</span>'; }
+    else if(st==='honor'){ cls='is-honor'; topBadge='<span class="badge-status badge-honor">'+(m.title?esc(m.title):'명예회원')+'</span>'; }
+    else if(st==='rest'){ cls='is-rest'; topBadge='<span class="badge-status badge-rest">휴식 중</span>'; }
+    // 아바타: 명예는 ★ 유니폼, 그 외는 번호(없으면 '-') 유니폼
     let av;
-    if(num) av=jerseyImg(num,46);
-    else if(st==='honor') av=jerseyImg('★',46);
-    else av=rankImg(rank,40);
-    // 직책 표기
-    let roleLabel = isExec?'임원':(st==='honor'?'명예회원':(st==='rest'?'휴식 멤버':'일반 회원'));
+    if(st==='honor') av=jerseyImg('★',46);
+    else av=jerseyImg(num||'-',46);
+    // 직책/등급 표기
+    let roleLabel;
+    if(isExec) roleLabel = m.title?esc(m.title):'임원';
+    else if(st==='honor') roleLabel='명예회원';
+    else if(st==='rest') roleLabel='휴식 멤버';
+    else roleLabel='일반 회원';
     return `<div class="member-card ${cls}">
-      ${statusBadge?('<div>'+statusBadge+'</div>'):''}
+      ${topBadge?('<div>'+topBadge+'</div>'):''}
       <div class="av">${av}</div>
       <div class="nm">${rankImg(rank,16)} ${esc(m.name)}</div>
       <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
@@ -1372,15 +1491,26 @@ function addRosterMember(){
   const role=document.getElementById('newMemRole').value;
   const status=document.getElementById('newMemStatus').value;
   let number=document.getElementById('newMemNumber').value.trim();
+  const title=document.getElementById('newMemTitle').value.trim();
   const join=document.getElementById('newMemJoin').value.trim();
   if(!name)return alert('이름을 입력하세요');
   if(number==='-'||number==='★') number=''; // 옛 표기는 빈값으로
   const a=DATA.roster.slice();
-  a.push({name,role,status,number,join});
+  a.push({name,role,status,number,title,join});
   ROOT.child('roster').set(a);
   document.getElementById('newMemName').value='';
   document.getElementById('newMemNumber').value='';
+  document.getElementById('newMemTitle').value='';
   document.getElementById('newMemJoin').value='';
+}
+// 직책 추가/수정
+function editMemberTitle(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const v=prompt(`${a[i].name} 직책을 입력하세요 (없애려면 비우고 확인)\n예) 회장, 회계부장, 홍보부장`,a[i].title||'');
+  if(v===null)return;
+  a[i].title=v.trim();
+  ROOT.child('roster').set(a);
 }
 function delRosterMember(i){if(!confirm('이 멤버를 삭제할까요?'))return;const a=DATA.roster.slice();a.splice(i,1);ROOT.child('roster').set(a);}
 // 멤버 상태 변경 (active/honor/rest)
@@ -1427,9 +1557,10 @@ function renderRosterAdmin(){
       ? `<a href="#" onclick="setMemberRole(${i},'member');return false;" style="color:#2176a8;">[일반직]</a>`
       : `<a href="#" onclick="setMemberRole(${i},'exec');return false;" style="color:#e0a93b;">[임원]</a>`;
     return `<div style="padding:3px 0;border-bottom:1px dotted #e8d8a8;">
-      ${roleIcon} ${stLabel} ${num?'#'+esc(num)+' ':'(번호없음) '}${esc(m.name)}${m.join?' ('+esc(m.join)+')':''}<br>
+      ${roleIcon} ${stLabel} ${num?'#'+esc(num)+' ':'(번호없음) '}${esc(m.name)}${m.title?' <b style="color:#b07a1a;">['+esc(m.title)+']</b>':''}${m.join?' ('+esc(m.join)+')':''}<br>
       <span style="font-size:9px;">
         <a href="#" onclick="editMemberNumber(${i});return false;" style="color:#2e8b3d;">[등번호수정]</a>
+        <a href="#" onclick="editMemberTitle(${i});return false;" style="color:#b07a1a;">[직책수정]</a>
         ${roleBtn} ${stBtns}
         <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a>
       </span>
