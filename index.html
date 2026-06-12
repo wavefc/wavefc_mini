@@ -189,20 +189,20 @@
   .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
   .rank-legend{font-family:'Galmuri9';font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
   /* QnA */
-  .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:12px;margin-bottom:14px;border-radius:4px;}
-  .qna-ask-h{font-family:'Galmuri9';font-size:13px;color:var(--frame-dark);margin-bottom:8px;}
-  .qna-input{width:100%;box-sizing:border-box;font-family:'Pretendard',sans-serif;font-size:13px;padding:8px;border:1px solid #c9d6df;border-radius:3px;resize:vertical;}
-  .qna-send{margin-top:8px;font-family:'Galmuri9';cursor:pointer;background:var(--frame);color:#fff;border:none;padding:8px 18px;border-radius:3px;font-size:13px;}
+  .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:14px;margin-bottom:14px;border-radius:4px;}
+  .qna-ask-h{font-family:'Galmuri9';font-size:16px;color:var(--frame-dark);margin-bottom:10px;}
+  .qna-input{width:100%;box-sizing:border-box;font-family:'Pretendard',sans-serif;font-size:16px;padding:10px;border:1px solid #c9d6df;border-radius:3px;resize:vertical;}
+  .qna-send{margin-top:8px;font-family:'Galmuri9';cursor:pointer;background:var(--frame);color:#fff;border:none;padding:9px 20px;border-radius:3px;font-size:15px;}
   .qna-send:disabled{opacity:.5;cursor:default;}
   .qna-send.sm{padding:5px 12px;font-size:12px;margin-top:6px;}
-  .qna-thinking{margin-top:8px;font-family:'Pretendard',sans-serif;font-size:13px;color:#2176a8;}
-  .qna-kbinfo{font-family:'Pretendard',sans-serif;font-size:12px;color:#5a7585;margin-bottom:10px;}
+  .qna-thinking{margin-top:8px;font-family:'Pretendard',sans-serif;font-size:15px;color:#2176a8;}
+  .qna-kbinfo{font-family:'Pretendard',sans-serif;font-size:13px;color:#5a7585;margin-bottom:10px;}
   .qna-list{display:flex;flex-direction:column;gap:10px;}
-  .qna-thread{background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 12px;}
-  .qna-q{font-family:'Pretendard',sans-serif;font-size:14px;color:var(--frame-dark);font-weight:700;margin-bottom:6px;line-height:1.5;}
-  .qna-a{font-family:'Pretendard',sans-serif;font-size:13px;color:#3a5566;line-height:1.7;white-space:pre-wrap;}
+  .qna-thread{background:#fff;border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
+  .qna-q{font-family:'Pretendard',sans-serif;font-size:17px;color:var(--frame-dark);font-weight:700;margin-bottom:8px;line-height:1.5;}
+  .qna-a{font-family:'Pretendard',sans-serif;font-size:15px;color:#3a5566;line-height:1.7;white-space:pre-wrap;}
   .qna-a.wait{color:#b08a4a;font-style:italic;}
-  .qna-badge{font-family:'Galmuri9';font-size:10px;padding:2px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
+  .qna-badge{font-family:'Galmuri9';font-size:11px;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .qna-badge.ok{background:#2e8b3d;color:#fff;}
   .qna-badge.wait{background:#e3a857;color:#fff;}
   .qna-src{font-size:11px;color:#8aa;margin-left:6px;}
@@ -408,14 +408,14 @@
     <div><b>🙋 가입 승인 대기</b></div>
     <div id="pendingList" style="font-size:10px;">없음</div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
-    <div><b>👥 회원 등급 관리</b> (💙임원 / 🌊일반)</div>
+    <div><b>👥 회원 등급 관리</b> (👑임원 / 🌊일반)</div>
     <div id="memberManage" style="font-size:10px;">승인된 회원 없음</div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>👤 멤버 명단 관리</b> (실제 뛰는 멤버)</div>
     <input id="newMemName" placeholder="이름">
     <select id="newMemRole" style="width:100%;font-family:'Galmuri9';font-size:11px;padding:4px;border:1px solid #c9d6df;margin:3px 0;">
       <option value="member">🌊 회원</option>
-      <option value="exec">💙 임원</option>
+      <option value="exec">👑 임원</option>
     </select>
     <select id="newMemStatus" style="width:100%;font-family:'Galmuri9';font-size:11px;padding:4px;border:1px solid #c9d6df;margin:3px 0;">
       <option value="active">🔵 일반(활동중)</option>
@@ -527,7 +527,7 @@ function rankOf(userKey){
 function rankImg(rank,size){
   size=size||18;
   if(rank==='exec'){
-    return '<span title="'+RANK_NAME[rank]+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">💙</span>';
+    return '<span title="'+RANK_NAME[rank]+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">👑</span>';
   }
   if(rank==='guest'){
     return '<span title="'+RANK_NAME[rank]+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">⚽</span>';
@@ -847,7 +847,7 @@ function renderPage(page){
   const c=document.getElementById('centerArea');
   if(['diary','cal','attend','member','activity','qna'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
-  else if(page==='rule')c.innerHTML=pageRule();
+  else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; } }
   else if(page==='notice')c.innerHTML=pageNotice();
   else if(page==='diary')c.innerHTML=pageDiary();
   else if(page==='cal')c.innerHTML=pageCalendar();
@@ -1000,8 +1000,14 @@ var _tacticSrc='';
 var qnaEditing=null, qnaAnsEditing=null;
 function pageRule(){
   const a1=adminLevel()===1;
-  const guides=(DATA.guidePosts&&DATA.guidePosts.length)?DATA.guidePosts:[{title:"설명서",html:"<p>아직 작성된 설명서가 없어요.</p>",ts:0}];
-  const tactics=DATA.tacticImgs||[];
+  // guidePosts가 비정상(객체 아님/문자열 등)이어도 안전하게 정규화
+  let rawGuides = Array.isArray(DATA.guidePosts) ? DATA.guidePosts : [];
+  let guides = rawGuides
+    .filter(g=>g!=null)
+    .map(g=> (typeof g==='object') ? {title:g.title||'설명서', html:g.html||'', ts:g.ts||0}
+                                   : {title:'설명서', html:String(g), ts:0});
+  if(!guides.length) guides=[{title:"설명서",html:"<p>아직 작성된 설명서가 없어요.</p>",ts:0}];
+  const tactics=(Array.isArray(DATA.tacticImgs)?DATA.tacticImgs:[]).filter(t=>typeof t==='string'&&t);
   const mannerHtml = (DATA.mannerHtml!==undefined && DATA.mannerHtml!=='') ? DATA.mannerHtml : DEFAULT.mannerHtml;
 
   // ---- 왼쪽: 설명서 게시판 ----
@@ -1917,38 +1923,29 @@ async function submitQna(){
   if(thinking){ thinking.style.display='block'; thinking.textContent='🤖 AI봇이 답변을 찾고 있어요…'; thinking.style.color='#2176a8'; }
 
   let answer='', source='', statusMsg='';
-  try{
-    const sys=`너는 여성 풋살 동호회 'WAVE FC'의 QnA 도우미야. 아래 지식베이스(KB)만을 근거로 회원의 질문에 한국어로 친근하고 간결하게 답해.
-- KB에 답이 명확히 있으면 그 내용을 바탕으로 1~3문장으로 답한다.
-- KB에 직접적인 답이 없더라도, 풋살이나 동호회 운영에 관한 일반적이고 무난한 질문이면 상식 범위에서 도움이 되게 답한다.
-- 회비 금액, 모임 시간/장소, 규칙 등 'WAVE FC만의 구체적 사실'은 반드시 KB에 있을 때만 답하고, KB에 없으면 추측하지 말고 정확히 "NO_ANSWER" 한 단어만 출력한다.
-- 답을 도저히 만들 수 없으면 "NO_ANSWER" 한 단어만 출력한다.
-
-[지식베이스]
-${buildQnaKbText()}`;
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-6",
-        max_tokens:1000,
-        system:sys,
-        messages:[{role:"user",content:question}]
-      })
-    });
-    if(res.ok){
-      const data=await res.json();
-      const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
-      answer=txt;
-      if(answer==='NO_ANSWER' || /^NO_ANSWER/.test(answer)){ answer=''; }
-      if(answer){ source='ai'; }
-      else { statusMsg='🙋 AI가 정확한 답을 찾지 못했어요. 관리자가 답변을 등록하면 자동 반영됩니다.'; }
-    }else{
-      let detail=''; try{ const e=await res.json(); detail=(e.error&&e.error.message)||''; }catch(_){}
-      statusMsg='⚠ AI 응답 오류('+res.status+(detail?': '+detail.slice(0,60):'')+'). 질문은 답변대기로 기록됐어요.';
+  if(QNA_WORKER_URL){
+    try{
+      const res=await fetch(QNA_WORKER_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ question:question, kb:buildQnaKbText() })
+      });
+      if(res.ok){
+        const data=await res.json();
+        answer=(data.answer||'').trim();
+        if(answer==='NO_ANSWER' || /^NO_ANSWER/.test(answer)){ answer=''; }
+        if(answer){ source=data.engine||'ai'; }
+        else if(data.error){ statusMsg='⚠ AI 서버 오류: '+String(data.error).slice(0,100)+' (관리자 확인 필요)'; }
+        else { statusMsg='🙋 AI가 지식베이스에서 답을 찾지 못했어요. 관리자가 답변을 등록하면 자동 반영됩니다.'; }
+      }else{
+        let detail=''; try{ const e=await res.json(); detail=(e.error||''); }catch(_){}
+        statusMsg='⚠ AI 서버 응답 오류('+res.status+(detail?': '+String(detail).slice(0,60):'')+'). 잠시 후 다시 시도해 주세요.';
+      }
+    }catch(err){
+      statusMsg='⚠ AI 서버에 연결하지 못했어요. (Worker 주소·배포 확인) 질문은 답변대기로 기록됩니다.';
     }
-  }catch(err){
-    statusMsg='⚠ AI에 연결하지 못했어요. 질문은 답변대기로 기록됩니다.';
+  }else{
+    statusMsg='ℹ AI봇 주소가 설정되지 않아 답변대기로만 기록됩니다.';
   }
 
   // 스레드 저장
@@ -1968,7 +1965,7 @@ ${buildQnaKbText()}`;
   // 상태 메시지 표시 (정상 답변이면 숨김)
   if(thinking){
     if(answer){ thinking.style.display='none'; }
-    else { thinking.style.display='block'; thinking.style.color='#b0772b'; thinking.textContent=statusMsg; setTimeout(()=>{if(thinking)thinking.style.display='none';},6000); }
+    else { thinking.style.display='block'; thinking.style.color='#b0772b'; thinking.textContent=statusMsg; setTimeout(()=>{if(thinking)thinking.style.display='none';},12000); }
   }
   if(currentPage==='qna'){ const c=document.getElementById('centerArea'); c.innerHTML=pageQna(); bindQnaForm(); }
 }
@@ -2087,7 +2084,7 @@ function renderPending(){
     me2.innerHTML = apr.length
       ? apr.map(([k,u])=>{
           const isExec=u.role==='exec';
-          return `<div class="pending">${isExec?'💙 ':'🌊 '}${esc(u.name)}
+          return `<div class="pending">${isExec?'👑 ':'🌊 '}${esc(u.name)}
             ${isExec
               ? `<button onclick="setRole('${k}','member')">일반으로</button>`
               : `<button onclick="setRole('${k}','exec')" style="background:#e0a93b;">임원으로</button>`}
@@ -2262,7 +2259,7 @@ function renderRosterAdmin(){
   el.innerHTML=DATA.roster.map((m,i)=>{
     const st=memStatus(m);
     const num=memNumber(m);
-    const roleIcon=m.role==='exec'?'💙':'🌊';
+    const roleIcon=m.role==='exec'?'👑':'🌊';
     const stLabel=st==='honor'?'⚫명예':(st==='rest'?'⚪휴식':'🔵일반');
     // 상태 전환 버튼: 현재 상태 빼고 보여줌
     const stBtns=[
