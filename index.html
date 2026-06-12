@@ -214,10 +214,29 @@
   .diary-d{font-size:12px;color:#8aa;white-space:nowrap;}
   .diary-body{padding:0 14px 14px;font-size:14px;color:#3a5566;border-top:1px dashed var(--line);}
   .diary-date{font-size:12px;color:#8aa;margin:8px 0;}
-  .diary-img{max-width:260px;width:100%;border:1px solid #c9d6df;border-radius:5px;cursor:zoom-in;display:block;}
+  .diary-img{width:280px;max-width:100%;height:auto;border:1px solid #c9d6df;border-radius:5px;cursor:zoom-in;display:block;}
   .diary-img:hover{filter:brightness(1.03);}
-  .diary-imgs{margin-top:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-  .diary-imgs .diary-img{max-width:100%;}
+  .diary-imgs{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;}
+  .diary-imgs .diary-img{width:280px;max-width:100%;}
+  /* 리치 텍스트 에디터 (네이버 블로그식 툴바) */
+  .rte-wrap{border:1px solid #c9d6df;border-radius:3px;background:#fff;}
+  .rte-toolbar{display:flex;flex-wrap:wrap;gap:3px;align-items:center;padding:6px;border-bottom:1px solid #e3edf3;background:#f5f9fc;}
+  .rte-toolbar button{font-family:'Galmuri9';font-size:12px;min-width:28px;height:28px;padding:0 6px;border:1px solid #c9d6df;background:#fff;color:#3a5566;border-radius:3px;cursor:pointer;line-height:1;}
+  .rte-toolbar button:hover{background:#e8f4fc;border-color:var(--frame);}
+  .rte-toolbar .rte-b{font-weight:700;}
+  .rte-toolbar .rte-i{font-style:italic;}
+  .rte-toolbar .rte-u{text-decoration:underline;}
+  .rte-toolbar .rte-s{text-decoration:line-through;}
+  .rte-toolbar select{font-family:'Galmuri9';font-size:11px;height:28px;border:1px solid #c9d6df;border-radius:3px;background:#fff;color:#3a5566;cursor:pointer;}
+  .rte-color-wrap{position:relative;display:inline-flex;align-items:center;}
+  .rte-color-wrap input[type=color]{width:28px;height:28px;padding:0;border:1px solid #c9d6df;border-radius:3px;background:#fff;cursor:pointer;}
+  .rte-color-lbl{font-family:'Galmuri9';font-size:9px;color:#8aa;margin:0 2px 0 4px;}
+  .rte-sep{width:1px;height:20px;background:#d4e2ec;margin:0 2px;}
+  .rte-area{min-height:120px;padding:10px 12px;font-family:'Pretendard',sans-serif;font-size:14px;line-height:1.7;color:#3a5566;outline:none;overflow-wrap:anywhere;}
+  .rte-area:empty:before{content:attr(data-ph);color:#aab8c2;}
+  /* 저장된 본문 안 서식 유지 */
+  .diary-body .rte-html,.qna-a .rte-html{white-space:normal;}
+  .rte-html img{max-width:100%;}
   .lg-preview{display:flex;flex-wrap:wrap;gap:6px;}
   .lg-thumb{position:relative;display:inline-block;}
   .lg-thumb img{width:72px;height:72px;object-fit:cover;border:1px solid #c9d6df;border-radius:4px;}
@@ -286,7 +305,7 @@
   .modal label{display:block;font-family:'Galmuri9';font-size:10px;color:#5a7585;margin:8px 0 2px;}
   .modal input{width:100%;font-family:'Galmuri11';font-size:12px;padding:6px;border:1px solid #c9d6df;}
   .modal .go{width:100%;font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:8px;margin-top:12px;}
-  .modal .hint{font-family:'Galmuri9';font-size:9px;color:#8aa;margin-top:8px;line-height:1.6;}
+  .modal .hint{font-family:'Galmuri9';font-size:11px;color:#5a7585;margin-top:10px;line-height:1.8;}
 
   @media(min-width:1100px){
     .center{padding:24px 28px;min-height:640px;}
@@ -452,7 +471,7 @@
     <div class="mh"><span id="modalTitle">로그인</span><span class="x" onclick="closeModal()">✕</span></div>
     <div class="mb">
       <label>이름</label><input id="mName" placeholder="이름">
-      <label>비밀번호</label><input id="mPw" type="password" placeholder="비밀번호">
+      <label>비밀번호 <span id="pwHint" style="color:#8aa;"></span></label><input id="mPw" type="password" placeholder="비밀번호">
       <button class="go" id="modalGo" onclick="modalSubmit()">로그인</button>
       <div class="hint" id="modalHint"></div>
     </div>
@@ -662,8 +681,9 @@ function openModal(mode){
   document.getElementById('modalGo').textContent=mode==='login'?'로그인':'가입 신청';
   document.getElementById('modalHint').innerHTML=mode==='login'
     ?'승인된 회원만 로그인됩니다.'
-    :'<b>실명으로 가입해 주세요.</b> 출석·회비 관리를 위해 필요해요.<br>일촌평·QnA는 다른 회원에게는 익명으로 표시되며, 운영상 회장(관리자)에게만 작성자가 확인됩니다.<br>가입 신청 후 대표(관리자)가 승인하면 로그인할 수 있습니다.';
+    :'WAVE FC 멤버 여부 확인을 위해<br><b>실명으로 가입해 주세요.</b><br><br>일촌평, QnA 등 커뮤니티 활동은<br>다른 회원에게 익명으로 표시됩니다.<br><br>가입 신청 후 관리자가 승인하면<br>로그인하실 수 있습니다.';
   document.getElementById('mName').placeholder=mode==='login'?'이름':'실명 (예: 홍길동)';
+  const pwH=document.getElementById('pwHint'); if(pwH) pwH.textContent=mode==='signup'?'(예: 영문+숫자 조합)':'';
   document.getElementById('mName').value='';document.getElementById('mPw').value='';
   document.getElementById('modalBg').classList.add('show');
 }
@@ -699,7 +719,7 @@ function renderAll(){
   document.getElementById('totalCnt').textContent=DATA.visits.toLocaleString();
   const mb=document.getElementById('moodBox'); if(mb) mb.textContent=DATA.mood;
   const it=document.getElementById('introText');
-  if(it) it.innerHTML=(DATA.intro||DEFAULT.intro||'매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!');
+  if(it){ it.innerHTML=(DATA.intro||DEFAULT.intro||'매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!'); it.dataset.editing=''; it.onclick=function(){editIntro();}; }
   // 관리자1이면 사이드바 문구 편집 가능 표시
   const editable=(adminLevel()===1);
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
@@ -714,10 +734,27 @@ function editMood(){
 }
 function editIntro(){
   if(adminLevel()!==1) return;
-  const cur=(DATA.intro||'매주 화요일 저녁 8시\nWAVE FC 입니다.\n함께 뛰고, 함께 웃고…\n다 같이 무브무브!').replace(/<br>/g,'\n');
-  const v=prompt('소개글 수정 (줄바꿈 가능)',cur);
-  if(v===null)return;
-  ROOT.child('intro').set(esc(v.trim()).replace(/\n/g,'<br>'));
+  const el=document.getElementById('introText');
+  if(!el || el.dataset.editing==='1') return;
+  el.dataset.editing='1';
+  el.onclick=null;
+  const cur=(DATA.intro||'매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!').replace(/<br\s*\/?>/gi,'\n');
+  el.innerHTML=`<textarea id="introEdit" style="width:100%;box-sizing:border-box;font-family:'Pretendard',sans-serif;font-size:13px;line-height:1.6;padding:6px;border:1px solid #c9d6df;border-radius:3px;resize:vertical;" rows="4">${esc(cur)}</textarea>
+    <div style="margin-top:5px;display:flex;gap:4px;">
+      <button onclick="saveIntro()" style="flex:1;font-family:'Galmuri9';font-size:11px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:6px;border-radius:3px;">저장</button>
+      <button onclick="cancelIntro()" style="flex:1;font-family:'Galmuri9';font-size:11px;cursor:pointer;background:#9aa6ae;color:#fff;border:none;padding:6px;border-radius:3px;">취소</button>
+    </div>`;
+  const ta=document.getElementById('introEdit'); if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
+}
+function saveIntro(){
+  if(adminLevel()!==1) return;
+  const ta=document.getElementById('introEdit'); if(!ta) return;
+  const v=esc(ta.value.trim()).replace(/\n/g,'<br>');
+  ROOT.child('intro').set(v); // onValue가 renderAll로 갱신
+}
+function cancelIntro(){
+  const el=document.getElementById('introText'); if(el) el.dataset.editing='';
+  renderAll();
 }
 
 function startSlideshow(){
@@ -850,7 +887,7 @@ function pageHome(){
   const detail = cur
     ? `<div class="feed-detail">
          <div class="fd-h"><span class="feed-label ${feedColor(cur)}">${cur.label}</span> ${esc(cur.title)}</div>
-         <div class="fd-body">${esc(cur.text)||'(내용 없음)'}</div>
+         <div class="fd-body">${cur._t==='notice'?bodyRender(cur.text):(esc(cur.text)||'(내용 없음)')}</div>
        </div>`
     : '';
 
@@ -932,8 +969,14 @@ function pageRule(){
   }
   return `<div class="rule-layout">
     <div class="rule-col">
-      <div class="page-h">⚽ 풋살 기본 규칙 ${a1?'<button class="qna-send sm" style="float:right;" onclick="editRule()">규칙 수정</button>':''}</div>
-      <div class="rule-box" id="ruleBody">${ruleHtml}</div>
+      <div class="page-h">⚽ 풋살 기본 규칙 ${(a1&&!ruleEditing)?'<button class="qna-send sm" style="float:right;" onclick="editRule()">규칙 수정</button>':''}</div>
+      ${ruleEditing
+        ? `${rteBox('ruleEditBox',ruleHtml,'규칙 내용 (제목/목록 서식 가능)')}
+           <div style="margin-top:8px;">
+             <button class="qna-send sm" onclick="saveRule()">저장</button>
+             <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelRule()">취소</button>
+           </div>`
+        : `<div class="rule-box" id="ruleBody">${rteSanitize(ruleHtml)}</div>`}
     </div>
     <div class="rule-col">
       <div class="page-h">📋 전술 / 포메이션</div>
@@ -942,24 +985,39 @@ function pageRule(){
     </div>
   </div>
   <div class="manner-box" id="mannerBody">
-    ${a1?'<button class="qna-send sm" style="float:right;background:#e84a8a;" onclick="editManner()">매너 수정</button>':''}
-    ${mannerHtml}
+    ${(a1&&!mannerEditing)?'<button class="qna-send sm" style="float:right;background:#e84a8a;" onclick="editManner()">매너 수정</button>':''}
+    ${mannerEditing
+      ? `${rteBox('mannerEditBox',mannerHtml,'매너 규칙')}
+         <div style="margin-top:8px;">
+           <button class="qna-send sm" onclick="saveManner()">저장</button>
+           <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelManner()">취소</button>
+         </div>`
+      : rteSanitize(mannerHtml)}
   </div>`;
 }
+var ruleEditing=false, mannerEditing=false;
 function editRule(){
   if(adminLevel()!==1)return;
-  const cur=(DATA.ruleHtml!==undefined&&DATA.ruleHtml!=='')?DATA.ruleHtml:DEFAULT.ruleHtml;
-  const v=prompt('풋살 규칙 내용 수정 (HTML 가능: <h4>제목</h4>, <ul><li>항목</li></ul>)',cur);
-  if(v===null)return;
+  ruleEditing=true; renderPage('rule');
+}
+function saveRule(){
+  if(adminLevel()!==1)return;
+  const v=rteGetHtml('ruleEditBox');
+  ruleEditing=false;
   ROOT.child('ruleHtml').set(v);
 }
+function cancelRule(){ ruleEditing=false; renderPage('rule'); }
 function editManner(){
   if(adminLevel()!==1)return;
-  const cur=(DATA.mannerHtml!==undefined&&DATA.mannerHtml!=='')?DATA.mannerHtml:DEFAULT.mannerHtml;
-  const v=prompt('매너 규칙 수정 (HTML 가능)',cur);
-  if(v===null)return;
+  mannerEditing=true; renderPage('rule');
+}
+function saveManner(){
+  if(adminLevel()!==1)return;
+  const v=rteGetHtml('mannerEditBox');
+  mannerEditing=false;
   ROOT.child('mannerHtml').set(v);
 }
+function cancelManner(){ mannerEditing=false; renderPage('rule'); }
 function onTacticFile(ev){
   if(adminLevel()!==1)return;
   const f=ev.target.files&&ev.target.files[0]; if(!f)return;
@@ -980,7 +1038,9 @@ function onTacticFile(ev){
 }
 function clearTactic(){ if(adminLevel()!==1)return; if(!confirm('전술 이미지를 삭제할까요?'))return; ROOT.child('tacticImg').set(''); }
 /* ===== 공지사항 게시판 ===== */
-var noticeEditing=null; // 인라인 편집 중인 공지 인덱스
+var noticeEditing=null;   // 인라인 편집 중인 공지 인덱스
+var noticeWriting=false;  // 글쓰기 폼 펼침 여부
+var noticeOpen=null;      // 목록에서 펼쳐 본 공지 인덱스(_i)
 function pageNotice(){
   const isExec=rankOf(me)==='exec';
   const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
@@ -989,54 +1049,98 @@ function pageNotice(){
       if(ap!==bp)return bp-ap;
       return (b.ts||0)-(a.ts||0);
     });
-  const writeBox = isExec ? `
+
+  // 글쓰기 버튼 + (펼쳐졌을 때) 작성 폼
+  const writeToggle = isExec
+    ? `<div style="text-align:right;margin-bottom:10px;">
+         <button class="qna-send sm" onclick="toggleNoticeWrite()">${noticeWriting?'✕ 작성 닫기':'✏ 글쓰기'}</button>
+       </div>` : '';
+  const writeBox = (isExec && noticeWriting) ? `
     <div class="qna-ask" style="margin-bottom:14px;">
       <div class="qna-ask-h">✏ 새 공지 작성</div>
       <input id="ntTitle" class="qna-input" style="margin-bottom:6px;" placeholder="공지 제목">
-      <textarea id="ntText" class="qna-input" rows="3" placeholder="공지 내용"></textarea>
-      <label style="display:block;font-size:12px;margin:6px 0;"><input type="checkbox" id="ntPin"> 상단 고정</label>
+      ${rteBox('ntText','','공지 내용')}
+      <label style="display:block;font-size:12px;margin:8px 0;"><input type="checkbox" id="ntPin"> 상단 고정</label>
       <button class="qna-send" onclick="addNoticeBoard()">공지 등록</button>
     </div>` : '';
-  const items=list.map(n=>{
-    const t=n.ts?new Date(n.ts):null;
-    const tstr=t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
-    // 편집 중인 공지는 입력 폼으로 표시 (글 자리에서 바로 수정)
-    if(isExec && noticeEditing===n._i){
-      return `
+
+  // 편집 폼 렌더러
+  function editForm(n){
+    return `
       <div class="qna-thread editing" style="margin-bottom:10px;border:2px solid var(--frame);">
         <input id="ntEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(n.title||'')}" placeholder="공지 제목">
-        <textarea id="ntEditText" class="qna-input" rows="5">${esc(n.text||'')}</textarea>
+        ${rteBox('ntEditText',(/<[a-z][\s\S]*>/i.test(n.text||'')?(n.text||''):esc(n.text||'').replace(/\n/g,'<br>')),'공지 내용')}
         <div style="margin-top:8px;">
           <button class="qna-send sm" onclick="saveNotice(${n._i})">저장</button>
           <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelNotice()">취소</button>
         </div>
       </div>`;
-    }
-    const adminBtns = isExec ? `
+  }
+  function adminBtns(n){
+    return isExec ? `
       <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
         <button class="qna-send sm" onclick="editNotice(${n._i})">수정</button>
         <button class="qna-send sm" style="background:${n.pinned?'#9aa6ae':'#2e8b3d'};" onclick="togglePin(${n._i})">${n.pinned?'고정해제':'상단고정'}</button>
         <button class="qna-send sm" style="background:#c0392b;" onclick="delNoticeBoard(${n._i})">삭제</button>
       </div>` : '';
+  }
+  function dstr(n){const t=n.ts?new Date(n.ts):null;return t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';}
+
+  // 대표글: 상단 고정이 있으면 그 첫 글, 없으면 가장 최신글
+  const featured = list.length ? list[0] : null;
+
+  // 대표글 본문(또는 편집폼)
+  let featuredHtml='';
+  if(featured){
+    if(isExec && noticeEditing===featured._i){
+      featuredHtml=editForm(featured);
+    }else{
+      featuredHtml=`
+      <div class="qna-thread" style="margin-bottom:14px;">
+        <div class="qna-q">${featured.pinned?'📌 ':'📢 '}${esc(featured.title||'')}<span class="qna-src" style="float:right;">${dstr(featured)}</span></div>
+        <div class="qna-a">${bodyRender(featured.text||'')}</div>
+        ${adminBtns(featured)}
+      </div>`;
+    }
+  }
+
+  // 나머지 글 목록(대표글 제외) — 최대 5개 제목 리스트, 클릭하면 펼침
+  const rest=list.slice(1);
+  const listRows=rest.slice(0,5).map(n=>{
+    if(isExec && noticeEditing===n._i) return editForm(n);
+    const opened = noticeOpen===n._i;
     return `
-      <div class="qna-thread" style="margin-bottom:10px;">
-        <div class="qna-q">${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}<span class="qna-src" style="float:right;">${tstr}</span></div>
-        <div class="qna-a" style="white-space:pre-wrap;">${esc(n.text||'')}</div>
-        ${adminBtns}
+      <div class="qna-thread" style="margin-bottom:8px;">
+        <div class="qna-q" style="cursor:pointer;font-weight:600;" onclick="toggleNoticeOpen(${n._i})">
+          <span style="color:var(--frame);font-size:12px;">${opened?'▼':'▶'}</span>
+          ${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}
+          <span class="qna-src" style="float:right;">${dstr(n)}</span>
+        </div>
+        ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${adminBtns(n)}`:''}
       </div>`;
   }).join('');
+  const moreNote = rest.length>5 ? `<div style="font-size:11px;color:#8aa;text-align:center;padding:6px;">외 ${rest.length-5}개의 공지가 더 있어요.</div>` : '';
+  const listBlock = rest.length
+    ? `<div class="qna-ask-h" style="margin:6px 0;">📋 이전 공지</div><div class="qna-list">${listRows}${moreNote}</div>`
+    : '';
+
   return `<div class="page-h">📢 공지사항</div>
+    ${writeToggle}
     ${writeBox}
-    <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 공지가 없어요.</div>'}</div>`;
+    ${featuredHtml || '<div style="color:#8aa;padding:16px;">등록된 공지가 없어요.</div>'}
+    ${listBlock}`;
 }
+function toggleNoticeWrite(){ noticeWriting=!noticeWriting; noticeEditing=null; renderPage('notice'); }
+function toggleNoticeOpen(i){ noticeOpen=(noticeOpen===i)?null:i; renderPage('notice'); }
 function addNoticeBoard(){
   if(rankOf(me)!=='exec') return alert('임원만 공지를 작성할 수 있어요.');
   const title=document.getElementById('ntTitle').value.trim();
-  const text=document.getElementById('ntText').value.trim();
+  const text=rteGetHtml('ntText');
   const pin=document.getElementById('ntPin').checked;
-  if(!title&&!text) return alert('제목이나 내용을 입력하세요.');
+  if(!title&&rteIsEmpty('ntText')) return alert('제목이나 내용을 입력하세요.');
   const a=DATA.notices.slice();
-  a.unshift({title:title||text.slice(0,20),text:text,pinned:pin,ts:Date.now()});
+  a.unshift({title:title||document.getElementById('ntText').textContent.trim().slice(0,20),text:text,pinned:pin,ts:Date.now()});
+  noticeWriting=false;
   ROOT.child('notices').set(a);
 }
 function editNotice(i){           // 인라인 편집 모드 진입
@@ -1053,8 +1157,8 @@ function saveNotice(i){
   const a=JSON.parse(JSON.stringify(DATA.notices));
   if(!a[i])return;
   const nt=document.getElementById('ntEditTitle').value.trim();
-  const tx=document.getElementById('ntEditText').value.trim();
-  a[i].title=nt||tx.slice(0,20);
+  const tx=rteGetHtml('ntEditText');
+  a[i].title=nt||document.getElementById('ntEditText').textContent.trim().slice(0,20);
   a[i].text=tx;
   noticeEditing=null;
   ROOT.child('notices').set(a); // 저장 후 onValue가 화면 갱신
@@ -1083,7 +1187,7 @@ function pageDiary(){
       <div class="qna-ask-h">✏ 새 훈련일지 작성</div>
       <input id="lgDate" class="qna-input" style="margin-bottom:6px;" placeholder="날짜 (예: 2026.06.09)">
       <input id="lgTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 6월 2일 정기훈련)">
-      <textarea id="lgText" class="qna-input" rows="4" placeholder="훈련 내용/결과"></textarea>
+      ${rteBox('lgText','','훈련 내용/결과')}
       <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 사진 첨부 (최대 4장)</div>
       <input type="file" id="lgFile" accept="image/*" multiple onchange="onDiaryFile(event)" style="font-size:11px;">
       <div id="lgPreview" class="lg-preview" style="margin-top:6px;"></div>
@@ -1099,7 +1203,7 @@ function pageDiary(){
       <div class="diary-item editing">
         <input id="lgEditDate" class="qna-input" style="margin-bottom:6px;" value="${esc(l.date||'')}" placeholder="날짜">
         <input id="lgEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(l.title||'')}" placeholder="제목">
-        <textarea id="lgEditText" class="qna-input" rows="6">${esc(l.text||'')}</textarea>
+        ${rteBox('lgEditText',(/<[a-z][\s\S]*>/i.test(l.text||'')?(l.text||''):esc(l.text||'').replace(/\n/g,'<br>')),'훈련 내용/결과')}
         <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 현재 사진 ${imgs.length}장 (최대 4장)</div>
         <div class="lg-preview">${existing}</div>
         <div style="margin:6px 0;font-size:11px;color:#5a7585;">사진 추가:</div>
@@ -1116,7 +1220,7 @@ function pageDiary(){
     const body = opened ? `
       <div class="diary-body">
         ${l.date?'<div class="diary-date">📅 '+esc(l.date)+'</div>':''}
-        <div style="white-space:pre-wrap;line-height:1.6;">${esc(l.text||'')}</div>
+        <div style="line-height:1.7;">${bodyRender(l.text||'')}</div>
         ${imgHtml}
         ${isExec?`<div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
           <button class="qna-send sm" onclick="editDiary(${l._i})">수정</button>
@@ -1179,8 +1283,8 @@ function addDiary(){
   if(rankOf(me)!=='exec') return alert('임원만 작성할 수 있어요.');
   const d=document.getElementById('lgDate').value.trim();
   const t=document.getElementById('lgTitle').value.trim();
-  const tx=document.getElementById('lgText').value.trim();
-  if(!t&&!tx) return alert('제목이나 내용을 입력하세요.');
+  const tx=rteGetHtml('lgText');
+  if(!t&&rteIsEmpty('lgText')) return alert('제목이나 내용을 입력하세요.');
   const a=DATA.logs.slice();
   a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,imgs:_diaryFiles.slice(),ts:Date.now()});
   _diaryFiles=[];
@@ -1194,7 +1298,7 @@ function saveDiary(i){
   if(!a[i])return;
   a[i].date=document.getElementById('lgEditDate').value.trim();
   a[i].title=document.getElementById('lgEditTitle').value.trim()||('훈련일지'+(a[i].date?' '+a[i].date:''));
-  a[i].text=document.getElementById('lgEditText').value.trim();
+  a[i].text=rteGetHtml('lgEditText');
   // 기존 이미지(배열로 정규화) + 새로 추가한 이미지
   let imgs=diaryImgs(a[i]);
   imgs=imgs.concat(_diaryFiles).slice(0,4);
@@ -1589,7 +1693,7 @@ function pageQna(){
     }
     return `
       <div class="qna-thread">
-        <div class="qna-q"><b>Q.</b> ${esc(t.q)} ${badge} ${a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':''} ${btns}</div>
+        <div class="qna-q"><b>Q.</b> ${esc(t.q)} ${badge} ${(a1 && t.byKey && DATA.users[t.byKey])?'<span class="qna-by">✍ '+esc(DATA.users[t.byKey].name)+'</span>':(a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':'')} ${btns}</div>
         ${answered?`<div class="qna-a"><b>A.</b> ${esc(t.answer)} ${src}</div>`:'<div class="qna-a wait">아직 등록된 답변이 없어요. 관리자가 곧 답변을 준비할게요!</div>'}
         ${adminAnswer}
       </div>`;
@@ -1663,7 +1767,7 @@ async function submitQna(){
     q:question,
     answer:answer||'',
     source:source||'',
-    by:(me&&DATA.users[me]?DATA.users[me].name:'회원'),
+    by:'',
     byKey:me||'',
     ts:Date.now()
   });
@@ -2019,6 +2123,94 @@ function renderKbAdmin(){
 
 
 function setBg(name){document.body.className='bg-'+name;}
+/* ===== 리치 텍스트 에디터 (네이버 블로그식) =====
+   글씨색/배경색/크기/굵게·기울기·밑줄·취소선 지원.
+   본문은 HTML로 저장되며, 출력 시 sanitize 후 .rte-html로 감싸 표시 */
+function rteToolbar(id){
+  const sizes=[['작게','2'],['보통','3'],['크게','5'],['아주크게','6']];
+  return `<div class="rte-toolbar">
+    <select onchange="rteCmd('${id}','fontSize',this.value);this.selectedIndex=0;">
+      <option value="">글자크기</option>
+      ${sizes.map(s=>`<option value="${s[1]}">${s[0]}</option>`).join('')}
+    </select>
+    <span class="rte-sep"></span>
+    <button type="button" class="rte-b" title="굵게" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','bold')">B</button>
+    <button type="button" class="rte-i" title="기울임" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','italic')">I</button>
+    <button type="button" class="rte-u" title="밑줄" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','underline')">U</button>
+    <button type="button" class="rte-s" title="취소선" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','strikeThrough')">S</button>
+    <span class="rte-sep"></span>
+    <span class="rte-color-wrap"><span class="rte-color-lbl">글자</span><input type="color" value="#333333" title="글씨색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','foreColor',this.value)"></span>
+    <span class="rte-color-wrap"><span class="rte-color-lbl">배경</span><input type="color" value="#fff2a8" title="글씨 배경색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','hiliteColor',this.value)"></span>
+    <span class="rte-sep"></span>
+    <button type="button" title="서식 지우기" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','removeFormat')">⌫</button>
+  </div>`;
+}
+// 에디터 박스 전체 (툴바+편집영역). value는 HTML.
+function rteBox(id,html,ph){
+  return `<div class="rte-wrap">
+    ${rteToolbar(id)}
+    <div class="rte-area" id="${id}" contenteditable="true" data-ph="${esc(ph||'내용을 입력하세요')}">${html||''}</div>
+  </div>`;
+}
+let _rteSavedRange=null;
+function rteSaveSel(id){
+  const el=document.getElementById(id); if(el) el.focus();
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount>0) _rteSavedRange=sel.getRangeAt(0).cloneRange();
+}
+function rteRestoreSel(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.focus();
+  if(_rteSavedRange){
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(_rteSavedRange);
+  }
+}
+function rteCmd(id,cmd,val){
+  const el=document.getElementById(id); if(!el) return;
+  if(cmd==='foreColor'||cmd==='hiliteColor') rteRestoreSel(id); else el.focus();
+  try{
+    if(cmd==='hiliteColor'){
+      // 일부 브라우저는 hiliteColor 미지원 → backColor 폴백
+      if(!document.execCommand('hiliteColor',false,val)) document.execCommand('backColor',false,val);
+    }else{
+      document.execCommand(cmd,false,val);
+    }
+  }catch(e){}
+  el.focus();
+}
+function rteGetHtml(id){
+  const el=document.getElementById(id);
+  return el?rteSanitize(el.innerHTML):'';
+}
+function rteIsEmpty(id){
+  const el=document.getElementById(id); if(!el) return true;
+  return el.textContent.trim()==='' && !/<img/i.test(el.innerHTML);
+}
+// 위험 태그 제거 (서식 태그/색·크기 스타일만 허용)
+function rteSanitize(html){
+  const d=document.createElement('div'); d.innerHTML=html||'';
+  d.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach(n=>n.remove());
+  d.querySelectorAll('*').forEach(n=>{
+    [...n.attributes].forEach(a=>{
+      const an=a.name.toLowerCase();
+      if(an==='style') return;             // 색·크기 등 인라인 스타일 유지
+      if(an==='color'||an==='size'||an==='face') return; // <font> 속성 유지
+      n.removeAttribute(a.name);           // on*·href 등 기타 제거
+    });
+  });
+  return d.innerHTML;
+}
+// 저장된 HTML을 안전하게 화면에 표시
+function rteRender(html){
+  return `<span class="rte-html">${rteSanitize(html||'')}</span>`;
+}
+// 일반 텍스트(과거 데이터)인지 HTML인지 추정 후 표시
+function bodyRender(s){
+  s=s||'';
+  if(/<[a-z][\s\S]*>/i.test(s)) return rteRender(s);
+  return `<span class="rte-html" style="white-space:pre-wrap;">${esc(s)}</span>`;
+}
+
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function tick(){const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,'0');const ap=h<12?'오전':'오후';if(h>12)h-=12;if(h===0)h=12;document.getElementById('clock').textContent=`${ap} ${h}:${m}`;}
 tick();setInterval(tick,10000);
