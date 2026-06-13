@@ -161,16 +161,16 @@
   .tactic-img:hover{filter:brightness(1.03);}
   .tactic-empty{border:2px dashed var(--line);border-radius:6px;padding:40px 12px;color:#8aa;text-align:center;cursor:pointer;font-size:14px;}
   .tactic-empty:hover{background:#f0f8ff;}
-  /* 캐릭터 카드 (소개글 아래) */
-  .char-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;}
-  .char-card{border:3px solid #ccc;border-radius:10px;background:#fff;padding:10px;display:flex;flex-direction:column;align-items:center;box-shadow:2px 2px 0 rgba(0,0,0,.08);}
-  .char-card-img{width:100%;border-radius:8px;display:flex;justify-content:center;align-items:flex-end;padding-top:8px;height:150px;overflow:hidden;}
-  .char-card-img img{height:150px;width:auto;image-rendering:auto;}
-  .char-card-info{width:100%;text-align:center;margin-top:6px;}
-  .char-card-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:20px;font-weight:800;}
-  .char-card-personality{font-size:12px;color:#5a7585;margin:3px 0 4px;line-height:1.4;}
+  /* 캐릭터 카드 (소개글 아래) - 컴팩트 가로형 */
+  .char-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+  .char-card{border:2px solid #ccc;border-radius:9px;background:#fff;padding:8px;display:flex;align-items:center;gap:6px;box-shadow:2px 2px 0 rgba(0,0,0,.08);}
+  .char-card-img{flex:0 0 auto;border-radius:7px;display:flex;justify-content:center;align-items:flex-end;height:96px;width:58px;overflow:hidden;}
+  .char-card-img img{height:96px;width:auto;}
+  .char-card-info{flex:1;min-width:0;text-align:center;}
+  .char-card-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:16px;font-weight:800;line-height:1.1;}
+  .char-card-personality{font-size:10px;color:#5a7585;margin:2px 0 2px;line-height:1.3;}
   .char-card-radar{display:flex;justify-content:center;}
-  @media(max-width:760px){ .char-cards{grid-template-columns:1fr;} .char-card{flex-direction:row;align-items:center;gap:10px;} .char-card-img{width:auto;height:120px;} .char-card-img img{height:120px;} }
+  @media(max-width:760px){ .char-cards{grid-template-columns:1fr;} }
   @media(max-width:760px){ .rule-layout{flex-direction:column;} }
   /* WAVE FC 매너 강조 박스 */
   .manner-box{
@@ -649,7 +649,7 @@ const TEAM_CHARS=[
 ];
 function pentagonRadar(stats, color){
   const labels=['패스','스피드','슈팅','드리블','피지컬'];
-  const cx=90, cy=92, R=62;
+  const cx=68, cy=66, R=42;
   // 꼭짓점 좌표 계산(위쪽부터 시계방향)
   const pt=(i,r)=>{
     const ang=-Math.PI/2 + i*2*Math.PI/5;
@@ -670,14 +670,14 @@ function pentagonRadar(stats, color){
   // 라벨 + 수치
   let txt='';
   labels.forEach((lb,i)=>{
-    const [x,y]=pt(i, R+15);
+    const [x,y]=pt(i, R+11);
     const anchor = Math.abs(x-cx)<8 ? 'middle' : (x>cx?'start':'end');
-    txt+=`<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="10" fill="#5a7585" text-anchor="${anchor}">${lb} ${stats[lb]}</text>`;
+    txt+=`<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9" fill="#5a7585" text-anchor="${anchor}">${lb}</text>`;
   });
-  return `<svg viewBox="0 0 180 184" width="170" height="174" xmlns="http://www.w3.org/2000/svg">
+  return `<svg viewBox="0 0 136 132" width="120" height="116" xmlns="http://www.w3.org/2000/svg">
     ${grid}${axes}
     <polygon points="${dpts}" fill="${color}55" stroke="${color}" stroke-width="2"/>
-    ${labels.map((lb,i)=>{const [x,y]=pt(i,R*(stats[lb]||0)/100);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${color}"/>`;}).join('')}
+    ${labels.map((lb,i)=>{const [x,y]=pt(i,R*(stats[lb]||0)/100);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="${color}"/>`;}).join('')}
     ${txt}
   </svg>`;
 }
