@@ -13,11 +13,17 @@
     font-weight: normal;
     font-display: swap;
   }
+  @font-face {
+    font-family: 'Manse';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/Manse.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+  }
   /* WAVE FC 전체 글꼴: Tangba 우선 적용 (숫자 유니폼 등 SVG는 영향 없음) */
   *, *::before, *::after{ font-family:'Tangba','Galmuri11','Galmuri9',monospace !important; }
   /* Tangba는 두께가 두꺼워 보여서 전반적으로 normal로 통일, 강조는 600까지만 */
   *{ font-weight:normal; }
-  b, strong, .logo, .page-h, .nm, th{ font-weight:600 !important; }
+  b, strong, .page-h, .nm, th{ font-weight:600 !important; }
   :root{
     --frame:#3aa0d8;--frame-dark:#2176a8;--tab:#4aaee2;--tab-active:#1c6fa0;
     --ink:#2a3b47;--line:#bfe0f2;--pink:#ff7fae;--news:#d94b8c;
@@ -51,7 +57,7 @@
   .left .head{padding:8px 10px 6px;border-bottom:1px dashed var(--line);}
   .today{font-family:'Galmuri9';font-size:10px;color:#6a8595;}
   .today b{color:var(--news);}
-  .logo{font-family:'Tangba','Galmuri14' !important;font-size:32px;font-weight:600;color:var(--frame-dark);margin:6px 0 4px;letter-spacing:0;line-height:1.1;}
+  .logo{font-family:'Manse','Tangba','Galmuri14' !important;font-size:34px;font-weight:normal !important;color:var(--frame-dark);margin:6px 0 4px;letter-spacing:1px;line-height:1.15;}
   .logo small{font-family:'Galmuri9';font-size:9px;color:#9ab;vertical-align:super;}
   .mainimg-wrap{padding:8px;}
   .mainimg{width:100%;height:auto;max-height:320px;object-fit:contain;display:block;border:1px solid var(--line);background:#0d1b2a;image-rendering:auto;}
@@ -142,10 +148,11 @@
   table.lst th,table.lst td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
   table.lst th{background:#eaf4fb;color:var(--frame-dark);font-family:'Galmuri9';font-size:10px;}
   table.lst tr:nth-child(even) td{background:#f7fbfe;}
-  .rule-box{font-family:'Pretendard','Malgun Gothic','맑은 고딕',sans-serif;font-size:15px;line-height:2.0;}
-  .rule-box h4{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:16px;font-weight:700;color:var(--frame-dark);margin:18px 0 6px;}
+  .rule-box{font-family:'Pretendard','Malgun Gothic','맑은 고딕',sans-serif;font-size:15px;line-height:1.55;}
+  .rule-box h4{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:16px;font-weight:700;color:var(--frame-dark);margin:12px 0 4px;}
   .rule-box ul{margin:0;padding-left:20px;}
-  .rule-box ul li{margin-bottom:3px;}
+  .rule-box ul li{margin-bottom:2px;}
+  .rule-box p{margin:4px 0;}
   /* 풋살규칙 2단 레이아웃 */
   .rule-layout{display:flex;gap:14px;align-items:flex-start;}
   .rule-col{flex:1;min-width:0;}
@@ -171,11 +178,11 @@
   }
   .manner-box ul li{font-size:16px;font-weight:600;color:#c0392b;margin-bottom:6px;}
   /* 매너 규칙: 내용이 길면 자동 2단 (6개 이상이면 오른쪽에도 채워짐) */
-  .manner-cols{column-count:2;column-gap:28px;}
-  .manner-cols h4{column-span:all;-webkit-column-span:all;}
-  .manner-cols ul{margin:0;padding-left:20px;break-inside:avoid;}
-  .manner-cols p{margin:0 0 10px;break-inside:avoid;font-size:15px;color:#c0392b;line-height:1.7;}
-  @media(max-width:760px){ .manner-cols{column-count:1;} }
+  .manner-cols ul{margin:0;padding-left:20px;column-count:2;column-gap:32px;list-style-position:inside;}
+  .manner-cols ul li{break-inside:avoid;-webkit-column-break-inside:avoid;}
+  .manner-cols h4{margin:0 0 8px;}
+  .manner-cols p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;column-count:2;column-gap:32px;}
+  @media(max-width:760px){ .manner-cols ul, .manner-cols p{column-count:1;} }
   .manner-single ul{margin:0;padding-left:20px;}
   .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
@@ -183,12 +190,12 @@
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
   .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
   .member-card.is-rest{border:2px solid #b8c0c7;background:#f1f3f5;opacity:.78;}
-  .member-card .badge-status{font-family:'Galmuri9';font-size:8px;padding:1px 5px;border-radius:7px;color:#fff;display:inline-block;margin-bottom:2px;}
-  .member-card .mc-badgeslot{height:18px;line-height:18px;margin-bottom:2px;}
-  .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}.badge-exec{background:#d99a2b;}
+  .member-card .badge-status{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:13px;font-weight:700;padding:2px 9px;border-radius:9px;color:#fff;display:inline-block;margin-bottom:2px;}
+  .member-card .mc-badgeslot{min-height:24px;line-height:22px;margin-bottom:3px;}
+  .badge-honor{background:#2a2a2a;}.badge-rest{background:#9aa6ae;}.badge-exec{background:#d99a2b;}.badge-member{background:#5aa9e6;}
   .member-card .av{font-size:26px;line-height:1;height:44px;display:flex;align-items:center;justify-content:center;}
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
-  .member-card .po{font-family:'Galmuri9';font-size:9px;color:#8aa;}
+  .member-card .po{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#8aa;}
   .rank-legend{font-family:'Galmuri9';font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
   /* QnA */
   .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:14px;margin-bottom:14px;border-radius:4px;}
@@ -318,7 +325,7 @@
   @media(min-width:1100px){
     .center{padding:24px 28px;min-height:640px;}
     .news-list{font-size:13px;}
-    .rule-box{font-size:17px;line-height:2.2;}
+    .rule-box{font-size:17px;line-height:1.6;}
     .rule-box h4{font-size:18px;}
     .manner-box ul li{font-size:18px;}
     table.lst{font-size:13px;}
@@ -446,6 +453,21 @@
     <textarea id="newKbA" rows="2" placeholder="답변 (예: 월 2만원입니다)"></textarea>
     <button onclick="addKbItem()">지식 추가</button>
     <div id="kbListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <div style="margin-top:8px;padding:8px;background:#fff7e6;border:1px dashed #d9b34b;border-radius:5px;">
+      <div style="font-size:11px;font-weight:700;color:#a06a00;">📥 대량 추가 (한 번에 여러 개)</div>
+      <div style="font-size:10px;color:#5a7585;margin:3px 0;">아래 형식으로 붙여넣거나 .txt/.csv 파일을 올리세요. 빈 줄로 항목 구분.<br>
+        <b>형식1)</b> Q: 질문 / A: 답변 &nbsp; <b>형식2)</b> 질문[탭 또는 |]답변</div>
+      <textarea id="bulkKb" rows="5" placeholder="Q: 회비는 얼마인가요?
+A: 월 25,000원이고 매월 1~5일이 납부일입니다.
+
+Q: 어디서 모이나요?
+A: 창원 OO풋살장에서 매주 화요일 저녁 8시에 모입니다." style="width:100%;box-sizing:border-box;font-size:11px;"></textarea>
+      <input type="file" id="bulkKbFile" accept=".txt,.csv,.tsv,text/plain" onchange="onBulkKbFile(event)" style="font-size:10px;margin:4px 0;">
+      <div style="display:flex;gap:4px;">
+        <button onclick="bulkAddKb(false)" style="flex:1;">미리보기 후 추가</button>
+        <button onclick="document.getElementById('bulkKb').value=''" style="background:#9aa6ae;">입력 비우기</button>
+      </div>
+    </div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🪪 프로필 사진</b> (왼쪽 상단, 미니룸과 별개)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0 4px;">📎 파일 첨부 또는 이미지 주소 중 하나만 쓰면 돼요</div>
@@ -687,6 +709,7 @@ ROOT.on('value',snap=>{
     roster:v.roster||[],
     profile:(v.profile!==undefined?v.profile:DEFAULT.profile),
     bubble:(v.bubble!==undefined?v.bubble:DEFAULT.bubble),
+    intro:(v.intro!==undefined?v.intro:DEFAULT.intro),
     visits:v.visits||1,mood:v.mood||DEFAULT.mood,
     qna_kb:v.qna_kb||DEFAULT.qna_kb,
     qna_threads:v.qna_threads||[],
@@ -1311,6 +1334,7 @@ function delNoticeBoard(i){
   const a=DATA.notices.slice();a.splice(i,1);ROOT.child('notices').set(a);
 }
 var diaryOpen=null;     // 펼쳐진 일지 인덱스
+var diaryWriting=false; // 글쓰기 폼 펼침 여부
 var diaryEditing=null;  // 인라인 편집 중인 일지 인덱스
 var _diaryFiles=[];// 첨부 이미지 base64 배열(최대 4)
 // 기존 단일 img 호환 → 배열로 정규화
@@ -1323,8 +1347,12 @@ function pageDiary(){
   const isExec=rankOf(me)==='exec';
   const list=DATA.logs.map((l,i)=>Object.assign({},l,{_i:i}))
     .sort((a,b)=>(b.ts||0)-(a.ts||0));
-  // 작성 폼(임원만)
-  const writeBox = isExec ? `
+  // 글쓰기 버튼 + (펼쳐졌을 때) 작성 폼 — 공지사항과 동일 방식
+  const writeToggle = isExec
+    ? `<div style="text-align:right;margin-bottom:10px;">
+         <button class="qna-send sm" onclick="toggleDiaryWrite()">${diaryWriting?'✕ 작성 닫기':'✏ 글쓰기'}</button>
+       </div>` : '';
+  const writeBox = (isExec && diaryWriting) ? `
     <div class="qna-ask" style="margin-bottom:14px;">
       <div class="qna-ask-h">✏ 새 훈련일지 작성</div>
       <input id="lgDate" class="qna-input" style="margin-bottom:6px;" placeholder="날짜 (예: 2026.06.09)">
@@ -1380,9 +1408,11 @@ function pageDiary(){
       </div>`;
   }).join('');
   return `<div class="page-h">📝 훈련 일지</div>
+    ${writeToggle}
     ${writeBox}
     <div class="diary-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 훈련일지가 없어요.</div>'}</div>`;
 }
+function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderPage('diary'); }
 function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('diary'); }
 function onDiaryFile(ev){
   const files=Array.from(ev.target.files||[]);
@@ -1430,6 +1460,7 @@ function addDiary(){
   const a=DATA.logs.slice();
   a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,imgs:_diaryFiles.slice(),ts:Date.now()});
   _diaryFiles=[];
+  diaryWriting=false;
   ROOT.child('logs').set(a);
 }
 function editDiary(i){ if(rankOf(me)!=='exec')return; diaryEditing=i; _diaryFiles=[]; renderPage('diary'); }
@@ -1765,9 +1796,10 @@ function pageMember(){
     const rank=isExec?'exec':'member';
     // 카드 클래스: 임원 > 명예 > 휴식 > 일반
     let cls='', topBadge='';
-    if(isExec){ cls='is-exec'; if(m.title) topBadge='<span class="badge-status badge-exec">'+esc(m.title)+'</span>'; }
+    if(isExec){ cls='is-exec'; topBadge='<span class="badge-status badge-exec">'+(m.title?esc(m.title):'임원')+'</span>'; }
     else if(st==='honor'){ cls='is-honor'; topBadge='<span class="badge-status badge-honor">'+(m.title?esc(m.title):'명예회원')+'</span>'; }
-    else if(st==='rest'){ cls='is-rest'; topBadge='<span class="badge-status badge-rest">휴식 중</span>'; }
+    else if(st==='rest'){ cls='is-rest'; topBadge='<span class="badge-status badge-rest">휴식중</span>'; }
+    else { topBadge='<span class="badge-status badge-member">멤버</span>'; }
     // 아바타: 명예는 ★ 유니폼, 그 외는 번호(없으면 '-') 유니폼
     let av;
     if(st==='honor') av=jerseyImg('★',46);
@@ -2306,6 +2338,66 @@ function delKbItem(i){
   const kb=(DATA.qna_kb||[]).slice();
   kb.splice(i,1);
   ROOT.child('qna_kb').set(kb);
+}
+// 파일 업로드 → 텍스트 영역에 채우기
+function onBulkKbFile(ev){
+  const f=(ev.target.files||[])[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('bulkKb').value=e.target.result||'';
+    alert('파일을 불러왔어요. "미리보기 후 추가"를 눌러주세요.');
+  };
+  reader.readAsText(f,'utf-8');
+}
+// 다양한 형식 파싱 → [{q,a}] 배열
+function parseBulkKb(raw){
+  const out=[];
+  const text=(raw||'').replace(/\r\n/g,'\n').trim();
+  if(!text) return out;
+
+  // 1) Q:/A: 블록 형식 (빈 줄 또는 다음 Q: 로 구분)
+  if(/(^|\n)\s*Q\s*[:：]/i.test(text)){
+    const blocks=text.split(/\n(?=\s*Q\s*[:：])/i);
+    blocks.forEach(b=>{
+      const qm=b.match(/Q\s*[:：]\s*([\s\S]*?)(?=\n\s*A\s*[:：]|$)/i);
+      const am=b.match(/A\s*[:：]\s*([\s\S]*)$/i);
+      if(qm){
+        const q=qm[1].replace(/\s+/g,' ').trim();
+        const a=(am?am[1]:'').trim();
+        if(q&&a) out.push({q,a});
+      }
+    });
+    return out;
+  }
+  // 2) 한 줄에 질문[탭|]답변
+  text.split('\n').forEach(line=>{
+    const l=line.trim(); if(!l) return;
+    let parts=null;
+    if(l.includes('\t')) parts=l.split('\t');
+    else if(l.includes('|')) parts=l.split('|');
+    else if(l.includes(' / A:')) { const m=l.match(/^(.*?)\s*\/\s*A[:：]\s*(.*)$/i); if(m) parts=[m[1],m[2]]; }
+    if(parts&&parts.length>=2){
+      const q=parts[0].replace(/^Q[:：]\s*/i,'').trim();
+      const a=parts.slice(1).join(' ').replace(/^A[:：]\s*/i,'').trim();
+      if(q&&a) out.push({q,a});
+    }
+  });
+  return out;
+}
+function bulkAddKb(skipConfirm){
+  if(adminLevel()!==1) return alert('관리자1만 지식을 추가할 수 있어요.');
+  const raw=document.getElementById('bulkKb').value;
+  const items=parseBulkKb(raw);
+  if(!items.length) return alert('인식된 항목이 없어요. 형식을 확인해주세요.\n예) Q: 질문 (줄바꿈) A: 답변');
+  const preview=items.slice(0,5).map((it,i)=>`${i+1}. ${it.q} → ${it.a.slice(0,30)}${it.a.length>30?'…':''}`).join('\n');
+  const more=items.length>5?`\n…외 ${items.length-5}개`:'';
+  if(!confirm(`${items.length}개 항목을 추가할까요?\n\n${preview}${more}`)) return;
+  const kb=(DATA.qna_kb||[]).slice();
+  items.forEach(it=>kb.push({q:it.q,a:it.a,ts:Date.now()}));
+  ROOT.child('qna_kb').set(kb);
+  document.getElementById('bulkKb').value='';
+  const fileEl=document.getElementById('bulkKbFile'); if(fileEl) fileEl.value='';
+  alert(`${items.length}개 항목이 추가되었어요! (총 ${kb.length}개)`);
 }
 function renderKbAdmin(){
   const el=document.getElementById('kbListAdmin');
