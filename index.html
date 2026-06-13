@@ -176,6 +176,8 @@
   .manner-cols ul{margin:0;padding-left:20px;break-inside:avoid;}
   .manner-cols p{margin:0 0 10px;break-inside:avoid;font-size:15px;color:#c0392b;line-height:1.7;}
   @media(max-width:760px){ .manner-cols{column-count:1;} }
+  .manner-single ul{margin:0;padding-left:20px;}
+  .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
   .member-card{border:2px solid #6ab8e8;padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
@@ -638,6 +640,11 @@ let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
 let me=localStorage.getItem('wavefc_user')||null; // 로그인된 이름
 let currentPage='home';
+let guideIdx=0;       // 현재 보고 있는 설명서 번호
+let guideListPage=0;  // 설명서 목록 페이지(3개씩)
+let guideEditIdx=null;// null=보기, -1=새글, n=수정
+let tacticIdx=0;      // 전술 이미지 번호
+let mannerEditing=false; // 매너 규칙 편집 모드
 let attViewMode='month'; // 'month' | 'range'
 let attMonth=''; // 'YYYY-M' 선택된 월, 빈값이면 최신월 자동
 let attFrom=''; // 기간 시작 (YYYY-M-D)
@@ -1097,7 +1104,7 @@ function pageRule(){
            <button class="qna-send sm" onclick="saveManner()">저장</button>
            <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelManner()">취소</button>
          </div>`
-      : `<div class="manner-cols">${rteSanitize(mannerHtml)}</div>`}
+      : `<div class="${(mannerHtml.match(/<li/gi)||[]).length>=6 || (mannerHtml.match(/<p[ >]/gi)||[]).length>=3 ? 'manner-cols' : 'manner-single'}">${rteSanitize(mannerHtml)}</div>`}
   </div>`;
 }
 /* 설명서 네비 */
