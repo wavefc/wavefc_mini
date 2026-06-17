@@ -1081,7 +1081,6 @@ function pageHome(){
         ${detail}
       </div>
     </div>
-    ${teamCharCards()}
     <div class="guest-h">📝 일촌평 (${DATA.comments.length})</div>
     ${form}
     <div class="guest-list" style="margin-top:8px;">${list}</div>`;
@@ -1706,14 +1705,18 @@ function pageAttend(){
   // 사용 가능한 월 목록 (최신순)
   const monthSet=[];
   allSessions.forEach(s=>{ const k=attMonthKey(s.date); if(!monthSet.includes(k)) monthSet.push(k); });
+  // 현재 달 키 (예: '2026-6')
+  const nowKey=(new Date().getFullYear())+'-'+(new Date().getMonth()+1);
+  // 드롭다운 월 목록에 현재 달이 없으면 추가
+  if(!monthSet.includes(nowKey)) monthSet.push(nowKey);
   monthSet.sort((a,b)=>{
     const pa=a.split('-').map(Number), pb=b.split('-').map(Number);
     return (pb[0]*100+pb[1])-(pa[0]*100+pa[1]);
   });
-  // 기본 선택월: 미설정이면 최신월
+  // 기본 선택월: 미설정이면 현재 달
   let curMonth=attMonth;
   if(attViewMode==='month' && (!curMonth || !monthSet.includes(curMonth))){
-    curMonth=monthSet[0]||(new Date().getFullYear()+'-'+(new Date().getMonth()+1));
+    curMonth=nowKey;
   }
 
   // 필터링된 세션
@@ -1732,6 +1735,8 @@ function pageAttend(){
 
   function markHtml(state){
     if(state==='O') return '<span style="color:#2e8b3d;font-weight:600;font-size:20px;">○</span>';
+    if(state==='E') return '<span style="color:#7b3fb5;font-weight:700;font-size:13px;">체험</span>';
+    if(state==='A') return '<span style="color:#d40000;font-weight:700;font-size:13px;">무단</span>';
     if(state==='R') return '<span style="color:#9aa6ae;font-size:13px;">휴식중</span>';
     return '<span style="color:#c0392b;font-weight:600;font-size:20px;">×</span>';
   }
@@ -1742,6 +1747,8 @@ function pageAttend(){
       let raw=(s.present&&s.present[name]);
       let state;
       if(raw===true) state='O';
+      else if(raw==='E') state='E';
+      else if(raw==='A') state='A';
       else if(raw==='R') state='R';
       else if(raw===false||raw==='X') state='X';
       else state=isRest?'R':'X';
@@ -1750,9 +1757,16 @@ function pageAttend(){
     let oCnt=0, denom=0;
     sessions.forEach(s=>{
       const raw=(s.present&&s.present[name]);
-      const st = raw===true?'O':(raw==='R'?'R':(raw===false||raw==='X'?'X':(isRest?'R':'X')));
-      if(st==='R') return;
-      denom++; if(st==='O') oCnt++;
+      let st;
+      if(raw===true) st='O';
+      else if(raw==='E') st='E';
+      else if(raw==='A') st='A';
+      else if(raw==='R') st='R';
+      else if(raw===false||raw==='X') st='X';
+      else st=isRest?'R':'X';
+      if(st==='R') return; // 휴식은 분모 제외
+      denom++;
+      if(st==='O'||st==='E') oCnt++; // 체험은 출석으로 인정 (무단결석은 X와 함께 결석 처리)
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
     return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(name)}</td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
@@ -1785,20 +1799,24 @@ function pageAttend(){
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th style="font-size:16px;">이름</th>${dateHeads||'<th>해당 기간 기록 없음</th>'}<th style="font-size:16px;">출석률</th></tr>
     ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → 휴식중 순으로 바뀝니다</div>':''}`;
+    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → <span style="color:#d40000;">무단</span>(무단결석) → <span style="color:#7b3fb5;">체험</span>(체험) → 휴식중 순으로 바뀝니다. 체험은 출석률에 포함, 무단결석은 결석으로 계산됩니다.</div>':''}`;
 }
 function setAttView(mode){ attViewMode=mode; renderPage('attend'); }
 function attDateKey(d){
-  // "6/9" "6/14" "2026-6-2" 등에서 정렬용 숫자 추출
+  // "6/9" "6/14" "2026-6-2" 등에서 정렬·비교용 YYYYMMDD 숫자 추출
   const s=String(d).trim();
   const parts=s.split(/[\/\.\-]/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  const yr=new Date().getFullYear();
   if(parts.length>=3){ // 연-월-일
     return parts[0]*10000+parts[1]*100+parts[2];
   }
-  if(parts.length===2){ // 월/일
-    return parts[0]*100+parts[1];
+  if(parts.length===2){ // 월/일 → 올해 연도 보정
+    return yr*10000+parts[0]*100+parts[1];
   }
-  return parts[0]||0;
+  if(parts.length===1){ // 일만 → 올해/이번달 보정
+    return yr*10000+(new Date().getMonth()+1)*100+parts[0];
+  }
+  return 0;
 }
 function sortAttendance(arr){
   return arr.slice().sort((a,b)=>attDateKey(a.date)-attDateKey(b.date));
@@ -1816,10 +1834,12 @@ function cycleAttend(si,name){
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   const cur=arr[si].present[name];
-  // 현재 상태 → 다음 상태: O(true) → X('X') → 휴식('R') → O
+  // 순환: O(true) → X('X',결석) → A('A',무단결석) → E('E',체험) → R('R',휴식) → O
   let next;
   if(cur===true) next='X';
-  else if(cur==='X'||cur===false) next='R';
+  else if(cur==='X'||cur===false) next='A';
+  else if(cur==='A') next='E';
+  else if(cur==='E') next='R';
   else if(cur==='R') next=true;
   else next=true; // 미설정 → O
   arr[si].present[name]=next;
