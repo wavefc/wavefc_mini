@@ -231,6 +231,21 @@
   /* 훈련일지 게시판 */
   .diary-list{display:flex;flex-direction:column;gap:8px;}
   .diary-item{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  /* 하트 & 댓글 박스 */
+  .react-box{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;}
+  .react-bar{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .heart-btn{background:#fff;border:1px solid var(--line);border-radius:16px;padding:3px 12px;cursor:pointer;font-size:14px;color:#c0392b;}
+  .heart-btn.on{background:#ffe9ef;border-color:#ffb3c8;}
+  .heart-btn b{font-size:13px;}
+  .react-cc{font-size:12px;color:#8aa;}
+  .rc-list{margin:4px 0;}
+  .rc-row{font-size:13px;color:#333;padding:4px 6px;border-radius:4px;background:#f6f9fb;margin-bottom:3px;line-height:1.5;}
+  .rc-anon{font-size:11px;color:#5aa9e6;font-weight:700;margin-right:3px;}
+  .rc-date{font-size:10px;color:#aab;margin-left:5px;}
+  .rc-del{font-size:10px;color:#c0392b;cursor:pointer;margin-left:6px;}
+  .rc-input{display:flex;gap:4px;margin-top:4px;}
+  .rc-input input{flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:13px;}
+  .rc-input button{background:#5aa9e6;color:#fff;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:13px;}
   .diary-item.editing{border:2px solid var(--frame);padding:10px 12px;}
   .diary-head{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;}
   .diary-head:hover{background:#f0f8ff;}
@@ -1055,7 +1070,7 @@ function pageHome(){
   if(isMember()){
     form=`<div class="cmt-form">
       <div class="faces" id="facePick">${FACES.map(f=>`<span onclick="pickFace('${f}',this)" class="${f===selFace?'sel':''}">${f}</span>`).join('')}</div>
-      <div class="row"><input id="cmtText" maxlength="40" placeholder="익명 한 줄 일촌평 (40자)"><button onclick="addComment()">달기</button></div>
+      <div class="row"><input id="cmtText" maxlength="40" placeholder="익명 한 줄 일촌평 (40자)"><button onclick="addComment()">확인</button></div>
     </div>`;
   }else{
     form=`<div class="cmt-locked">🔒 일촌평은 로그인한 회원만 달 수 있어요</div>`;
@@ -1278,6 +1293,65 @@ function onTacticFile(ev){
 var noticeEditing=null;   // 인라인 편집 중인 공지 인덱스
 var noticeWriting=false;  // 글쓰기 폼 펼침 여부
 var noticeOpen=null;      // 목록에서 펼쳐 본 공지 인덱스(_i)
+// ===== 익명 하트 & 댓글 (공지·훈련일지 공통) =====
+// node: 'notices' | 'logs', idx: 배열 인덱스. 글의 ts를 좋아요 중복방지 키로 사용
+function _reactArr(node){ return (node==='logs'?(DATA.logs||[]):(DATA.notices||[])); }
+function _likedKey(node,ts){ return 'wavefc_like_'+node+'_'+ts; }
+function hasLiked(node,ts){ try{ return localStorage.getItem(_likedKey(node,ts))==='1'; }catch(e){ return false; } }
+function toggleLike(node,idx){
+  const arr=JSON.parse(JSON.stringify(_reactArr(node)));
+  const item=arr[idx]; if(!item) return;
+  const ts=item.ts||0;
+  item.likes=item.likes||0;
+  const key=_likedKey(node,ts);
+  if(hasLiked(node,ts)){ item.likes=Math.max(0,item.likes-1); try{localStorage.removeItem(key);}catch(e){} }
+  else { item.likes=item.likes+1; try{localStorage.setItem(key,'1');}catch(e){} }
+  ROOT.child(node).set(arr);
+}
+function addReactComment(node,idx){
+  const inp=document.getElementById('rc_'+node+'_'+idx);
+  if(!inp) return;
+  const txt=inp.value.trim(); if(!txt) return;
+  const arr=JSON.parse(JSON.stringify(_reactArr(node)));
+  const item=arr[idx]; if(!item) return;
+  item.comments=item.comments||[];
+  item.comments.push({text:txt.slice(0,200), ts:Date.now()});
+  ROOT.child(node).set(arr);
+}
+function delReactComment(node,idx,ci){
+  if(rankOf(me)!=='exec') return;
+  const arr=JSON.parse(JSON.stringify(_reactArr(node)));
+  const item=arr[idx]; if(!item||!item.comments) return;
+  item.comments.splice(ci,1);
+  ROOT.child(node).set(arr);
+}
+// 글 하단에 붙는 하트+댓글 UI (idx는 DATA[node] 배열의 실제 인덱스)
+function reactBox(node,idx){
+  const item=_reactArr(node)[idx]; if(!item) return '';
+  const ts=item.ts||0;
+  const likes=item.likes||0;
+  const liked=hasLiked(node,ts);
+  const cmts=item.comments||[];
+  const isExec=rankOf(me)==='exec';
+  const cmtRows=cmts.map((c,ci)=>{
+    const t=c.ts?new Date(c.ts):null;
+    const dd=t?`${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
+    return `<div class="rc-row"><span class="rc-anon">익명</span> ${esc(c.text)}
+      <span class="rc-date">${dd}</span>
+      ${isExec?`<span class="rc-del" onclick="delReactComment('${node}',${idx},${ci})">삭제</span>`:''}</div>`;
+  }).join('');
+  return `<div class="react-box">
+    <div class="react-bar">
+      <button class="heart-btn ${liked?'on':''}" onclick="toggleLike('${node}',${idx})">${liked?'❤️':'🤍'} <b>${likes}</b></button>
+      <span class="react-cc">💬 ${cmts.length}</span>
+    </div>
+    <div class="rc-list">${cmtRows}</div>
+    <div class="rc-input">
+      <input id="rc_${node}_${idx}" maxlength="200" placeholder="익명 댓글 달기…" onkeydown="if(event.key==='Enter')addReactComment('${node}',${idx})">
+      <button onclick="addReactComment('${node}',${idx})">확인</button>
+    </div>
+  </div>`;
+}
 function pageNotice(){
   const isExec=rankOf(me)==='exec';
   const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
@@ -1336,6 +1410,7 @@ function pageNotice(){
       <div class="qna-thread" style="margin-bottom:14px;">
         <div class="qna-q">${featured.pinned?'📌 ':'📢 '}${esc(featured.title||'')}<span class="qna-src" style="float:right;">${dstr(featured)}</span></div>
         <div class="qna-a">${bodyRender(featured.text||'')}</div>
+        ${reactBox('notices',featured._i)}
         ${adminBtns(featured)}
       </div>`;
     }
@@ -1353,7 +1428,7 @@ function pageNotice(){
           ${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}
           <span class="qna-src" style="float:right;">${dstr(n)}</span>
         </div>
-        ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${adminBtns(n)}`:''}
+        ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
       </div>`;
   }).join('');
   const moreNote = rest.length>5 ? `<div style="font-size:11px;color:#8aa;text-align:center;padding:6px;">외 ${rest.length-5}개의 공지가 더 있어요.</div>` : '';
@@ -1464,6 +1539,7 @@ function pageDiary(){
         ${l.date?'<div class="diary-date">📅 '+esc(l.date)+'</div>':''}
         <div style="line-height:1.7;">${bodyRender(l.text||'')}</div>
         ${imgHtml}
+        ${reactBox('logs',l._i)}
         ${isExec?`<div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
           <button class="qna-send sm" onclick="editDiary(${l._i})">수정</button>
           <button class="qna-send sm" style="background:#c0392b;" onclick="delDiary(${l._i})">삭제</button>
