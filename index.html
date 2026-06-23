@@ -89,13 +89,37 @@
   .mr-img-head{background:#2a3b47;color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;padding:5px 8px;border:2px solid #1c2a33;border-bottom:none;}
   .mr-img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#0d1b2a;border:2px solid #1c2a33;display:block;}
   .mr-img-wrap{position:relative;}
+  /* 미니룸 클릭 핫스팟 */
+  .room-hotspot{position:absolute;transform:translate(-50%,-50%);z-index:5;cursor:pointer;}
+  .room-dot{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);border:2px solid #3aa0d8;color:#2176a8;font-weight:800;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.4);animation:roomPulse 1.8s ease-in-out infinite;}
+  @keyframes roomPulse{0%,100%{box-shadow:0 0 0 0 rgba(58,160,216,.5);}50%{box-shadow:0 0 0 6px rgba(58,160,216,0);}}
+  .room-bubble{position:absolute;left:50%;bottom:130%;transform:translateX(-50%);background:#fff;border:2px solid #3aa0d8;border-radius:10px;padding:10px 12px;width:180px;box-shadow:0 3px 10px rgba(0,0,0,.3);z-index:10;}
+  .room-bubble:after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#3aa0d8;}
+  .room-bubble-text{font-size:13px;color:#333;line-height:1.5;}
+  .room-bubble-x{position:absolute;top:4px;right:6px;cursor:pointer;color:#999;font-size:12px;}
+  .room-bubble-edit{margin-top:8px;font-size:11px;background:#3aa0d8;color:#fff;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;}
+  /* 활동 레벨 시스템 */
+  .lv-guide{background:#f0f8ff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#444;}
+  .lv-guide-faces{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;justify-content:center;}
+  .lv-guide-face{text-align:center;}
+  .lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+  .lv-card{position:relative;border:2px solid var(--line);border-radius:10px;background:#fff;padding:12px 8px;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.06);}
+  .lv-card.me{border-color:#3aa0d8;background:#f5fbff;}
+  .lv-crown{position:absolute;top:6px;right:8px;font-size:18px;}
+  .lv-face{display:flex;justify-content:center;margin-bottom:4px;}
+  .lv-name{font-weight:800;font-size:15px;color:#333;}
+  .lv-badge{display:inline-block;background:#eaf4fb;color:#2176a8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;margin:4px 0;}
+  .lv-bar{width:100%;height:7px;background:#e9eef2;border-radius:4px;overflow:hidden;margin:5px 0 3px;}
+  .lv-bar-in{height:100%;background:linear-gradient(90deg,#3aa0d8,#7cd0ff);border-radius:4px;}
+  .lv-score{font-size:11px;color:#8aa;}
   /* 오늘의 깜짝 퀴즈 */
   .quiz-box{margin-top:8px;border:2px solid #f0a500;border-radius:8px;background:#fffdf5;padding:10px 12px;}
   .quiz-h{font-weight:700;color:#c8870a;font-size:14px;margin-bottom:6px;}
   .quiz-edit-btn{float:right;font-size:11px;font-weight:600;color:#fff;background:#f0a500;border-radius:10px;padding:2px 8px;cursor:pointer;}
   .quiz-q{font-size:14px;font-weight:600;color:#333;margin:4px 0 8px;line-height:1.5;}
   .quiz-opts{display:flex;flex-direction:column;gap:6px;}
-  .quiz-opts.ox{flex-direction:row;gap:10px;}
+  .quiz-opts.ox{flex-direction:row;gap:14px;justify-content:center;}
+  .quiz-opt.ox-btn{width:88px;height:88px;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center;padding:0;line-height:1;}
   .quiz-opt{text-align:left;background:#fff;border:1px solid #e0d3a8;border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px;color:#444;transition:.1s;}
   .quiz-opt:hover{background:#fff6e0;}
   .quiz-opt.correct{background:#e7f7ea;border-color:#2e8b3d;color:#2e8b3d;font-weight:700;}
@@ -442,7 +466,7 @@
     <div class="left panel">
       <div class="head">
         <div class="today">TODAY <b id="todayCnt">1</b> | TOTAL <span id="totalCnt">1</span></div>
-        <div class="logo">WAVE FC</div>
+        <div class="logo" onclick="go('home')" style="cursor:pointer;" title="홈으로">WAVE FC</div>
       </div>
       <div class="mainimg-wrap">
         <img class="mainimg" id="mainImg" alt="대표 이미지" src="">
@@ -462,14 +486,14 @@
       <button class="tab-btn active" data-page="home" onclick="go('home',this)">홈</button>
       <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
       <button class="tab-btn" data-page="notice" onclick="go('notice',this)">공지사항</button>
-      <button class="tab-btn" data-page="diary" onclick="go('diary',this)">훈련일지<span class="lock" id="lk1">🔒</span></button>
       <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정안내<span class="lock" id="lk2">🔒</span></button>
+      <button class="tab-btn" data-page="diary" onclick="go('diary',this)">훈련일지<span class="lock" id="lk1">🔒</span></button>
+      <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
       <button class="tab-btn" data-page="attend" onclick="go('attend',this)">출석현황<span class="lock" id="lk4">🔒</span></button>
       <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
       <button class="tab-btn" data-page="activity" onclick="go('activity',this)">활동현황<span class="lock" id="lk5">🔒</span></button>
-      <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
       <button class="tab-btn" data-page="quiz" onclick="go('quiz',this)">깜짝퀴즈</button>
-      <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
+      <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
       <div class="minicards">
         <div class="mc-title">WAVE 더 구경하기</div>
         <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener">📷 인스타</a>
@@ -705,6 +729,100 @@ const CARD_CHAR_BLUE="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAAFoCAYA
 function miniRoomChars(){
   return '';
 }
+// ===== 미니룸 클릭 말풍선 (핫스팟) =====
+let roomTipOpen=null; // 열린 팁 인덱스
+function roomHotspots(){
+  const tips=DATA.roomTips||DEFAULT.roomTips;
+  const lvl=adminLevel(); // 1,2 관리자면 수정 가능
+  const canEdit=(lvl===1||lvl===2);
+  return tips.map((t,i)=>{
+    const open=roomTipOpen===i;
+    const bubble = open ? `<div class="room-bubble" onclick="event.stopPropagation();">
+        <span class="room-bubble-x" onclick="roomTipOpen=null;renderPage('home');">✕</span>
+        <div class="room-bubble-text">${esc(t.text||'')}</div>
+        ${canEdit?`<button class="room-bubble-edit" onclick="editRoomTip(${i})">✏ 문구 수정</button>`:''}
+      </div>` : '';
+    return `<div class="room-hotspot" style="left:${t.x}%;top:${t.y}%;" onclick="toggleRoomTip(${i})" title="${esc(t.label||'')}">
+      <span class="room-dot">?</span>
+      ${bubble}
+    </div>`;
+  }).join('');
+}
+function toggleRoomTip(i){ roomTipOpen=(roomTipOpen===i)?null:i; renderPage('home'); }
+function editRoomTip(i){
+  const lvl=adminLevel(); if(lvl!==1&&lvl!==2) return;
+  const tips=(DATA.roomTips||DEFAULT.roomTips).slice();
+  const cur=tips[i]; if(!cur) return;
+  const nv=prompt('말풍선 문구를 입력하세요:', cur.text||'');
+  if(nv===null) return;
+  tips[i]=Object.assign({},cur,{text:nv});
+  ROOT.child('roomTips').set(tips);
+}
+// ===== 활동 점수 & 레벨 시스템 =====
+// 활동 1건당 1점. 로그인 사용자만 기록됨.
+function logActivity(type){
+  if(!me) return; // 비로그인은 점수 없음
+  const arr=(DATA.activity_log||[]).slice();
+  arr.push({user:me, type:type, ts:Date.now()});
+  ROOT.child('activity_log').set(arr);
+}
+// 좋아요 취소 시 최근 활동 1건 회수
+function revokeActivity(type){
+  if(!me) return;
+  const arr=(DATA.activity_log||[]).slice();
+  for(let i=arr.length-1;i>=0;i--){ if(arr[i].user===me && arr[i].type===type){ arr.splice(i,1); break; } }
+  ROOT.child('activity_log').set(arr);
+}
+// 사용자별 활동 점수 합산
+function activityScore(user){
+  return (DATA.activity_log||[]).filter(r=>r.user===user).length;
+}
+// 점수 → 레벨 (레벨업 구간)
+// Lv1:0~2, Lv2:3~5, Lv3:6~9, Lv4:10~14, Lv5~11: 머리색(빨주노초파남보), Lv12: 무지개
+const LEVEL_THRESHOLDS=[0,3,6,10,15,21,28,36,45,55,66,78]; // index=레벨-1
+function scoreToLevel(score){
+  let lv=1;
+  for(let i=0;i<LEVEL_THRESHOLDS.length;i++){ if(score>=LEVEL_THRESHOLDS[i]) lv=i+1; }
+  return lv;
+}
+function nextLevelInfo(score){
+  const lv=scoreToLevel(score);
+  if(lv>=LEVEL_THRESHOLDS.length) return {lv, need:0, next:null};
+  const next=LEVEL_THRESHOLDS[lv];
+  return {lv, need:next-score, next};
+}
+// 레벨별 얼굴 SVG (대머리+눈 → 눈코 → 눈코입 → 검정머리 → 무지개 단계)
+function levelFace(level, size){
+  size=size||60;
+  const HAIR=['none','none','none','#1a1a1a','#e8453c','#f08a00','#f5d400','#2e9e4a','#2a7de1','#28349e','#7b3fb5','rainbow'];
+  // level 1~12
+  const lv=Math.max(1,Math.min(12,level));
+  const hair=HAIR[lv-1];
+  const showNose = lv>=2;
+  const showMouth = lv>=3;
+  // 머리: lv1~3 대머리, lv4부터 머리카락
+  let hairSvg='';
+  if(hair==='rainbow'){
+    hairSvg=`<defs><linearGradient id="rg${lv}" x1="0" x2="1"><stop offset="0" stop-color="#e8453c"/><stop offset="0.2" stop-color="#f08a00"/><stop offset="0.4" stop-color="#f5d400"/><stop offset="0.6" stop-color="#2e9e4a"/><stop offset="0.8" stop-color="#2a7de1"/><stop offset="1" stop-color="#7b3fb5"/></linearGradient></defs>
+      <path d="M16 34 Q16 8 50 8 Q84 8 84 34 Q84 22 50 20 Q16 22 16 34Z" fill="url(#rg${lv})"/>
+      <ellipse cx="50" cy="22" rx="36" ry="20" fill="url(#rg${lv})"/>`;
+  } else if(hair!=='none'){
+    hairSvg=`<path d="M18 36 Q18 10 50 10 Q82 10 82 36 Q82 24 50 22 Q18 24 18 36Z" fill="${hair}"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="56" rx="32" ry="34" fill="#ffe0c2" stroke="#e0b894" stroke-width="1.5"/>
+    ${hairSvg}
+    <circle cx="38" cy="54" r="4" fill="#222"/>
+    <circle cx="62" cy="54" r="4" fill="#222"/>
+    ${showNose?'<path d="M50 60 L47 67 L53 67 Z" fill="#e0a878"/>':''}
+    ${showMouth?'<path d="M40 74 Q50 82 60 74" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round"/>':''}
+    ${lv>=2?'<circle cx="32" cy="64" r="4" fill="#ffb3b3" opacity="0.6"/><circle cx="68" cy="64" r="4" fill="#ffb3b3" opacity="0.6"/>':''}
+  </svg>`;
+}
+function levelName(level){
+  const names=['새내기','루키','꿈나무','새싹','빨강','주황','노랑','초록','파랑','남색','보라','무지개'];
+  return 'Lv.'+level+' '+(names[Math.max(0,Math.min(11,level-1))]||'');
+}
 // ===== 오늘의 깜짝 퀴즈 =====
 let quizPicked=null;   // 사용자가 고른 보기(인덱스 또는 'O'/'X')
 let quizRevealed=false;// 정답 공개 여부
@@ -713,6 +831,7 @@ let videoCatFilter='전체'; // 참고영상 카테고리 필터
 let videoSearch='';        // 참고영상 검색어
 let videoPage=0;           // 일반영상 페이지(6개씩)
 let shortsPage=0;          // 숏츠 페이지(6개씩)
+let videoWriting=false;    // 참고영상 추가 폼 펼침
 function todayQuizIndex(){
   const qs=DATA.quizzes||[];
   if(!qs.length) return -1;
@@ -800,7 +919,7 @@ function quizCard(){
         else if(v===shownPicked) cls+=' wrong';
       }
       const clickable = (!shown && me) ? `onclick="pickQuiz('${v}')"` : (!me?`onclick="alert('로그인하면 퀴즈에 참여하고 기록이 남아요!')"`:'');
-      opts+=`<button class="${cls}${shown?' locked':''}" style="font-size:20px;font-weight:800;width:60px;" ${clickable}>${v}</button>`;
+      opts+=`<button class="${cls} ox-btn${shown?' locked':''}" ${clickable}>${v}</button>`;
     });
     opts=`<div class="quiz-opts ox">${opts}</div>`;
   }else{
@@ -961,9 +1080,12 @@ function pageVideo(){
   const cats=DATA.videoCats||DEFAULT.videoCats;
   const allVids=(DATA.videos||[]).map((v,i)=>Object.assign({},v,{_i:i}));
 
-  // 관리자 등록 폼
+  // 관리자 등록 폼 (관리자1만, 토글로 펼침 — 훈련일지 글쓰기 방식)
   const catOpts=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  const addBox = isExec ? `
+  const writeToggle = isExec ? `<div style="text-align:right;margin-bottom:10px;">
+      <button class="qna-send sm" onclick="toggleVideoWrite()">${videoWriting?'✕ 닫기':'🎬 영상 추가'}</button>
+    </div>` : '';
+  const addBox = (isExec && videoWriting) ? `
     <div class="qna-ask" style="margin-bottom:14px;">
       <div class="qna-ask-h">🎬 참고영상 추가</div>
       <input id="vdUrl" class="qna-input" style="margin-bottom:6px;" placeholder="유튜브 주소 붙여넣기 (일반영상/숏츠 모두 가능)">
@@ -1062,6 +1184,7 @@ function pageVideo(){
     : '';
 
   return `<div class="page-h">🎬 참고영상</div>
+    ${writeToggle}
     ${addBox}
     ${filterBar}
     <div id="videoBody">
@@ -1075,6 +1198,7 @@ function rerenderVideo(){
     const s=document.getElementById('vdSearch'); if(s){ s.focus(); s.setSelectionRange(s.value.length,s.value.length); } }
 }
 function setVideoCat(c){ videoCatFilter=c; videoPage=0; shortsPage=0; rerenderVideo(); }
+function toggleVideoWrite(){ videoWriting=!videoWriting; rerenderVideo(); }
 function goVideoPage(p){ videoPage=p; rerenderVideo(); }
 function goShortsPage(p){ shortsPage=p; rerenderVideo(); }
 function moveVideoCat(i,newCat){
@@ -1101,6 +1225,7 @@ function addVideo(){
   }
   const arr=(DATA.videos||[]).slice();
   arr.push({url, title, cat:cat||'기본', ts:Date.now()});
+  videoWriting=false;
   ROOT.child('videos').set(arr);
 }
 function delVideo(i){
@@ -1206,8 +1331,16 @@ const DEFAULT={
     {type:'ox', q:"풋살은 한 팀이 11명으로 경기한다.", answer:'X', ts:0}
   ],
   quiz_records:[],
+  activity_log:[],
   videos:[],
-  videoCats:["기초","기본","응용","경기"]
+  videoCats:["기초","기본","응용","경기"],
+  roomTips:[
+    {x:24, y:30, label:"엠블럼", text:"WAVE FC 엠블럼! 우리 팀의 상징이에요 🌊"},
+    {x:50, y:23, label:"유니폼", text:"등번호 유니폼! 너의 번호는 몇 번? ⚽"},
+    {x:52, y:42, label:"벤치", text:"경기 전 작전 회의는 여기 벤치에서! 📋"},
+    {x:30, y:60, label:"가방", text:"풋살화 잊지 말고 챙기기! 👟"},
+    {x:62, y:62, label:"센터로고", text:"오늘도 다 같이 무브무브! 💙"}
+  ]
 };
 let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
@@ -1272,8 +1405,10 @@ ROOT.on('value',snap=>{
     tacticImgs:migrateTactics(v),
     quizzes:(Array.isArray(v.quizzes)?v.quizzes:DEFAULT.quizzes),
     quiz_records:(Array.isArray(v.quiz_records)?v.quiz_records:[]),
+    activity_log:(Array.isArray(v.activity_log)?v.activity_log:[]),
     videos:(Array.isArray(v.videos)?v.videos:[]),
-    videoCats:(Array.isArray(v.videoCats)&&v.videoCats.length?v.videoCats:DEFAULT.videoCats)};
+    videoCats:(Array.isArray(v.videoCats)&&v.videoCats.length?v.videoCats:DEFAULT.videoCats),
+    roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips)};
   }
   setStatus(true);renderAll();
 },()=>setStatus(false));
@@ -1559,6 +1694,7 @@ function pageHome(){
         <div class="mr-img-wrap">
           <img class="mr-img" id="mrImg" src="${(DATA.images[imgIndex]||DEFAULT.images[0]).url}" alt="미니룸">
           ${miniRoomChars()}
+          ${roomHotspots()}
           ${bubbleHtml}
         </div>
         ${quizCard()}
@@ -1581,6 +1717,7 @@ function addComment(){
   if(!t)return;
   const arr=DATA.comments.slice();
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
+  logActivity('comment');
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
 }
@@ -1777,8 +1914,8 @@ function toggleLike(node,idx){
   const ts=item.ts||0;
   item.likes=item.likes||0;
   const key=_likedKey(node,ts);
-  if(hasLiked(node,ts)){ item.likes=Math.max(0,item.likes-1); try{localStorage.removeItem(key);}catch(e){} }
-  else { item.likes=item.likes+1; try{localStorage.setItem(key,'1');}catch(e){} }
+  if(hasLiked(node,ts)){ item.likes=Math.max(0,item.likes-1); try{localStorage.removeItem(key);}catch(e){} revokeActivity('like'); }
+  else { item.likes=item.likes+1; try{localStorage.setItem(key,'1');}catch(e){} logActivity('like'); }
   ROOT.child(node).set(arr);
 }
 function addReactComment(node,idx){
@@ -1789,6 +1926,7 @@ function addReactComment(node,idx){
   const item=arr[idx]; if(!item) return;
   item.comments=item.comments||[];
   item.comments.push({text:txt.slice(0,200), ts:Date.now()});
+  logActivity(node==='logs'?'feedback':'reply');
   ROOT.child(node).set(arr);
 }
 function delReactComment(node,idx,ci){
@@ -2469,22 +2607,39 @@ function pageMember(){
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 function pageActivity(){
-  // 로그인 가입 회원들의 활동 현황
+  // 가입 회원들의 활동 레벨 (임원/회원 구분 없이 Lv로만 표시)
   const approvedUsers=Object.entries(DATA.users)
     .filter(([k,u])=>u.approved)
-    .map(([k,u])=>({name:u.name,rank:u.role==='exec'?'exec':'member'}));
-  approvedUsers.sort((a,b)=>(a.rank==='exec'?0:1)-(b.rank==='exec'?0:1));
-  const cards=approvedUsers.map(m=>`
-    <div class="member-card ${m.rank==='exec'?'is-exec':''}">
-      <div class="av">${rankImg(m.rank,40)}</div>
-      <div class="nm">${esc(m.name)}</div>
-      <div class="po">${RANK_NAME[m.rank]}</div>
-    </div>`).join('');
-  const legend=`<div class="rank-legend">
-    ${rankImg('exec',18)} 임원 &nbsp; ${rankImg('member',18)} 일반 회원 &nbsp; ${rankImg('guest',18)} 방문객</div>`;
+    .map(([k,u])=>({name:u.name, score:activityScore(u.name)}));
+  // 점수 높은 순(레벨업한 사람이 위로)
+  approvedUsers.sort((a,b)=> b.score-a.score || String(a.name).localeCompare(String(b.name),'ko'));
+
+  const cards=approvedUsers.map((m,rank)=>{
+    const lv=scoreToLevel(m.score);
+    const info=nextLevelInfo(m.score);
+    const isMe = me && m.name===me;
+    const crown = rank===0 && m.score>0 ? '<span class="lv-crown">👑</span>' : '';
+    return `<div class="lv-card${isMe?' me':''}">
+      ${crown}
+      <div class="lv-face">${levelFace(lv,72)}</div>
+      <div class="lv-name">${esc(m.name)}</div>
+      <div class="lv-badge">${levelName(lv)}</div>
+      <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/(info.next-(LEVEL_THRESHOLDS[lv-1]||0)))*100):100}%;"></div></div>
+      <div class="lv-score">${m.score}점${info.next?` · 다음 레벨까지 ${info.need}점`:' · 최고 레벨!'}</div>
+    </div>`;
+  }).join('');
+
+  // 레벨 안내(진화 단계)
+  const guide=`<div class="lv-guide">
+    <b>🎮 레벨은 이렇게 올라가요!</b> 일촌평·댓글·좋아요·훈련 피드백을 남길 때마다 1점씩 쌓여요.
+    <div class="lv-guide-faces">
+      ${[1,3,4,5,6,7,8,9,10,11,12].map(l=>`<span class="lv-guide-face">${levelFace(l,38)}<br><span style="font-size:10px;color:#8aa;">Lv.${l}</span></span>`).join('')}
+    </div>
+  </div>`;
+
   return `<div class="page-h">🙋 활동 현황 (가입회원 ${approvedUsers.length}명)</div>
-    ${legend}
-    <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 가입 회원이 없어요.</div>'}</div>`;
+    ${guide}
+    <div class="lv-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 가입 회원이 없어요.</div>'}</div>`;
 }
 
 /* ===== QnA (AI 봇 + 미답변 기록) ===== */
