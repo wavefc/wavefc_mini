@@ -19,6 +19,11 @@
     font-weight: normal;
     font-display: swap;
   }
+  @font-face { font-family:'Escoredream'; src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-3Light.woff') format('woff'); font-weight:300; font-display:swap; }
+  @font-face { font-family:'Escoredream'; src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-4Regular.woff') format('woff'); font-weight:normal; font-display:swap; }
+  @font-face { font-family:'Escoredream'; src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-5Medium.woff') format('woff'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'Escoredream'; src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-6Bold.woff') format('woff'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'Escoredream'; src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-7ExtraBold.woff') format('woff'); font-weight:700; font-display:swap; }
   /* WAVE FC 전체 글꼴: Tangba 우선 적용 (숫자 유니폼 등 SVG는 영향 없음) */
   *, *::before, *::after{ font-family:'Tangba','Galmuri11','Galmuri9',monospace !important; }
   /* Tangba는 두께가 두꺼워 보여서 전반적으로 normal로 통일, 강조는 600까지만 */
@@ -85,6 +90,39 @@
   .mr-img-head{background:#2a3b47;color:#fff;font-family:'Galmuri9';font-size:11px;padding:5px 8px;border:2px solid #1c2a33;border-bottom:none;}
   .mr-img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#0d1b2a;border:2px solid #1c2a33;display:block;}
   .mr-img-wrap{position:relative;}
+  /* 오늘의 깜짝 퀴즈 */
+  .quiz-box{margin-top:8px;border:2px solid #f0a500;border-radius:8px;background:#fffdf5;padding:10px 12px;}
+  .quiz-h{font-weight:700;color:#c8870a;font-size:14px;margin-bottom:6px;}
+  .quiz-edit-btn{float:right;font-size:11px;font-weight:600;color:#fff;background:#f0a500;border-radius:10px;padding:2px 8px;cursor:pointer;}
+  .quiz-q{font-size:14px;font-weight:600;color:#333;margin:4px 0 8px;line-height:1.5;}
+  .quiz-opts{display:flex;flex-direction:column;gap:6px;}
+  .quiz-opts.ox{flex-direction:row;gap:10px;}
+  .quiz-opt{text-align:left;background:#fff;border:1px solid #e0d3a8;border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px;color:#444;transition:.1s;}
+  .quiz-opt:hover{background:#fff6e0;}
+  .quiz-opt.correct{background:#e7f7ea;border-color:#2e8b3d;color:#2e8b3d;font-weight:700;}
+  .quiz-opt.wrong{background:#fde9e9;border-color:#c0392b;color:#c0392b;}
+  .quiz-result{margin-top:8px;font-size:13px;padding:6px 8px;border-radius:6px;}
+  .quiz-result.ok{background:#e7f7ea;color:#2e8b3d;}
+  .quiz-result.no{background:#fde9e9;color:#c0392b;}
+  .quiz-retry{margin-top:6px;background:#f0a500;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;}
+  .quiz-admin-row{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px dashed #eee;}
+  .quiz-del{color:#c0392b;cursor:pointer;font-size:11px;}
+  .quiz-add{margin-top:8px;border-top:1px dashed #e0d3a8;padding-top:6px;}
+  .quiz-opt.locked{cursor:default;opacity:.96;}
+  .quiz-opt.locked:hover{background:#fff;}
+  .quiz-opt.locked.correct:hover{background:#e7f7ea;}
+  .quiz-opt.locked.wrong:hover{background:#fde9e9;}
+  .quiz-stat{font-size:13px;background:#f0f8ff;border-radius:6px;padding:8px 10px;margin-bottom:8px;}
+  /* 참고영상 */
+  .video-list{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .video-card{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;}
+  .video-frame{position:relative;width:100%;padding-top:56.25%;background:#000;}
+  .video-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+  .video-meta{padding:8px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .video-title{font-weight:700;font-size:13px;color:#333;flex:1;min-width:0;}
+  .video-link{font-size:12px;color:#c0392b;text-decoration:none;white-space:nowrap;}
+  .video-link:hover{text-decoration:underline;}
+  @media(max-width:760px){ .video-list{grid-template-columns:1fr;} }
   /* 미니룸 캐릭터 레이어 (이미지 위 바닥에 배치) */
   .mr-chars{position:absolute;left:0;right:0;bottom:6px;display:flex;align-items:flex-end;justify-content:center;gap:10px;z-index:2;pointer-events:none;}
   .mr-char{image-rendering:pixelated;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.25));}
@@ -108,6 +146,7 @@
   }
   @keyframes bubblePop{from{transform:translateX(-50%) scale(.6);opacity:0;}to{transform:translateX(-50%) scale(1);opacity:1;}}
   .mr-right{flex:1;min-width:0;border:2px solid #2176a8;background:#eaf4fb;display:flex;flex-direction:column;}
+  .mr-right, .mr-right *{ font-family:'Escoredream','Pretendard',sans-serif !important; }
   .mr-news-h{background:var(--frame);color:#fff;font-family:'Galmuri9';font-size:12px;padding:6px 8px;}
   .feed-list{padding:6px;display:flex;flex-direction:column;gap:4px;}
   .feed-item{background:#fff;border:1px solid var(--line);padding:7px 9px;cursor:pointer;display:flex;gap:6px;align-items:baseline;font-size:13px;}
@@ -414,6 +453,8 @@
       <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
       <button class="tab-btn" data-page="activity" onclick="go('activity',this)">활동현황<span class="lock" id="lk5">🔒</span></button>
       <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
+      <button class="tab-btn" data-page="quiz" onclick="go('quiz',this)">깜짝퀴즈</button>
+      <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
       <div class="minicards">
         <div class="mc-title">WAVE 더 구경하기</div>
         <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener">📷 인스타</a>
@@ -649,8 +690,304 @@ const CARD_CHAR_BLUE="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAAFoCAYA
 function miniRoomChars(){
   return '';
 }
-// ===== 캐릭터 카드 (소개글 아래 노/빨/파 칸) =====
-// 능력치: 패스, 스피드, 슈팅, 드리블, 피지컬 (0~100)
+// ===== 오늘의 깜짝 퀴즈 =====
+let quizPicked=null;   // 사용자가 고른 보기(인덱스 또는 'O'/'X')
+let quizRevealed=false;// 정답 공개 여부
+let quizEditing=false; // 관리자 편집 모드
+function todayQuizIndex(){
+  const qs=DATA.quizzes||[];
+  if(!qs.length) return -1;
+  // 날짜(YYYYMMDD) 기준 고정 인덱스 → 같은 날은 같은 문제
+  const d=new Date();
+  const key=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  return key % qs.length;
+}
+// 퀴즈 고유키: ts가 있으면 ts, 없으면 질문 텍스트
+function quizKey(q){ return q&&q.ts?('t'+q.ts):('q'+(q&&q.q?q.q:'')); }
+// 특정 사용자가 이 퀴즈를 이미 풀었는지 → 기록 객체 반환(없으면 null)
+function myQuizRecord(qk, user){
+  user=user||me; if(!user) return null;
+  const recs=DATA.quiz_records||[];
+  for(let i=recs.length-1;i>=0;i--){ if(recs[i].user===user && recs[i].qk===qk) return recs[i]; }
+  return null;
+}
+function pickQuiz(val){
+  if(quizRevealed) return;
+  const qs=DATA.quizzes||[]; const idx=todayQuizIndex();
+  if(idx<0) return;
+  const q=qs[idx]; const qk=quizKey(q);
+  const correct = (val===q.answer);
+  quizPicked=val; quizRevealed=true;
+  // 로그인 상태이고 아직 기록이 없으면 저장 (한 번만)
+  if(me && !myQuizRecord(qk)){
+    const d=new Date();
+    const dateStr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+    const rec={user:me, qk:qk, q:(q.q||''), type:q.type, picked:val, correct:correct, date:dateStr, ts:Date.now()};
+    const arr=(DATA.quiz_records||[]).slice();
+    arr.push(rec);
+    ROOT.child('quiz_records').set(arr);
+  } else {
+    renderPage('home');
+  }
+}
+function quizCard(){
+  const isExec=rankOf(me)==='exec';
+  const qs=DATA.quizzes||[];
+  const idx=todayQuizIndex();
+
+  // 관리자 편집 모드
+  if(quizEditing && isExec){
+    const rows=qs.map((q,i)=>{
+      const ans=q.type==='ox'?q.answer:(q.options&&q.options[q.answer]!==undefined?(q.answer+1)+'번':'?');
+      return `<div class="quiz-admin-row">
+        <span style="flex:1;">${q.type==='ox'?'[O/X] ':'[객관식] '}${esc((q.q||'').slice(0,24))}${(q.q||'').length>24?'…':''} <b style="color:#2e8b3d;">(정답 ${esc(String(ans))})</b></span>
+        <span class="quiz-del" onclick="delQuiz(${i})">삭제</span>
+      </div>`;
+    }).join('') || '<div style="color:#8aa;font-size:12px;">등록된 퀴즈가 없어요.</div>';
+    return `<div class="quiz-box">
+      <div class="quiz-h">🎯 퀴즈 관리 <span class="quiz-edit-btn" onclick="quizEditing=false;renderPage('home');">✕ 닫기</span></div>
+      <div class="quiz-admin-list">${rows}</div>
+      <div class="quiz-add">
+        <select id="qzType" onchange="renderQuizAddForm()" style="font-size:12px;">
+          <option value="mc">객관식</option>
+          <option value="ox">O/X</option>
+        </select>
+        <div id="qzAddForm"></div>
+      </div>
+    </div>`;
+  }
+
+  if(idx<0){
+    return `<div class="quiz-box">
+      <div class="quiz-h">🎯 오늘의 깜짝 퀴즈${isExec?' <span class="quiz-edit-btn" onclick="quizEditing=true;renderPage(\'home\');">관리</span>':''}</div>
+      <div style="color:#8aa;font-size:13px;padding:10px 4px;">아직 등록된 퀴즈가 없어요.${isExec?' "관리"에서 추가하세요.':''}</div>
+    </div>`;
+  }
+
+  const q=qs[idx];
+  const qk=quizKey(q);
+  // 로그인 사용자가 이미 푼 기록이 있으면: 잠금 + 기록된 답 반영
+  const myRec = me ? myQuizRecord(qk) : null;
+  const locked = !!myRec;          // 이미 푼 상태(다시 못 풀게)
+  const shownPicked = locked ? myRec.picked : quizPicked;
+  const shown = locked || quizRevealed;  // 정답 표시 상태
+
+  let opts='';
+  if(q.type==='ox'){
+    ['O','X'].forEach(v=>{
+      let cls='quiz-opt';
+      if(shown){
+        if(v===q.answer) cls+=' correct';
+        else if(v===shownPicked) cls+=' wrong';
+      }
+      const clickable = (!shown && me) ? `onclick="pickQuiz('${v}')"` : (!me?`onclick="alert('로그인하면 퀴즈에 참여하고 기록이 남아요!')"`:'');
+      opts+=`<button class="${cls}${shown?' locked':''}" style="font-size:20px;font-weight:800;width:60px;" ${clickable}>${v}</button>`;
+    });
+    opts=`<div class="quiz-opts ox">${opts}</div>`;
+  }else{
+    (q.options||[]).forEach((o,i)=>{
+      let cls='quiz-opt';
+      if(shown){
+        if(i===q.answer) cls+=' correct';
+        else if(i===shownPicked) cls+=' wrong';
+      }
+      const clickable = (!shown && me) ? `onclick="pickQuiz(${i})"` : (!me?`onclick="alert('로그인하면 퀴즈에 참여하고 기록이 남아요!')"`:'');
+      opts+=`<button class="${cls}${shown?' locked':''}" ${clickable}>${i+1}. ${esc(o)}</button>`;
+    });
+    opts=`<div class="quiz-opts">${opts}</div>`;
+  }
+
+  let result='';
+  if(shown){
+    const correct = (shownPicked===q.answer);
+    const ansTxt = q.type==='ox' ? q.answer : ((q.answer+1)+'번 · '+esc(q.options[q.answer]||''));
+    result=`<div class="quiz-result ${correct?'ok':'no'}">${correct?'🎉 정답입니다!':'❌ 아쉬워요!'} 정답은 <b>${ansTxt}</b></div>
+      ${locked?'<div style="font-size:11px;color:#8aa;margin-top:4px;">이미 푼 문제예요. 기록은 \'깜짝퀴즈\' 탭에서 볼 수 있어요.</div>':''}`;
+  } else if(!me){
+    result=`<div style="font-size:12px;color:#c8870a;margin-top:6px;">🔑 로그인하면 정답 확인 + 기록이 남아요!</div>`;
+  }
+
+  return `<div class="quiz-box">
+    <div class="quiz-h">🎯 오늘의 깜짝 퀴즈${isExec?' <span class="quiz-edit-btn" onclick="quizEditing=true;renderPage(\'home\');">관리</span>':''}</div>
+    <div class="quiz-q">${esc(q.q||'')}</div>
+    ${opts}
+    ${result}
+  </div>`;
+}
+function renderQuizAddForm(){
+  const t=document.getElementById('qzType'); if(!t) return;
+  const box=document.getElementById('qzAddForm'); if(!box) return;
+  if(t.value==='ox'){
+    box.innerHTML=`<input id="qzQ" placeholder="문장 (예: 풋살은 11명이 한다)" style="width:100%;box-sizing:border-box;font-size:12px;margin:4px 0;">
+      <div style="font-size:12px;margin:2px 0;">정답:
+        <label><input type="radio" name="qzOx" value="O" checked> O</label>
+        <label style="margin-left:8px;"><input type="radio" name="qzOx" value="X"> X</label>
+      </div>
+      <button onclick="addQuizOx()" style="font-size:12px;">퀴즈 추가</button>`;
+  }else{
+    box.innerHTML=`<input id="qzQ" placeholder="질문" style="width:100%;box-sizing:border-box;font-size:12px;margin:4px 0;">
+      <input id="qzO1" placeholder="보기 1" style="width:100%;box-sizing:border-box;font-size:12px;margin:2px 0;">
+      <input id="qzO2" placeholder="보기 2" style="width:100%;box-sizing:border-box;font-size:12px;margin:2px 0;">
+      <input id="qzO3" placeholder="보기 3 (선택)" style="width:100%;box-sizing:border-box;font-size:12px;margin:2px 0;">
+      <input id="qzO4" placeholder="보기 4 (선택)" style="width:100%;box-sizing:border-box;font-size:12px;margin:2px 0;">
+      <div style="font-size:12px;margin:2px 0;">정답 번호:
+        <select id="qzAns" style="font-size:12px;"><option value="0">1번</option><option value="1">2번</option><option value="2">3번</option><option value="3">4번</option></select>
+      </div>
+      <button onclick="addQuizMc()" style="font-size:12px;">퀴즈 추가</button>`;
+  }
+}
+function addQuizMc(){
+  if(rankOf(me)!=='exec') return;
+  const q=document.getElementById('qzQ').value.trim();
+  const os=['qzO1','qzO2','qzO3','qzO4'].map(id=>document.getElementById(id).value.trim()).filter(x=>x);
+  const ans=parseInt(document.getElementById('qzAns').value,10);
+  if(!q) return alert('질문을 입력하세요.');
+  if(os.length<2) return alert('보기를 2개 이상 입력하세요.');
+  if(ans>=os.length) return alert('정답 번호가 보기 개수보다 큽니다.');
+  const arr=(DATA.quizzes||[]).slice();
+  arr.push({type:'mc', q, options:os, answer:ans, ts:Date.now()});
+  ROOT.child('quizzes').set(arr);
+  alert('퀴즈가 추가되었어요!');
+}
+function addQuizOx(){
+  if(rankOf(me)!=='exec') return;
+  const q=document.getElementById('qzQ').value.trim();
+  const r=document.querySelector('input[name="qzOx"]:checked');
+  if(!q) return alert('문장을 입력하세요.');
+  const arr=(DATA.quizzes||[]).slice();
+  arr.push({type:'ox', q, answer:(r?r.value:'O'), ts:Date.now()});
+  ROOT.child('quizzes').set(arr);
+  alert('퀴즈가 추가되었어요!');
+}
+function delQuiz(i){
+  if(rankOf(me)!=='exec') return;
+  if(!confirm('이 퀴즈를 삭제할까요?')) return;
+  const arr=(DATA.quizzes||[]).slice();
+  arr.splice(i,1);
+  ROOT.child('quizzes').set(arr);
+}
+// ===== 깜짝퀴즈 탭: 내 기록 / (관리자1) 전체 기록 =====
+function pageQuiz(){
+  const isAdmin1 = adminLevel()===1;
+  const recs=(DATA.quiz_records||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+  if(!me){
+    return `<div class="page-h">🎯 깜짝퀴즈 기록</div>
+      <div style="padding:20px;color:#8aa;">로그인하면 내가 푼 퀴즈 기록을 볼 수 있어요.<br>홈 화면 왼쪽에서 로그인해주세요.</div>`;
+  }
+
+  // 통계 카드 만들기
+  function statCard(title, list, showUser){
+    const total=list.length;
+    const ok=list.filter(r=>r.correct).length;
+    const rate=total?Math.round(ok/total*100):0;
+    const rows=list.map(r=>{
+      const pickTxt = r.type==='ox' ? r.picked : (typeof r.picked==='number'?(r.picked+1)+'번':r.picked);
+      return `<tr>
+        <td style="font-size:12px;color:#888;white-space:nowrap;">${esc(r.date||'')}</td>
+        ${showUser?`<td style="font-weight:600;white-space:nowrap;">${esc(r.user||'')}</td>`:''}
+        <td style="font-size:13px;">${esc((r.q||'').slice(0,30))}${(r.q||'').length>30?'…':''}</td>
+        <td style="text-align:center;">${r.correct?'<span style="color:#2e8b3d;font-weight:700;">⭕ 정답</span>':'<span style="color:#c0392b;font-weight:700;">❌ 오답</span>'}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="${showUser?4:3}" style="color:#8aa;padding:14px;text-align:center;">아직 푼 퀴즈가 없어요.</td></tr>`;
+    return `
+      <div class="quiz-stat">
+        <b>${title}</b> · 참여 ${total}회 · 정답 ${ok}회 · 정답률 <span style="color:#2e8b3d;font-weight:700;">${rate}%</span>
+      </div>
+      <table class="lst" style="margin-bottom:18px;">
+        <tr><th>날짜</th>${showUser?'<th>이름</th>':''}<th>문제</th><th>결과</th></tr>
+        ${rows}
+      </table>`;
+  }
+
+  // 내 기록
+  const mine=recs.filter(r=>r.user===me);
+  let html=`<div class="page-h">🎯 깜짝퀴즈 기록</div>`;
+  html+=statCard('📌 '+esc(me)+'님의 기록', mine, false);
+
+  // 관리자1: 전체 기록 + 사람별 요약
+  if(isAdmin1){
+    // 사람별 요약
+    const byUser={};
+    recs.forEach(r=>{ (byUser[r.user]=byUser[r.user]||{t:0,o:0}); byUser[r.user].t++; if(r.correct)byUser[r.user].o++; });
+    const summary=Object.keys(byUser).sort((a,b)=>byUser[b].o-byUser[a].o).map(u=>{
+      const s=byUser[u]; const rate=s.t?Math.round(s.o/s.t*100):0;
+      return `<tr><td style="font-weight:600;">${esc(u)}</td><td style="text-align:center;">${s.t}회</td><td style="text-align:center;color:#2e8b3d;font-weight:700;">${s.o}회</td><td style="text-align:center;">${rate}%</td></tr>`;
+    }).join('') || '<tr><td colspan="4" style="color:#8aa;padding:14px;text-align:center;">기록이 없어요.</td></tr>';
+    html+=`<div style="border-top:2px dashed var(--line);margin:18px 0 10px;padding-top:12px;"></div>
+      <div class="quiz-stat" style="background:#fff7e6;"><b>👑 관리자 전용 · 멤버별 정답 요약</b> <span style="font-size:11px;color:#8aa;">(상품 줄 때 참고하세요)</span></div>
+      <table class="lst" style="margin-bottom:18px;">
+        <tr><th>이름</th><th>참여</th><th>정답</th><th>정답률</th></tr>
+        ${summary}
+      </table>`;
+    html+=statCard('📋 전체 기록 (최신순)', recs, true);
+  }
+  return html;
+}
+// ===== 참고영상 (유튜브 임베드) =====
+// 다양한 유튜브 URL에서 영상 ID 추출
+function ytId(url){
+  const s=String(url||'').trim();
+  let m;
+  if((m=s.match(/[?&]v=([A-Za-z0-9_-]{11})/))) return m[1];
+  if((m=s.match(/youtu\.be\/([A-Za-z0-9_-]{11})/))) return m[1];
+  if((m=s.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/))) return m[1];
+  if((m=s.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/))) return m[1];
+  if((m=s.match(/^([A-Za-z0-9_-]{11})$/))) return m[1]; // ID만 입력한 경우
+  return '';
+}
+function pageVideo(){
+  const isExec=rankOf(me)==='exec';
+  const vids=(DATA.videos||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+  const addBox = isExec ? `
+    <div class="qna-ask" style="margin-bottom:14px;">
+      <div class="qna-ask-h">🎬 참고영상 추가</div>
+      <input id="vdUrl" class="qna-input" style="margin-bottom:6px;" placeholder="유튜브 주소 붙여넣기 (예: https://youtu.be/xxxx)">
+      <input id="vdTitle" class="qna-input" style="margin-bottom:6px;" placeholder="영상 제목 (선택)">
+      <button class="qna-send" onclick="addVideo()">영상 등록</button>
+    </div>` : '';
+
+  const cards = vids.map((v,i)=>{
+    const id=ytId(v.url);
+    const realIdx=(DATA.videos||[]).indexOf(v);
+    if(!id){
+      return `<div class="video-card"><div style="padding:14px;color:#c0392b;font-size:13px;">⚠ 유튜브 주소를 인식하지 못했어요: ${esc(v.url||'')}
+        ${isExec?`<span class="quiz-del" onclick="delVideo(${realIdx})">삭제</span>`:''}</div></div>`;
+    }
+    return `<div class="video-card">
+      <div class="video-frame">
+        <iframe src="https://www.youtube.com/embed/${id}" title="${esc(v.title||'참고영상')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+      <div class="video-meta">
+        <span class="video-title">${esc(v.title||'WAVE FC 참고영상')}</span>
+        <a class="video-link" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">▶ 유튜브에서 보기</a>
+        ${isExec?`<span class="quiz-del" onclick="delVideo(${realIdx})">삭제</span>`:''}
+      </div>
+    </div>`;
+  }).join('') || `<div style="color:#8aa;padding:18px;text-align:center;">아직 등록된 참고영상이 없어요.${isExec?' 위에서 유튜브 주소를 등록해보세요.':''}</div>`;
+
+  return `<div class="page-h">🎬 참고영상</div>
+    ${addBox}
+    <div class="video-list">${cards}</div>`;
+}
+function addVideo(){
+  if(rankOf(me)!=='exec') return alert('임원만 영상을 등록할 수 있어요.');
+  const url=document.getElementById('vdUrl').value.trim();
+  const title=document.getElementById('vdTitle').value.trim();
+  if(!url) return alert('유튜브 주소를 입력하세요.');
+  if(!ytId(url)) return alert('유튜브 주소를 인식하지 못했어요.\n예: https://youtu.be/abc123  또는  https://www.youtube.com/watch?v=abc123');
+  const arr=(DATA.videos||[]).slice();
+  arr.push({url, title, ts:Date.now()});
+  ROOT.child('videos').set(arr);
+}
+function delVideo(i){
+  if(rankOf(me)!=='exec') return;
+  if(!confirm('이 영상을 삭제할까요?')) return;
+  const arr=(DATA.videos||[]).slice();
+  arr.splice(i,1);
+  ROOT.child('videos').set(arr);
+}
 const TEAM_CHARS=[
   { img:CARD_CHAR_BROWN, name:'초코', color:'#e0a93b',
     personality:'든든한 살림꾼 · 패스 마스터',
@@ -741,7 +1078,13 @@ const DEFAULT={
   guidePosts:[
     {title:"풋살 기본 규칙",html:"<h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul><h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul><h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>",ts:0}
   ],
-  tacticImgs:[]
+  tacticImgs:[],
+  quizzes:[
+    {type:'mc', q:"WAVE FC는 매주 무슨 요일에 모일까요?", options:["월요일","화요일","목요일","토요일"], answer:1, ts:0},
+    {type:'ox', q:"풋살은 한 팀이 11명으로 경기한다.", answer:'X', ts:0}
+  ],
+  quiz_records:[],
+  videos:[]
 };
 let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
@@ -803,7 +1146,10 @@ ROOT.on('value',snap=>{
     mannerHtml:(v.mannerHtml!==undefined?v.mannerHtml:DEFAULT.mannerHtml),
     tacticImg:(v.tacticImg!==undefined?v.tacticImg:''),
     guidePosts:migrateGuides(v),
-    tacticImgs:migrateTactics(v)};
+    tacticImgs:migrateTactics(v),
+    quizzes:(Array.isArray(v.quizzes)?v.quizzes:DEFAULT.quizzes),
+    quiz_records:(Array.isArray(v.quiz_records)?v.quiz_records:[]),
+    videos:(Array.isArray(v.videos)?v.videos:[])};
   }
   setStatus(true);renderAll();
 },()=>setStatus(false));
@@ -972,7 +1318,9 @@ function renderPage(page){
   else if(page==='member')c.innerHTML=pageMember();
   else if(page==='activity')c.innerHTML=pageActivity();
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
-  if(page==='home')bindCommentForm();
+  else if(page==='quiz')c.innerHTML=pageQuiz();
+  else if(page==='video')c.innerHTML=pageVideo();
+  if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
   return `<div class="locked-msg"><div class="ic">🔒</div>
@@ -1089,6 +1437,7 @@ function pageHome(){
           ${miniRoomChars()}
           ${bubbleHtml}
         </div>
+        ${quizCard()}
       </div>
       <div class="mr-right">
         <div class="mr-news-h">📌 새 소식</div>
