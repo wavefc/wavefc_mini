@@ -591,11 +591,6 @@ OX | 골키퍼는 손을 쓸 수 없다 | X" style="width:100%;box-sizing:border
       <button onclick="document.getElementById('bulkQuiz').value='';" style="background:#9aa6ae;">입력 비우기</button>
     </div>
     <div id="quizListAdmin" style="font-size:10px;margin-top:6px;"></div>
-    <div style="margin-top:8px;padding:8px;background:#eef7ff;border:1px dashed #8ab8e0;border-radius:5px;">
-      <div style="font-size:11px;font-weight:700;color:#2a6aa0;">🔧 오프사이드 퀴즈 기록 정정</div>
-      <div style="font-size:10px;color:#5a7585;margin:3px 0;">박지예·김소연·조은비·안시하 → <b>정답</b>, 조훈지 → <b>오답</b>으로 고치고 점수도 맞춥니다. 한 번만 누르세요.</div>
-      <button onclick="fixOffsideQuiz()" style="width:100%;background:#3a9bd8;">정답/오답 정정 실행</button>
-    </div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🪪 프로필 사진</b> (왼쪽 상단, 미니룸과 별개)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0 4px;">📎 파일 첨부 또는 이미지 주소 중 하나만 쓰면 돼요</div>
@@ -840,7 +835,17 @@ function runMigrations(){
       ROOT.child('_manualAdj1').set(true);
     }catch(e){}
   }
-  // --- (1.6) 오프사이드 퀴즈 기록 정정은 관리 패널의 버튼으로 수동 실행 (fixOffsideQuiz) ---
+  // (오프사이드 등 잘못 출제된 퀴즈 결과는 '깜짝퀴즈' 탭의 관리자1 전체기록에서 결과를 클릭해 정정)
+  // --- (1.6) 기본 샘플 퀴즈 1회 제거 (사용자가 만들지 않은 기본 문제) ---
+  if(!DATA._sampleQuizRemoved){
+    try{
+      const sampleQs=['WAVE FC는 매주 무슨 요일에 모일까요?','풋살은 한 팀이 11명으로 경기한다.','풋살은 한 팀이 11명으로 경기한다'];
+      const qs=(DATA.quizzes||[]);
+      const filtered=qs.filter(q=> sampleQs.indexOf((q.q||'').trim())<0 );
+      if(filtered.length!==qs.length){ ROOT.child('quizzes').set(filtered); }
+      ROOT.child('_sampleQuizRemoved').set(true);
+    }catch(e){}
+  }
   // --- (2) 과거 활동 소급 점수 (한 번만, _backfilled 플래그로 중복 방지) ---
   if(DATA._backfilled) return;
   try{
@@ -1156,31 +1161,37 @@ function delQuiz(i){
 // ===== 깜짝퀴즈 탭: 내 기록 / (관리자1) 전체 기록 =====
 function pageQuiz(){
   const isAdmin1 = adminLevel()===1;
-  const recs=(DATA.quiz_records||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  // 원본 인덱스 보존 후 최신순 정렬 (관리자 정정 시 정확한 레코드 지정용)
+  const recs=(DATA.quiz_records||[]).map((r,i)=>Object.assign({},r,{_i:i})).sort((a,b)=>(b.ts||0)-(a.ts||0));
 
   if(!me){
     return `<div class="page-h">🎯 깜짝퀴즈 기록</div>
       <div style="padding:20px;color:#8aa;">로그인하면 내가 푼 퀴즈 기록을 볼 수 있어요.<br>홈 화면 왼쪽에서 로그인해주세요.</div>`;
   }
 
-  // 통계 카드 만들기
+  // 통계 카드 만들기. showUser=true면 관리자 전체기록(결과 클릭 정정 가능)
   function statCard(title, list, showUser){
     const total=list.length;
     const ok=list.filter(r=>r.correct).length;
     const rate=total?Math.round(ok/total*100):0;
+    const canEdit = showUser && isAdmin1; // 관리자1 전체기록에서만 정정
     const rows=list.map(r=>{
       const pickTxt = r.type==='ox' ? r.picked : (typeof r.picked==='number'?(r.picked+1)+'번':r.picked);
+      const resultCell = canEdit
+        ? `<span onclick="toggleQuizResult(${r._i})" style="cursor:pointer;border-radius:6px;padding:2px 6px;${r.correct?'color:#2e8b3d;background:#eafbef;':'color:#c0392b;background:#fdeaea;'}font-weight:700;" title="클릭하면 정답↔오답이 바뀌어요">${r.correct?'⭕ 정답':'❌ 오답'} ✏️</span>`
+        : (r.correct?'<span style="color:#2e8b3d;font-weight:700;">⭕ 정답</span>':'<span style="color:#c0392b;font-weight:700;">❌ 오답</span>');
       return `<tr>
         <td style="font-size:12px;color:#888;white-space:nowrap;">${esc(r.date||'')}</td>
         ${showUser?`<td style="font-weight:600;white-space:nowrap;">${esc(r.user||'')}</td>`:''}
         <td style="font-size:13px;line-height:1.5;white-space:normal;word-break:break-all;">${esc(r.q||'')}</td>
-        <td style="text-align:center;">${r.correct?'<span style="color:#2e8b3d;font-weight:700;">⭕ 정답</span>':'<span style="color:#c0392b;font-weight:700;">❌ 오답</span>'}</td>
+        <td style="text-align:center;">${resultCell}</td>
       </tr>`;
     }).join('') || `<tr><td colspan="${showUser?4:3}" style="color:#8aa;padding:14px;text-align:center;">아직 푼 퀴즈가 없어요.</td></tr>`;
     return `
       <div class="quiz-stat">
         <b>${title}</b> · 참여 ${total}회 · 정답 ${ok}회 · 정답률 <span style="color:#2e8b3d;font-weight:700;">${rate}%</span>
       </div>
+      ${canEdit?'<div style="font-size:11px;color:#a06a00;margin-bottom:4px;">✏️ 결과를 클릭하면 정답↔오답을 바꿀 수 있어요 (점수도 자동 반영).</div>':''}
       <table class="lst" style="margin-bottom:18px;">
         <tr><th>날짜</th>${showUser?'<th>이름</th>':''}<th>문제</th><th>결과</th></tr>
         ${rows}
@@ -1210,6 +1221,25 @@ function pageQuiz(){
     html+=statCard('📋 전체 기록 (최신순)', recs, true);
   }
   return html;
+}
+// 관리자1: 특정 퀴즈 기록의 정답↔오답을 토글하고 점수도 반영
+function toggleQuizResult(i){
+  if(adminLevel()!==1) return alert('관리자1만 정정할 수 있어요.');
+  const recs=(DATA.quiz_records||[]).slice();
+  const r=recs[i]; if(!r) return;
+  const name=r.user||'';
+  const willBeCorrect=!r.correct; // 바꿀 결과
+  if(!confirm(`'${name}' 님의 이 문제를 ${willBeCorrect?'정답':'오답'}(으)로 바꿀까요?\n\n${(r.q||'').slice(0,40)}`)) return;
+  recs[i]=Object.assign({},r,{correct:willBeCorrect});
+  ROOT.child('quiz_records').set(recs);
+  // 점수 반영: 오답→정답이면 +2점, 정답→오답이면 받았던 quiz 점수 1건 회수
+  const log=(DATA.activity_log||[]).slice();
+  if(willBeCorrect){
+    log.push({user:name, type:'quiz', ts:Date.now(), pts:actPoints('quiz'), note:'결과 정정', backfill:true});
+  } else {
+    for(let j=log.length-1;j>=0;j--){ if(log[j].user===name && log[j].type==='quiz'){ log.splice(j,1); break; } }
+  }
+  ROOT.child('activity_log').set(log);
 }
 // ===== 참고영상 (유튜브 임베드) =====
 // 다양한 유튜브 URL에서 영상 ID 추출
@@ -1475,10 +1505,7 @@ const DEFAULT={
     {title:"풋살 기본 규칙",html:"<h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul><h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul><h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>",ts:0}
   ],
   tacticImgs:[],
-  quizzes:[
-    {type:'mc', q:"WAVE FC는 매주 무슨 요일에 모일까요?", options:["월요일","화요일","목요일","토요일"], answer:1, ts:0},
-    {type:'ox', q:"풋살은 한 팀이 11명으로 경기한다.", answer:'X', ts:0}
-  ],
+  quizzes:[],
   quiz_records:[],
   activity_log:[],
   videos:[],
@@ -1561,7 +1588,8 @@ ROOT.on('value',snap=>{
     roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips),
     _backfilled:(v._backfilled===true),
     _manualAdj1:(v._manualAdj1===true),
-    _offsideFix1:(v._offsideFix1===true)};
+    _offsideFix1:(v._offsideFix1===true),
+    _sampleQuizRemoved:(v._sampleQuizRemoved===true)};
   }
   setStatus(true);renderAll();
   runMigrations();   // roomTips 좌표 보정 + 과거 활동 소급 점수 (1회만)
@@ -3464,59 +3492,6 @@ function renderQuizAdmin(){
       }).join('')
     : '등록된 퀴즈 없음';
 }
-// 오프사이드 퀴즈 정답/오답 수동 정정 (관리자 버튼)
-function fixOffsideQuiz(){
-  if(adminLevel()<1) return alert('관리자만 실행할 수 있어요.');
-  const qs=DATA.quizzes||[];
-  // 현재 등록된 '오프사이드' 문제 찾기 (정답 X 우선)
-  let target=null;
-  for(const q of qs){ if((q.q||'').indexOf('오프사이드')>=0){ target=q; if(q.answer==='X') break; } }
-  if(!target){ return alert('"오프사이드"가 들어간 새 퀴즈를 먼저 등록해 주세요.\n(관리 패널에서 정답 X로 등록 후 다시 눌러주세요)'); }
-  const qk=quizKey(target);
-  const correctNames=['박지예','김소연','조은비','안시하'];
-  const wrongNames=['조훈지'];
-  const toKey=n=>n.replace(/[.#$\[\]\/]/g,'_');
-  const recs=(DATA.quiz_records||[]).slice();
-  const log=(DATA.activity_log||[]).slice();
-  // 사용자의 오프사이드 기록 찾기: 질문에 '오프사이드' 포함 또는 새 qk
-  const findRec=(uk)=>{
-    for(let i=recs.length-1;i>=0;i--){
-      const r=recs[i];
-      if(r.user===uk && ((r.q||'').indexOf('오프사이드')>=0 || r.qk===qk)) return i;
-    }
-    return -1;
-  };
-  const nowTs=Date.now();
-  const d=new Date();
-  const dstr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
-  let report=[];
-  correctNames.forEach(n=>{
-    const uk=toKey(n);
-    const idx=findRec(uk);
-    const wasCorrect = idx>=0 ? !!recs[idx].correct : false;
-    if(idx>=0){ recs[idx]=Object.assign({},recs[idx],{qk:qk, q:target.q, type:target.type, picked:target.answer, correct:true}); }
-    else { recs.push({user:uk, qk:qk, q:target.q, type:target.type, picked:target.answer, correct:true, date:dstr, ts:nowTs}); }
-    if(!wasCorrect){ log.push({user:uk, type:'quiz', ts:nowTs, pts:actPoints('quiz'), note:'오프사이드 정정', backfill:true}); report.push(n+' → 정답(+2점)'); }
-    else { report.push(n+' → 정답(이미 정답)'); }
-  });
-  wrongNames.forEach(n=>{
-    const uk=toKey(n);
-    const idx=findRec(uk);
-    const wasCorrect = idx>=0 ? !!recs[idx].correct : false;
-    const wrongPick = target.answer==='X'?'O':'X';
-    if(idx>=0){ recs[idx]=Object.assign({},recs[idx],{qk:qk, q:target.q, type:target.type, picked:wrongPick, correct:false}); }
-    else { recs.push({user:uk, qk:qk, q:target.q, type:target.type, picked:wrongPick, correct:false, date:dstr, ts:nowTs}); }
-    if(wasCorrect){
-      for(let i=log.length-1;i>=0;i--){ if(log[i].user===uk && log[i].type==='quiz'){ log.splice(i,1); break; } }
-      report.push(n+' → 오답(-2점 회수)');
-    } else { report.push(n+' → 오답(변동 없음)'); }
-  });
-  ROOT.child('quiz_records').set(recs);
-  ROOT.child('activity_log').set(log);
-  alert('정정 완료!\n\n'+report.join('\n'));
-}
-
-
 function setBg(name){
   if(name && name.indexOf('custom:')===0){
     const id=name.slice(7);
