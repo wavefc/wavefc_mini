@@ -319,6 +319,8 @@
   .rc-list{margin:4px 0;}
   .rc-row{font-size:13px;color:#333;padding:4px 6px;border-radius:4px;background:#f6f9fb;margin-bottom:3px;line-height:1.5;}
   .rc-anon{font-size:11px;color:#5aa9e6;font-weight:700;margin-right:3px;}
+  .rc-who{font-size:11px;color:#e6735a;font-weight:700;margin-right:3px;}
+  .rc-likedby{font-size:11px;color:#c0563f;background:#fff3f0;border-radius:4px;padding:3px 7px;margin-bottom:4px;line-height:1.4;}
   .rc-date{font-size:10px;color:#aab;margin-left:5px;}
   .rc-del{font-size:10px;color:#c0392b;cursor:pointer;margin-left:6px;}
   .rc-input{display:flex;gap:4px;margin-top:4px;}
@@ -503,12 +505,10 @@
   </div>
 
   <div class="bgbar" id="bgbar">
-    <b>🎨 미니룸 배경</b>
+    <b>🎨 미니홈피 배경</b>
     <button onclick="setBg('grid')">기본그리드</button>
     <button onclick="setBg('futsal')" id="bgBtnFutsal">풋살장</button>
     <button onclick="setBg('pitch')" id="bgBtnPitch">축구장</button>
-    <button onclick="setBg('ball')">축구공</button>
-    <button onclick="setBg('night')">야간경기</button>
     <span id="bgCustomBtns"></span>
     <button onclick="document.getElementById('bgFileInput').click()" id="bgAddBtn" style="display:none;">＋ 배경 추가</button>
     <input type="file" id="bgFileInput" accept="image/*" style="display:none;" onchange="onBgFile(event)">
@@ -748,7 +748,13 @@ function roomHotspots(){
     </div>`;
   }).join('');
 }
-function toggleRoomTip(i){ roomTipOpen=(roomTipOpen===i)?null:i; renderPage('home'); }
+function toggleRoomTip(i){
+  const opening=(roomTipOpen!==i);
+  roomTipOpen=opening?i:null;
+  // 말풍선을 새로 열 때만, 하루 5회(=0.5점)까지 점수
+  if(opening && me && isMember() && countActToday(me,'roomtip')<5){ logActivity('roomtip'); }
+  renderPage('home');
+}
 function editRoomTip(i){
   const lvl=adminLevel(); if(lvl!==1&&lvl!==2) return;
   const tips=(DATA.roomTips||DEFAULT.roomTips).slice();
@@ -759,11 +765,86 @@ function editRoomTip(i){
   ROOT.child('roomTips').set(tips);
 }
 // ===== 활동 점수 & 레벨 시스템 =====
-// 활동 1건당 1점. 로그인 사용자만 기록됨.
+// 활동별 점수 가중치
+const ACT_POINTS={
+  ilchon:2,   // 일촌평
+  comment:1,  // 댓글
+  like:0.5,   // 좋아요
+  quiz:2,     // 퀴즈 정답
+  qna:2,      // QnA 작성
+  login:5,    // 접속(하루 1회)
+  roomtip:0.1 // 미니룸 말풍선(하루 0.5점 한도)
+};
+function actPoints(type){ return ACT_POINTS[type]!==undefined?ACT_POINTS[type]:1; }
+// 하루 1회 접속 점수 (중복 방지: 오늘 login 기록 없을 때만)
+function markLoginToday(){
+  if(!me) return;
+  if(!isMember()) return; // 승인된 회원만
+  if(countActToday(me,'login')>0) return;
+  logActivity('login');
+}
+// ===== 1회성 마이그레이션 =====
+// (1) roomTips 좌표를 최신 기본값으로 보정  (2) 과거 활동 소급 점수
+function runMigrations(){
+  if(_didMigrate) return;
+  _didMigrate=true;
+  // --- (1) roomTips 좌표 보정 ---
+  // 저장된 좌표가 옛 위치(엠블럼 x:24 / 벤치 x:52)면 최신 기본 좌표로 갱신
+  try{
+    const rt=DATA.roomTips||[];
+    const emb=rt.find(t=>t&&t.label==='엠블럼');
+    const ben=rt.find(t=>t&&t.label==='벤치');
+    const needFix = (emb && (emb.x===24||emb.y===30)) || (ben && (ben.x===52));
+    if(needFix){
+      // 텍스트는 사용자가 수정했을 수 있으니 보존, 좌표만 기본값으로
+      const fixed=DEFAULT.roomTips.map(d=>{
+        const cur=rt.find(t=>t&&t.label===d.label);
+        return Object.assign({}, d, cur?{text:cur.text}:{});
+      });
+      ROOT.child('roomTips').set(fixed);
+    }
+  }catch(e){}
+  // --- (1.5) 수동 소급 점수 보정 (좋아요·댓글 등 서버에 작성자 기록 없는 과거 활동) ---
+  if(!DATA._manualAdj1){
+    try{
+      const ADJ={ '조안나':4, '간장구':4.5, '김서영':3 };
+      const log=(DATA.activity_log||[]).slice();
+      Object.keys(ADJ).forEach(name=>{
+        const key=name.replace(/[.#$\[\]\/]/g,'_');
+        log.push({user:key, type:'adjust', ts:0, pts:ADJ[name], note:'과거 활동 소급', backfill:true});
+      });
+      ROOT.child('activity_log').set(log);
+      ROOT.child('_manualAdj1').set(true);
+    }catch(e){}
+  }
+  // --- (2) 과거 활동 소급 점수 (한 번만, _backfilled 플래그로 중복 방지) ---
+  if(DATA._backfilled) return;
+  try{
+    const log=(DATA.activity_log||[]).slice();
+    // 이미 기록된 (user|type|ts) 조합 → 중복 방지용 집합
+    const seen=new Set(log.map(r=>r.user+'|'+r.type+'|'+r.ts));
+    const add=(user,type,ts)=>{
+      if(!user) return;
+      const k=user+'|'+type+'|'+ts;
+      if(seen.has(k)) return;
+      seen.add(k);
+      log.push({user:user,type:type,ts:ts||0,pts:actPoints(type),backfill:true});
+    };
+    // 일촌평 (comments: by, ts)
+    (DATA.comments||[]).forEach(c=>{ if(c&&c.by) add(c.by,'ilchon',c.ts); });
+    // 퀴즈 정답 (quiz_records: user, correct, ts)
+    (DATA.quiz_records||[]).forEach(r=>{ if(r&&r.user&&r.correct) add(r.user,'quiz',r.ts); });
+    // QnA 작성 (qna_threads: byKey, ts)
+    (DATA.qna_threads||[]).forEach(t=>{ if(t&&t.byKey) add(t.byKey,'qna',t.ts); });
+    ROOT.child('activity_log').set(log);
+    ROOT.child('_backfilled').set(true);
+  }catch(e){}
+}
+// 활동 기록. 로그인 사용자만 기록됨. pts 필드에 가중치 저장.
 function logActivity(type){
   if(!me) return; // 비로그인은 점수 없음
   const arr=(DATA.activity_log||[]).slice();
-  arr.push({user:me, type:type, ts:Date.now()});
+  arr.push({user:me, type:type, ts:Date.now(), pts:actPoints(type)});
   ROOT.child('activity_log').set(arr);
 }
 // 좋아요 취소 시 최근 활동 1건 회수
@@ -773,22 +854,27 @@ function revokeActivity(type){
   for(let i=arr.length-1;i>=0;i--){ if(arr[i].user===me && arr[i].type===type){ arr.splice(i,1); break; } }
   ROOT.child('activity_log').set(arr);
 }
-// 사용자별 활동 점수 합산
-function activityScore(user){
-  return (DATA.activity_log||[]).filter(r=>r.user===user).length;
+// 같은 날(KST 기준) 특정 type 활동 횟수
+function _dayKey(ts){ const d=new Date(ts+9*3600000); return d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate(); }
+function countActToday(user,type){
+  const today=_dayKey(Date.now());
+  return (DATA.activity_log||[]).filter(r=>r.user===user && r.type===type && _dayKey(r.ts)===today).length;
 }
-// 점수 → 레벨 (레벨업 구간)
-// Lv1:0~2, Lv2:3~5, Lv3:6~9, Lv4:10~14, Lv5~11: 머리색(빨주노초파남보), Lv12: 무지개
-const LEVEL_THRESHOLDS=[0,3,6,10,15,21,28,36,45,55,66,78]; // index=레벨-1
+// 사용자별 활동 점수 합산 (pts 누적, 구버전 레코드는 가중치 보정)
+function activityScore(user){
+  return (DATA.activity_log||[]).filter(r=>r.user===user)
+    .reduce((s,r)=>s+(typeof r.pts==='number'?r.pts:actPoints(r.type)),0);
+}
+// 점수 → 레벨 (50점 단위). Lv1:0~49, Lv2:50~99 … Lv12:550+
+const LEVEL_STEP=50;
+const MAX_LEVEL=12;
 function scoreToLevel(score){
-  let lv=1;
-  for(let i=0;i<LEVEL_THRESHOLDS.length;i++){ if(score>=LEVEL_THRESHOLDS[i]) lv=i+1; }
-  return lv;
+  return Math.min(MAX_LEVEL, Math.floor(score/LEVEL_STEP)+1);
 }
 function nextLevelInfo(score){
   const lv=scoreToLevel(score);
-  if(lv>=LEVEL_THRESHOLDS.length) return {lv, need:0, next:null};
-  const next=LEVEL_THRESHOLDS[lv];
+  if(lv>=MAX_LEVEL) return {lv, need:0, next:null};
+  const next=lv*LEVEL_STEP;
   return {lv, need:next-score, next};
 }
 // 레벨별 얼굴 SVG (대머리+눈 → 눈코 → 눈코입 → 검정머리 → 무지개 단계)
@@ -864,6 +950,7 @@ function pickQuiz(val){
     const arr=(DATA.quiz_records||[]).slice();
     arr.push(rec);
     ROOT.child('quiz_records').set(arr);
+    if(correct) logActivity('quiz'); // 정답이면 2점
   } else {
     renderPage('home');
   }
@@ -1335,9 +1422,9 @@ const DEFAULT={
   videos:[],
   videoCats:["기초","기본","응용","경기"],
   roomTips:[
-    {x:24, y:30, label:"엠블럼", text:"WAVE FC 엠블럼! 우리 팀의 상징이에요 🌊"},
+    {x:9, y:18, label:"엠블럼", text:"WAVE FC 엠블럼! 우리 팀의 상징이에요 🌊"},
     {x:50, y:23, label:"유니폼", text:"등번호 유니폼! 너의 번호는 몇 번? ⚽"},
-    {x:52, y:42, label:"벤치", text:"경기 전 작전 회의는 여기 벤치에서! 📋"},
+    {x:66, y:42, label:"벤치", text:"경기 전 작전 회의는 여기 벤치에서! 📋"},
     {x:30, y:60, label:"가방", text:"풋살화 잊지 말고 챙기기! 👟"},
     {x:62, y:62, label:"센터로고", text:"오늘도 다 같이 무브무브! 💙"}
   ]
@@ -1377,6 +1464,7 @@ function migrateTactics(v){
   return t?[t]:[];
 }
 
+var _didMigrate=false; // roomTips 좌표/소급점수 1회성 마이그레이션 플래그
 ROOT.on('value',snap=>{
   const v=snap.val();
   if(!v){ROOT.set(DEFAULT);DATA=JSON.parse(JSON.stringify(DEFAULT));}
@@ -1408,9 +1496,13 @@ ROOT.on('value',snap=>{
     activity_log:(Array.isArray(v.activity_log)?v.activity_log:[]),
     videos:(Array.isArray(v.videos)?v.videos:[]),
     videoCats:(Array.isArray(v.videoCats)&&v.videoCats.length?v.videoCats:DEFAULT.videoCats),
-    roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips)};
+    roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips),
+    _backfilled:(v._backfilled===true),
+    _manualAdj1:(v._manualAdj1===true)};
   }
   setStatus(true);renderAll();
+  runMigrations();   // roomTips 좌표 보정 + 과거 활동 소급 점수 (1회만)
+  markLoginToday();  // 재방문 시에도 하루 1회 접속 점수
 },()=>setStatus(false));
 
 function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
@@ -1474,6 +1566,7 @@ function modalSubmit(){
     if(!u.approved) {me=key;localStorage.setItem('wavefc_user',key);renderLoginBox();return alert('아직 승인 대기 중입니다');}
     me=key;localStorage.setItem('wavefc_user',key);
     closeModal();renderLoginBox();updateLocks();renderPage(currentPage);
+    markLoginToday();
   }
 }
 
@@ -1717,7 +1810,7 @@ function addComment(){
   if(!t)return;
   const arr=DATA.comments.slice();
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
-  logActivity('comment');
+  logActivity('ilchon');
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
 }
@@ -1913,11 +2006,24 @@ function toggleLike(node,idx){
   const item=arr[idx]; if(!item) return;
   const ts=item.ts||0;
   item.likes=item.likes||0;
+  item.likedBy=Array.isArray(item.likedBy)?item.likedBy:[];
   const key=_likedKey(node,ts);
-  if(hasLiked(node,ts)){ item.likes=Math.max(0,item.likes-1); try{localStorage.removeItem(key);}catch(e){} revokeActivity('like'); }
-  else { item.likes=item.likes+1; try{localStorage.setItem(key,'1');}catch(e){} logActivity('like'); }
+  if(hasLiked(node,ts)){
+    item.likes=Math.max(0,item.likes-1);
+    try{localStorage.removeItem(key);}catch(e){}
+    if(me) item.likedBy=item.likedBy.filter(n=>n!==me);
+    revokeActivity('like');
+  }
+  else {
+    item.likes=item.likes+1;
+    try{localStorage.setItem(key,'1');}catch(e){}
+    if(me && item.likedBy.indexOf(me)<0) item.likedBy.push(me);
+    logActivity('like');
+  }
   ROOT.child(node).set(arr);
 }
+// 사용자 키 → 표시 이름 (없으면 키 그대로)
+function userLabel(key){ if(!key) return ''; const u=DATA.users&&DATA.users[key]; return u&&u.name?u.name:key; }
 function addReactComment(node,idx){
   const inp=document.getElementById('rc_'+node+'_'+idx);
   if(!inp) return;
@@ -1925,7 +2031,7 @@ function addReactComment(node,idx){
   const arr=JSON.parse(JSON.stringify(_reactArr(node)));
   const item=arr[idx]; if(!item) return;
   item.comments=item.comments||[];
-  item.comments.push({text:txt.slice(0,200), ts:Date.now()});
+  item.comments.push({text:txt.slice(0,200), ts:Date.now(), by:me||''});
   logActivity(node==='logs'?'feedback':'reply');
   ROOT.child(node).set(arr);
 }
@@ -1944,18 +2050,26 @@ function reactBox(node,idx){
   const liked=hasLiked(node,ts);
   const cmts=item.comments||[];
   const isExec=rankOf(me)==='exec';
+  const a1=adminLevel()===1; // 관리자1 모드에서만 실명 공개
   const cmtRows=cmts.map((c,ci)=>{
     const t=c.ts?new Date(c.ts):null;
     const dd=t?`${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
-    return `<div class="rc-row"><span class="rc-anon">익명</span> ${esc(c.text)}
+    const nameTag=(a1&&c.by)?`<span class="rc-who">✍ ${esc(userLabel(c.by))}</span>`:`<span class="rc-anon">익명</span>`;
+    return `<div class="rc-row">${nameTag} ${esc(c.text)}
       <span class="rc-date">${dd}</span>
       ${isExec?`<span class="rc-del" onclick="delReactComment('${node}',${idx},${ci})">삭제</span>`:''}</div>`;
   }).join('');
+  // 관리자1 모드: 좋아요 누른 사람 명단
+  let likedByRow='';
+  if(a1 && Array.isArray(item.likedBy) && item.likedBy.length){
+    likedByRow=`<div class="rc-likedby">❤️ ${item.likedBy.map(k=>esc(userLabel(k))).join(', ')}</div>`;
+  }
   return `<div class="react-box">
     <div class="react-bar">
       <button class="heart-btn ${liked?'on':''}" onclick="toggleLike('${node}',${idx})">${liked?'❤️':'🤍'} <b>${likes}</b></button>
       <span class="react-cc">💬 ${cmts.length}</span>
     </div>
+    ${likedByRow}
     <div class="rc-list">${cmtRows}</div>
     <div class="rc-input">
       <input id="rc_${node}_${idx}" maxlength="200" placeholder="익명 댓글 달기…" onkeydown="if(event.key==='Enter')addReactComment('${node}',${idx})">
@@ -2376,7 +2490,7 @@ function attMonthLabel(key){
   const p=key.split('-'); return p[0]+'년 '+p[1]+'월';
 }
 function pageAttend(){
-  const isExec=rankOf(me)==='exec';
+  const isExec=adminLevel()>=1; // 관리자 모드(1 또는 2)면 출석 관리 가능
   const roster=DATA.roster.filter(m=>memStatus(m)!=='honor');
   const members=roster.slice().sort((a,b)=>{
     const ra=memStatus(a)==='rest'?1:0, rb=memStatus(b)==='rest'?1:0;
@@ -2509,15 +2623,17 @@ function sortAttendance(arr){
   return arr.slice().sort((a,b)=>attDateKey(a.date)-attDateKey(b.date));
 }
 function addAttendSession(){
-  if(rankOf(me)!=='exec') return;
+  if(adminLevel()<1) return;
   const date=prompt('출석일 (예: 6/14)');
   if(!date) return;
   const arr=DATA.attendance.slice();
   arr.push({date:date.trim(),present:{}});
   ROOT.child('attendance').set(sortAttendance(arr));
+  // 추가한 날짜가 속한 달로 화면 전환 (월별 보기 기준)
+  try{ attViewMode='month'; attMonth=attMonthKey(date.trim()); }catch(e){}
 }
 function cycleAttend(si,name){
-  if(rankOf(me)!=='exec') return;
+  if(adminLevel()<1) return;
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   const cur=arr[si].present[name];
@@ -2533,7 +2649,7 @@ function cycleAttend(si,name){
   ROOT.child('attendance').set(arr);
 }
 function delAttendSession(si){
-  if(rankOf(me)!=='exec') return;
+  if(adminLevel()<1) return;
   if(!confirm('이 출석일을 삭제할까요?')) return;
   const arr=sortAttendance(DATA.attendance);arr.splice(si,1);ROOT.child('attendance').set(arr);
 }
@@ -2624,14 +2740,15 @@ function pageActivity(){
       <div class="lv-face">${levelFace(lv,72)}</div>
       <div class="lv-name">${esc(m.name)}</div>
       <div class="lv-badge">${levelName(lv)}</div>
-      <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/(info.next-(LEVEL_THRESHOLDS[lv-1]||0)))*100):100}%;"></div></div>
-      <div class="lv-score">${m.score}점${info.next?` · 다음 레벨까지 ${info.need}점`:' · 최고 레벨!'}</div>
+      <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/LEVEL_STEP)*100):100}%;"></div></div>
+      <div class="lv-score">${(+m.score.toFixed(1))}점${info.next?` · 다음 레벨까지 ${(+info.need.toFixed(1))}점`:' · 최고 레벨!'}</div>
     </div>`;
   }).join('');
 
   // 레벨 안내(진화 단계)
   const guide=`<div class="lv-guide">
-    <b>🎮 레벨은 이렇게 올라가요!</b> 일촌평·댓글·좋아요·훈련 피드백을 남길 때마다 1점씩 쌓여요.
+    <b>🎮 레벨은 이렇게 올라가요!</b> 활동할 때마다 점수가 쌓이고, 50점마다 레벨이 올라요.<br>
+    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지)</span>
     <div class="lv-guide-faces">
       ${[1,3,4,5,6,7,8,9,10,11,12].map(l=>`<span class="lv-guide-face">${levelFace(l,38)}<br><span style="font-size:10px;color:#8aa;">Lv.${l}</span></span>`).join('')}
     </div>
@@ -2795,7 +2912,7 @@ async function submitQna(){
     ts:Date.now()
   });
   ROOT.child('qna_threads').set(arr);
-
+  if(me) logActivity('qna'); // QnA 작성 2점
   if(inp) inp.value='';
   if(btn) btn.disabled=false;
   // 상태 메시지 표시 (정상 답변이면 숨김)
@@ -3292,6 +3409,7 @@ function rteToolbar(id){
     <span class="rte-color-wrap"><span class="rte-color-lbl">글자</span><input type="color" value="#333333" title="글씨색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','foreColor',this.value)"></span>
     <span class="rte-color-wrap"><span class="rte-color-lbl">배경</span><input type="color" value="#fff2a8" title="글씨 배경색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','hiliteColor',this.value)"></span>
     <span class="rte-sep"></span>
+    <button type="button" title="가운데 점 추가" onmousedown="rteSaveSel('${id}')" onclick="rteInsertBullet('${id}')">•</button>
     <button type="button" title="서식 지우기" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','removeFormat')">⌫</button>
   </div>`;
 }
@@ -3326,6 +3444,23 @@ function rteCmd(id,cmd,val){
       document.execCommand(cmd,false,val);
     }
   }catch(e){}
+  el.focus();
+}
+// 커서 위치에 가운데 점(•)을 삽입. 줄 맨 앞이면 글머리 기호로 활용.
+function rteInsertBullet(id){
+  const el=document.getElementById(id); if(!el) return;
+  rteRestoreSel(id);
+  el.focus();
+  try{ document.execCommand('insertText',false,'• '); }
+  catch(e){
+    // 폴백: 선택 영역에 텍스트 노드 삽입
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount){
+      const r=sel.getRangeAt(0); r.deleteContents();
+      r.insertNode(document.createTextNode('• '));
+      r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
+    }
+  }
   el.focus();
 }
 function rteGetHtml(id){
