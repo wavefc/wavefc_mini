@@ -961,6 +961,22 @@ function quizSolvedTodayCount(user){
   return (DATA.quiz_records||[]).filter(r=>r.user===user && _dayKey(r.ts)===today).length;
 }
 const QUIZ_DAILY_LIMIT=3; // 하루 최대 출제 수
+// 출제에서 영구 제외할 퀴즈(질문 텍스트로 지목). 예전 퀴즈 3개.
+const QUIZ_SKIP_QUESTIONS=[
+  "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
+  "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
+  "풋살에는 오프사이드가 있다"
+];
+// 이 날짜(YYYYMMDD) 0시 이후에 푼 기록만 "푼 것"으로 인정. 그 이전 기록은 무시 → 모두 다시 출제.
+// 0이면 비활성(기존처럼 전체 기간 기준).
+const QUIZ_FRESH_START=20260625;
+function _freshStartTs(){
+  if(!QUIZ_FRESH_START) return 0;
+  const y=Math.floor(QUIZ_FRESH_START/10000);
+  const m=Math.floor((QUIZ_FRESH_START%10000)/100);
+  const d=QUIZ_FRESH_START%100;
+  return new Date(y, m-1, d, 0, 0, 0, 0).getTime();
+}
 // 오늘 사용자에게 보여줄 퀴즈 목록(원본 인덱스 배열). 이미 푼 문제 제외, 하루 3개 한도.
 function todayQuizList(){
   const qs=DATA.quizzes||[];
@@ -969,18 +985,18 @@ function todayQuizList(){
   if(!me){ const i=todayQuizIndex(); return i>=0?[i]:[]; }
   const solvedToday=quizSolvedTodayCount(me);
   const remain=Math.max(0, QUIZ_DAILY_LIMIT - solvedToday);
-  // 안 푼 문제(전체 기간 통틀어 한 번도 안 푼 것)만 후보
+  const fresh=_freshStartTs();
+  // 안 푼 문제만 후보 → 등록 순서 그대로. 건너뛸 문제는 제외.
   const unsolved=[];
-  qs.forEach((q,i)=>{ if(!myQuizRecord(quizKey(q))) unsolved.push(i); });
-  // 날짜 기반 셔플(같은 날은 같은 순서) → 앞에서 remain개
-  const d=new Date();
-  const seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
-  const shuffled=unsolved.slice().sort((a,b)=>{
-    const ha=((a+1)*9301+seed*49297)%233280;
-    const hb=((b+1)*9301+seed*49297)%233280;
-    return ha-hb;
+  qs.forEach((q,i)=>{
+    if(QUIZ_SKIP_QUESTIONS.indexOf((q&&q.q)||'')>=0) return; // 영구 제외
+    const rec=myQuizRecord(quizKey(q));
+    // 기준일 이후에 푼 기록이 있을 때만 "푼 것"으로 간주
+    if(rec && (!fresh || (rec.ts||0)>=fresh)) return;
+    unsolved.push(i);
   });
-  return shuffled.slice(0, remain);
+  // 등록된 순서(앞에서부터) 그대로 remain개 출제
+  return unsolved.slice(0, remain);
 }
 // 퀴즈 고유키: ts가 있으면 ts, 없으면 질문 텍스트
 function quizKey(q){ return q&&q.ts?('t'+q.ts):('q'+(q&&q.q?q.q:'')); }
@@ -1000,8 +1016,11 @@ function pickQuiz(qIdx, val){
   if(quizState[qIdx] && quizState[qIdx].revealed) return; // 이미 이 문제 답함
   const correct = (val===q.answer);
   quizState[qIdx]={picked:val, revealed:true};
-  // 로그인 상태이고 아직 기록이 없으면 저장 (한 번만)
-  if(me && !myQuizRecord(qk)){
+  // 로그인 상태이고, (기준일 이후) 기록이 없으면 저장
+  const prev=me?myQuizRecord(qk):null;
+  const fresh=_freshStartTs();
+  const alreadySolved = prev && (!fresh || (prev.ts||0)>=fresh);
+  if(me && !alreadySolved){
     const d=new Date();
     const dateStr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
     const rec={user:me, qk:qk, q:(q.q||''), type:q.type, picked:val, correct:correct, date:dateStr, ts:Date.now()};
@@ -1552,298 +1571,7 @@ const DEFAULT={
   ],
   tacticImgs:[],
   quizzes:[],
-  quiz_records:[
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000000,
-    "type": "ox",
-    "user": "윤디정"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000001,
-    "type": "ox",
-    "user": "윤디정"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000002,
-    "type": "ox",
-    "user": "윤디정"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000003,
-    "type": "ox",
-    "user": "조흔지"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000004,
-    "type": "ox",
-    "user": "조흔지"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000005,
-    "type": "ox",
-    "user": "조흔지"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000006,
-    "type": "ox",
-    "user": "안시하"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000007,
-    "type": "ox",
-    "user": "안시하"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000008,
-    "type": "ox",
-    "user": "안시하"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000009,
-    "type": "ox",
-    "user": "조은비"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000010,
-    "type": "ox",
-    "user": "조은비"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000011,
-    "type": "ox",
-    "user": "조은비"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에는 오프사이드가 있다",
-    "qk": "t1782181890000",
-    "ts": 1782200000012,
-    "type": "ox",
-    "user": "조은비"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000013,
-    "type": "ox",
-    "user": "김소연"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000014,
-    "type": "ox",
-    "user": "김소연"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000015,
-    "type": "ox",
-    "user": "김소연"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에는 오프사이드가 있다",
-    "qk": "t1782181890000",
-    "ts": 1782200000016,
-    "type": "ox",
-    "user": "김소연"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000017,
-    "type": "ox",
-    "user": "조아나"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": 1,
-    "q": "WAVE FC는 매주 무슨 요일에 모일까요?",
-    "qk": "qWAVE FC는 매주 무슨 요일에 모일까요?",
-    "ts": 1782200000018,
-    "type": "mc",
-    "user": "조아나"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000019,
-    "type": "ox",
-    "user": "박지예"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.",
-    "qk": "t1782182080726",
-    "ts": 1782200000020,
-    "type": "ox",
-    "user": "박지예"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살은 한 팀이 11명으로 경기한다.",
-    "qk": "t1782181985000",
-    "ts": 1782200000021,
-    "type": "ox",
-    "user": "박지예"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에는 오프사이드가 있다",
-    "qk": "t1782181890000",
-    "ts": 1782200000022,
-    "type": "ox",
-    "user": "박지예"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": 1,
-    "q": "WAVE FC는 매주 무슨 요일에 모일까요?",
-    "qk": "qWAVE FC는 매주 무슨 요일에 모일까요?",
-    "ts": 1782200000023,
-    "type": "mc",
-    "user": "박지예"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000024,
-    "type": "ox",
-    "user": "김민지"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000025,
-    "type": "ox",
-    "user": "김서영"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000026,
-    "type": "ox",
-    "user": "풋살굿"
-  },
-  {
-    "correct": true,
-    "date": "2026.06.24",
-    "picked": "O",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000027,
-    "type": "ox",
-    "user": "장하현"
-  },
-  {
-    "correct": false,
-    "date": "2026.06.24",
-    "picked": "X",
-    "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.",
-    "qk": "t1782182175975",
-    "ts": 1782200000028,
-    "type": "ox",
-    "user": "장예나"
-  }
-],
+  quiz_records:[],
   activity_log:[],
   videos:[],
   videoCats:["기초","기본","응용","경기"],
@@ -3814,12 +3542,14 @@ function bulkAddQuiz(){
   }).join('\n');
   const more=items.length>5?`\n…외 ${items.length-5}개`:'';
   if(!confirm(`${items.length}개 문제를 등록할까요?\n\n${preview}${more}`)) return;
-  const arr=(DATA.quizzes||[]).slice();
+  const old=(DATA.quizzes||[]).slice();
   let ts=Date.now();
-  items.forEach(it=>{
-    if(it.type==='ox') arr.push({type:'ox', q:it.q, answer:it.answer, ts:ts++});
-    else arr.push({type:'mc', q:it.q, options:it.options, answer:it.answer, ts:ts++});
+  const fresh=items.map(it=>{
+    if(it.type==='ox') return {type:'ox', q:it.q, answer:it.answer, ts:ts++};
+    return {type:'mc', q:it.q, options:it.options, answer:it.answer, ts:ts++};
   });
+  // 새로 등록한 문제를 맨 앞에 → 파일 순서대로 먼저 출제, 기존 문제는 뒤에 보존
+  const arr=fresh.concat(old);
   ROOT.child('quizzes').set(arr);
   document.getElementById('bulkQuiz').value='';
   const fileEl=document.getElementById('bulkQuizFile'); if(fileEl) fileEl.value='';
