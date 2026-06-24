@@ -591,6 +591,11 @@ OX | 골키퍼는 손을 쓸 수 없다 | X" style="width:100%;box-sizing:border
       <button onclick="document.getElementById('bulkQuiz').value='';" style="background:#9aa6ae;">입력 비우기</button>
     </div>
     <div id="quizListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <div style="margin-top:8px;padding:8px;background:#eef7ff;border:1px dashed #8ab8e0;border-radius:5px;">
+      <div style="font-size:11px;font-weight:700;color:#2a6aa0;">🔧 오프사이드 퀴즈 기록 정정</div>
+      <div style="font-size:10px;color:#5a7585;margin:3px 0;">박지예·김소연·조은비·안시하 → <b>정답</b>, 조훈지 → <b>오답</b>으로 고치고 점수도 맞춥니다. 한 번만 누르세요.</div>
+      <button onclick="fixOffsideQuiz()" style="width:100%;background:#3a9bd8;">정답/오답 정정 실행</button>
+    </div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🪪 프로필 사진</b> (왼쪽 상단, 미니룸과 별개)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0 4px;">📎 파일 첨부 또는 이미지 주소 중 하나만 쓰면 돼요</div>
@@ -835,6 +840,7 @@ function runMigrations(){
       ROOT.child('_manualAdj1').set(true);
     }catch(e){}
   }
+  // --- (1.6) 오프사이드 퀴즈 기록 정정은 관리 패널의 버튼으로 수동 실행 (fixOffsideQuiz) ---
   // --- (2) 과거 활동 소급 점수 (한 번만, _backfilled 플래그로 중복 방지) ---
   if(DATA._backfilled) return;
   try{
@@ -1554,7 +1560,8 @@ ROOT.on('value',snap=>{
     videoCats:(Array.isArray(v.videoCats)&&v.videoCats.length?v.videoCats:DEFAULT.videoCats),
     roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips),
     _backfilled:(v._backfilled===true),
-    _manualAdj1:(v._manualAdj1===true)};
+    _manualAdj1:(v._manualAdj1===true),
+    _offsideFix1:(v._offsideFix1===true)};
   }
   setStatus(true);renderAll();
   runMigrations();   // roomTips 좌표 보정 + 과거 활동 소급 점수 (1회만)
@@ -3097,6 +3104,7 @@ function renderPending(){
             ${isExec
               ? `<button onclick="setRole('${k}','member')">일반으로</button>`
               : `<button onclick="setRole('${k}','exec')" style="background:#e0a93b;">임원으로</button>`}
+            <button onclick="resetMemberPw('${k}')" style="background:#3a9bd8;">비번초기화</button>
             <button class="rej" onclick="rejectUser('${k}')">삭제</button></div>`;
         }).join('')
       : '승인된 회원 없음';
@@ -3107,6 +3115,17 @@ function approveUser(k,role){
   ROOT.child('users/'+k+'/role').set(role==='exec'?'exec':'member');
 }
 function setRole(k,role){ROOT.child('users/'+k+'/role').set(role);}
+// 관리자가 회원 비밀번호를 임시 비번으로 초기화
+function resetMemberPw(k){
+  if(adminLevel()<1) return alert('관리자만 비밀번호를 초기화할 수 있어요.');
+  const u=DATA.users&&DATA.users[k]; if(!u) return;
+  const np=prompt(`'${u.name}' 님의 임시 비밀번호를 입력하세요.\n(이 비번을 회원에게 알려주고, 로그인 후 바꾸도록 안내하세요)`, 'wave0000');
+  if(np===null) return;
+  const pw=np.trim();
+  if(!pw) return alert('비밀번호를 입력하세요.');
+  ROOT.child('users/'+k+'/pw').set(pw);
+  alert(`'${u.name}' 님의 비밀번호가 "${pw}" 로 초기화되었어요.\n회원에게 전달해 주세요.`);
+}
 function rejectUser(k){if(confirm('이 회원을 삭제할까요?'))ROOT.child('users/'+k).remove();}
 function changeAdminPw(level){
   if(level===2){
@@ -3444,6 +3463,57 @@ function renderQuizAdmin(){
         return `<div style="margin-bottom:2px;">${q.type==='ox'?'[O/X]':'[객관식]'} ${esc((q.q||'').slice(0,28))}${(q.q||'').length>28?'…':''} <b style="color:#2e8b3d;">(${esc(String(ans))})</b> <a href="#" onclick="delQuiz(${i});renderQuizAdmin();return false;" style="color:#c0392b;">[삭제]</a></div>`;
       }).join('')
     : '등록된 퀴즈 없음';
+}
+// 오프사이드 퀴즈 정답/오답 수동 정정 (관리자 버튼)
+function fixOffsideQuiz(){
+  if(adminLevel()<1) return alert('관리자만 실행할 수 있어요.');
+  const qs=DATA.quizzes||[];
+  // 현재 등록된 '오프사이드' 문제 찾기 (정답 X 우선)
+  let target=null;
+  for(const q of qs){ if((q.q||'').indexOf('오프사이드')>=0){ target=q; if(q.answer==='X') break; } }
+  if(!target){ return alert('"오프사이드"가 들어간 새 퀴즈를 먼저 등록해 주세요.\n(관리 패널에서 정답 X로 등록 후 다시 눌러주세요)'); }
+  const qk=quizKey(target);
+  const correctNames=['박지예','김소연','조은비','안시하'];
+  const wrongNames=['조훈지'];
+  const toKey=n=>n.replace(/[.#$\[\]\/]/g,'_');
+  const recs=(DATA.quiz_records||[]).slice();
+  const log=(DATA.activity_log||[]).slice();
+  // 사용자의 오프사이드 기록 찾기: 질문에 '오프사이드' 포함 또는 새 qk
+  const findRec=(uk)=>{
+    for(let i=recs.length-1;i>=0;i--){
+      const r=recs[i];
+      if(r.user===uk && ((r.q||'').indexOf('오프사이드')>=0 || r.qk===qk)) return i;
+    }
+    return -1;
+  };
+  const nowTs=Date.now();
+  const d=new Date();
+  const dstr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  let report=[];
+  correctNames.forEach(n=>{
+    const uk=toKey(n);
+    const idx=findRec(uk);
+    const wasCorrect = idx>=0 ? !!recs[idx].correct : false;
+    if(idx>=0){ recs[idx]=Object.assign({},recs[idx],{qk:qk, q:target.q, type:target.type, picked:target.answer, correct:true}); }
+    else { recs.push({user:uk, qk:qk, q:target.q, type:target.type, picked:target.answer, correct:true, date:dstr, ts:nowTs}); }
+    if(!wasCorrect){ log.push({user:uk, type:'quiz', ts:nowTs, pts:actPoints('quiz'), note:'오프사이드 정정', backfill:true}); report.push(n+' → 정답(+2점)'); }
+    else { report.push(n+' → 정답(이미 정답)'); }
+  });
+  wrongNames.forEach(n=>{
+    const uk=toKey(n);
+    const idx=findRec(uk);
+    const wasCorrect = idx>=0 ? !!recs[idx].correct : false;
+    const wrongPick = target.answer==='X'?'O':'X';
+    if(idx>=0){ recs[idx]=Object.assign({},recs[idx],{qk:qk, q:target.q, type:target.type, picked:wrongPick, correct:false}); }
+    else { recs.push({user:uk, qk:qk, q:target.q, type:target.type, picked:wrongPick, correct:false, date:dstr, ts:nowTs}); }
+    if(wasCorrect){
+      for(let i=log.length-1;i>=0;i--){ if(log[i].user===uk && log[i].type==='quiz'){ log.splice(i,1); break; } }
+      report.push(n+' → 오답(-2점 회수)');
+    } else { report.push(n+' → 오답(변동 없음)'); }
+  });
+  ROOT.child('quiz_records').set(recs);
+  ROOT.child('activity_log').set(log);
+  alert('정정 완료!\n\n'+report.join('\n'));
 }
 
 
