@@ -591,6 +591,11 @@ OX | 골키퍼는 손을 쓸 수 없다 | X" style="width:100%;box-sizing:border
       <button onclick="document.getElementById('bulkQuiz').value='';" style="background:#9aa6ae;">입력 비우기</button>
     </div>
     <div id="quizListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <div style="margin-top:8px;padding:8px;background:#fff0f0;border:2px solid #e08080;border-radius:5px;">
+      <div style="font-size:11px;font-weight:700;color:#c0392b;">🚨 긴급 복구 (퀴즈내역 + 점수)</div>
+      <div style="font-size:10px;color:#5a7585;margin:3px 0;">데이터가 초기화됐을 때, 캡처 기준으로 퀴즈 내역과 점수를 되살립니다. 한 번만 누르세요.</div>
+      <button onclick="emergencyRecover()" style="width:100%;background:#c0392b;">복구 실행</button>
+    </div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🪪 프로필 사진</b> (왼쪽 상단, 미니룸과 별개)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0 4px;">📎 파일 첨부 또는 이미지 주소 중 하나만 쓰면 돼요</div>
@@ -1222,6 +1227,47 @@ function pageQuiz(){
   }
   return html;
 }
+
+// ===== 긴급 복구: 퀴즈 내역 + 전체 점수 재생성 (관리자1 전용, 1회) =====
+const RECOVERY_QUIZ_RECORDS = [{"user": "엄다정", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000000}, {"user": "엄다정", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000001}, {"user": "엄다정", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000002}, {"user": "조훈지", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000003}, {"user": "조훈지", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782290000004}, {"user": "조훈지", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000005}, {"user": "안시하", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782290000006}, {"user": "안시하", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000007}, {"user": "안시하", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000008}, {"user": "조은비", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000009}, {"user": "조은비", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000010}, {"user": "조은비", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000011}, {"user": "김소연", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000012}, {"user": "김소연", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000013}, {"user": "김소연", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000014}, {"user": "조안나", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000015}, {"user": "박지예", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782290000016}, {"user": "박지예", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000017}, {"user": "박지예", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000018}, {"user": "조안나", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000019}, {"user": "조안나", "qk": "qWAVE FC는 매주 무슨 요일에 모일까요?", "q": "WAVE FC는 매주 무슨 요일에 모일까요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.24", "ts": 1782290000020}, {"user": "장예나", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782290000021}, {"user": "김서영", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000022}, {"user": "김민지", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000023}];
+function emergencyRecover(){
+  if(adminLevel()!==1) return alert('관리자1만 실행할 수 있어요.');
+  if(!confirm('퀴즈 내역과 점수를 복구합니다.\n\n현재 퀴즈 기록과 점수가 복구본으로 교체됩니다. 진행할까요?')) return;
+  // 1) 퀴즈 내역 복구
+  const recs = JSON.parse(JSON.stringify(RECOVERY_QUIZ_RECORDS));
+  ROOT.child('quiz_records').set(recs);
+  // 2) 점수(activity_log) 전체 재생성
+  const log = [];
+  const push = (user,type,ts,note)=>{ if(!user) return; log.push({user:user, type:type, ts:ts||0, pts:actPoints(type), backfill:true, note:note||'복구'}); };
+  // 2-1) 퀴즈 정답 → 2점
+  recs.forEach(r=>{ if(r.correct) push(r.user,'quiz',r.ts,'퀴즈복구'); });
+  // 2-2) 일촌평(comments의 by) → 2점
+  (DATA.comments||[]).forEach(c=>{ if(c&&c.by) push(c.by,'ilchon',c.ts,'일촌평복구'); });
+  // 2-3) QnA(qna_threads의 byKey) → 2점
+  (DATA.qna_threads||[]).forEach(t=>{ if(t&&t.byKey) push(t.byKey,'qna',t.ts,'QnA복구'); });
+  // 2-4) 새소식 댓글(logs/notices) → 1점, 좋아요(likedBy) → 0.5점
+  ['logs','notices'].forEach(node=>{
+    (DATA[node]||[]).forEach(item=>{
+      if(!item) return;
+      (item.comments||[]).forEach(cm=>{ if(cm&&cm.by) push(cm.by,'comment',cm.ts,'댓글복구'); });
+      if(Array.isArray(item.likedBy)) item.likedBy.forEach(uk=>{ if(uk) push(uk,'like',item.ts,'좋아요복구'); });
+    });
+  });
+  // 2-5) 수동 보정점수 (조안나·간장구·김서영) 재적용
+  const ADJ={'조안나':4,'간장구':4.5,'김서영':3};
+  Object.keys(ADJ).forEach(n=>{ log.push({user:n, type:'adjust', ts:0, pts:ADJ[n], backfill:true, note:'과거활동소급'}); });
+  ROOT.child('activity_log').set(log);
+  // 재실행 방지용 플래그들도 모두 set (자동 마이그레이션이 다시 덮어쓰지 않도록)
+  ROOT.child('_backfilled').set(true);
+  ROOT.child('_manualAdj1').set(true);
+  ROOT.child('_sampleQuizRemoved').set(true);
+  // 사람별 점수 요약
+  const score={};
+  log.forEach(l=>{ score[l.user]=(score[l.user]||0)+(typeof l.pts==='number'?l.pts:0); });
+  let lines=Object.keys(score).sort((a,b)=>score[b]-score[a]).map(u=>u+': '+(+score[u].toFixed(1))+'점');
+  alert('복구 완료!\n\n퀴즈 '+recs.length+'건 복원\n\n[점수]\n'+lines.join('\n'));
+}
+
 // 관리자1: 특정 퀴즈 기록의 정답↔오답을 토글하고 점수도 반영
 function toggleQuizResult(i){
   if(adminLevel()!==1) return alert('관리자1만 정정할 수 있어요.');
@@ -1554,9 +1600,15 @@ function migrateTactics(v){
 }
 
 var _didMigrate=false; // roomTips 좌표/소급점수 1회성 마이그레이션 플래그
+var _initialized=false; // 최초 1회 정상 데이터 수신 여부
 ROOT.on('value',snap=>{
   const v=snap.val();
-  if(!v){ROOT.set(DEFAULT);DATA=JSON.parse(JSON.stringify(DEFAULT));}
+  if(!v){
+    // 데이터가 비어 보일 때: 진짜 첫 사용일 때만 DEFAULT 생성.
+    // 한 번이라도 정상 데이터를 받은 적 있으면(=일시적 연결 문제 등) 절대 덮어쓰지 않음.
+    if(_initialized){ setStatus(false); return; } // 기존 데이터 보호: 화면만 유지
+    ROOT.set(DEFAULT);DATA=JSON.parse(JSON.stringify(DEFAULT));
+  }
   else{
     DATA={images:v.images||DEFAULT.images,
     notices:normNotices(v.notices),
@@ -1590,6 +1642,7 @@ ROOT.on('value',snap=>{
     _manualAdj1:(v._manualAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true)};
+    _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
   runMigrations();   // roomTips 좌표 보정 + 과거 활동 소급 점수 (1회만)
