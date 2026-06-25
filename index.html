@@ -344,6 +344,17 @@
   .rc-input{display:flex;gap:4px;margin-top:4px;}
   .rc-input input{flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:13px;}
   .rc-input button{background:#5aa9e6;color:#fff;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:13px;}
+  /* 비밀댓글 / 비밀글 */
+  .rc-seclabel{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:12px;color:#7a8a96;cursor:pointer;user-select:none;}
+  .rc-seclabel input{margin:0;cursor:pointer;}
+  .rc-secret{color:#9aa6ae;font-style:italic;}
+  .rc-secret-tag{color:#c0392b;font-size:11px;}
+  .qna-ask-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px;flex-wrap:wrap;}
+  .qna-seclabel{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#7a8a96;cursor:pointer;user-select:none;}
+  .qna-seclabel input{margin:0;cursor:pointer;}
+  .qna-secret{color:#9aa6ae;font-style:italic;}
+  .qna-secret-tag{color:#c0392b;font-size:12px;font-weight:700;}
+  .qna-thread.secret-locked{background:#f6f7f8;border-style:dashed;}
   .diary-item.editing{border:2px solid var(--frame);padding:10px 12px;}
   .diary-head{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;}
   .diary-head:hover{background:#f0f8ff;}
@@ -2421,10 +2432,12 @@ function addReactComment(node,idx){
   const inp=document.getElementById('rc_'+node+'_'+idx);
   if(!inp) return;
   const txt=inp.value.trim(); if(!txt) return;
+  const sc=document.getElementById('rcsec_'+node+'_'+idx);
+  const secret=!!(sc&&sc.checked);
   const arr=JSON.parse(JSON.stringify(_reactArr(node)));
   const item=arr[idx]; if(!item) return;
   item.comments=item.comments||[];
-  item.comments.push({text:txt.slice(0,200), ts:Date.now(), by:me||''});
+  item.comments.push({text:txt.slice(0,200), ts:Date.now(), by:me||'', secret:secret});
   logActivity(node==='logs'?'feedback':'reply');
   ROOT.child(node).set(arr);
 }
@@ -2448,7 +2461,12 @@ function reactBox(node,idx){
     const t=c.ts?new Date(c.ts):null;
     const dd=t?`${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';
     const nameTag=(a1&&c.by)?`<span class="rc-who">✍ ${esc(userLabel(c.by))}</span>`:`<span class="rc-anon">익명</span>`;
-    return `<div class="rc-row">${nameTag} ${esc(c.text)}
+    // 비밀댓글: 관리자1 또는 작성자 본인만 내용 확인 가능
+    const canSeeSecret = a1 || (c.by && me && c.by===me);
+    const bodyHtml = (c.secret && !canSeeSecret)
+      ? `<span class="rc-secret">🔒 비밀댓글입니다</span>`
+      : `${c.secret?'<span class="rc-secret-tag">🔒</span> ':''}${esc(c.text)}`;
+    return `<div class="rc-row">${nameTag} ${bodyHtml}
       <span class="rc-date">${dd}</span>
       ${canDelOwn(c.by)?`<span class="rc-del" onclick="delReactComment('${node}',${idx},${ci})">삭제</span>`:''}</div>`;
   }).join('');
@@ -2468,6 +2486,7 @@ function reactBox(node,idx){
       <input id="rc_${node}_${idx}" maxlength="200" placeholder="익명 댓글 달기…" onkeydown="if(event.key==='Enter')addReactComment('${node}',${idx})">
       <button onclick="addReactComment('${node}',${idx})">확인</button>
     </div>
+    <label class="rc-seclabel"><input type="checkbox" id="rcsec_${node}_${idx}"> 🔒 비밀댓글</label>
   </div>`;
 }
 function pageNotice(){
@@ -3116,6 +3135,18 @@ function pageMember(){
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 function pageActivity(){
+  // 활동현황 이름 마스킹: 본인·관리자1은 전체, 그 외 회원은 가운데만 노출
+  //  3글자 박지예 → ＊지＊ / 4글자 박새로이 → ＊새로＊ / 2글자 김민 → ＊민
+  const a1mask=adminLevel()===1;
+  function maskName(name){
+    const n=String(name||'');
+    if(a1mask) return n;            // 관리자1 모드: 다 보임
+    if(me && n===me) return n;      // 본인: 온전히 보임
+    const len=n.length;
+    if(len<=1) return n;
+    if(len===2) return '＊'+n.slice(1);             // 두 글자: 끝 글자만
+    return '＊'+n.slice(1,len-1)+'＊';                // 세 글자 이상: 가운데만
+  }
   // 가입 회원들의 활동 레벨 (임원/회원 구분 없이 Lv로만 표시)
   const approvedUsers=Object.entries(DATA.users)
     .filter(([k,u])=>u.approved)
@@ -3131,7 +3162,7 @@ function pageActivity(){
     return `<div class="lv-card${isMe?' me':''}">
       ${crown}
       <div class="lv-face">${levelFace(lv,72)}</div>
-      <div class="lv-name">${esc(m.name)}</div>
+      <div class="lv-name">${esc(maskName(m.name))}</div>
       <div class="lv-badge">${levelName(lv)}</div>
       <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/LEVEL_STEP)*100):100}%;"></div></div>
       <div class="lv-score">${(+m.score.toFixed(1))}점${info.next?` · 다음 레벨까지 ${(+info.need.toFixed(1))}점`:' · 최고 레벨!'}</div>
@@ -3172,20 +3203,32 @@ function pageQna(){
     <div class="qna-ask">
       <div class="qna-ask-h">⚽ 풋살이나 WAVE FC에 대해 무엇이든 물어보세요</div>
       <textarea id="qnaInput" class="qna-input" rows="2" placeholder="예) 풋살 규칙이 궁금해요 / 회비는 얼마인가요?"></textarea>
-      <button class="qna-send" id="qnaSendBtn" onclick="submitQna()">질문하기</button>
+      <div class="qna-ask-row">
+        <label class="qna-seclabel"><input type="checkbox" id="qnaSecret"> 🔒 비밀글로 질문하기</label>
+        <button class="qna-send" id="qnaSendBtn" onclick="submitQna()">질문하기</button>
+      </div>
       <div id="qnaThinking" class="qna-thinking" style="display:none;">🤖 AI봇이 답변을 찾고 있어요…</div>
     </div>`;
 
   // 질문/답변 스레드 목록
   const items=pageThreads.map((t,i)=>{
     const answered=t.answer&&t.answer.trim();
+    const isMine = me && t.byKey && (t.byKey===me);
+    // 비밀글: 관리자1 또는 작성자 본인만 내용 확인 가능
+    const canSeeSecret = a1 || isMine;
+    if(t.secret && !canSeeSecret){
+      return `
+      <div class="qna-thread secret-locked">
+        <div class="qna-q"><b>Q.</b> <span class="qna-secret">🔒 비밀글입니다 (작성자와 관리자만 볼 수 있어요. 익명은 유지되니 편하게 질문해 주세요😊)</span></div>
+      </div>`;
+    }
+    const secretTag = t.secret ? '<span class="qna-secret-tag">🔒비밀</span> ' : '';
     const badge=answered
       ? '<span class="qna-badge ok">답변완료</span>'
       : '<span class="qna-badge wait">답변대기</span>';
     const src=answered
       ? (t.source==='ai'?'<span class="qna-src">🤖 AI봇</span>':'<span class="qna-src">🙋 관리자</span>')
       : '';
-    const isMine = me && t.byKey && (t.byKey===me);
     // 질문 인라인 편집 모드
     if(qnaEditing===t._origIdx && (a1 || (isMine && !answered))){
       return `
@@ -3232,7 +3275,7 @@ function pageQna(){
     }
     return `
       <div class="qna-thread">
-        <div class="qna-q"><b>Q.</b> ${esc(t.q)} ${badge} ${(a1 && t.byKey && DATA.users[t.byKey])?'<span class="qna-by">✍ '+esc(DATA.users[t.byKey].name)+'</span>':(a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':'')} ${btns}</div>
+        <div class="qna-q"><b>Q.</b> ${secretTag}${esc(t.q)} ${badge} ${(a1 && t.byKey && DATA.users[t.byKey])?'<span class="qna-by">✍ '+esc(DATA.users[t.byKey].name)+'</span>':(a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':'')} ${btns}</div>
         ${answered?`<div class="qna-a"><b>A.</b> ${esc(t.answer)} ${src}</div>`:'<div class="qna-a wait">아직 등록된 답변이 없어요. 관리자가 곧 답변을 준비할게요!</div>'}
         ${adminAnswer}
       </div>`;
@@ -3317,6 +3360,8 @@ async function submitQna(){
   }
 
   // 스레드 저장
+  const secretEl=document.getElementById('qnaSecret');
+  const isSecret=!!(secretEl&&secretEl.checked);
   const arr=(DATA.qna_threads||[]).slice();
   arr.push({
     q:question,
@@ -3324,6 +3369,7 @@ async function submitQna(){
     source:source||'',
     by:'',
     byKey:me||'',
+    secret:isSecret,
     ts:Date.now()
   });
   ROOT.child('qna_threads').set(arr);
@@ -3355,10 +3401,12 @@ function answerQna(origIdx){
   arr[origIdx].answer=val;
   arr[origIdx].source='admin';
   ROOT.child('qna_threads').set(arr);
-  // 지식베이스에도 추가
-  const kb=(DATA.qna_kb||[]).slice();
-  kb.push({q:arr[origIdx].q, a:val, ts:Date.now()});
-  ROOT.child('qna_kb').set(kb);
+  // 지식베이스에도 추가 (단, 비밀글은 공유 KB에 넣지 않음)
+  if(!arr[origIdx].secret){
+    const kb=(DATA.qna_kb||[]).slice();
+    kb.push({q:arr[origIdx].q, a:val, ts:Date.now()});
+    ROOT.child('qna_kb').set(kb);
+  }
 }
 
 function editQnaQuestion(origIdx){
