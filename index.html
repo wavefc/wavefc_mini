@@ -206,6 +206,8 @@
   .feed-detail{margin:4px 6px 8px;background:#fff;border:1px solid var(--line);padding:9px 10px;}
   .fd-h{font-family:'Pretendard',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .fd-body{font-family:'Pretendard',sans-serif;font-size:13px;line-height:1.7;color:#3a5566;white-space:pre-wrap;word-break:break-word;}
+  .fd-goto{margin-top:10px;width:100%;background:var(--frame);color:#fff;border:none;border-radius:6px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard','Malgun Gothic',sans-serif;}
+  .fd-goto:hover{background:var(--frame-dark);}
   .comments{display:flex;flex-direction:column;gap:6px;}
   /* 미니룸 아래 일촌평 댓글 섹션 */
   .guest-h{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:var(--news);margin:14px 0 6px;border-bottom:1px dashed var(--line);padding-bottom:4px;}
@@ -1078,7 +1080,7 @@ let videoSearch='';        // 참고영상 검색어
 let videoPage=0;           // 일반영상 페이지(6개씩)
 let shortsPage=0;          // 숏츠 페이지(6개씩)
 let videoWriting=false;    // 참고영상 추가 폼 펼침
-let cmtPage=0;             // 일촌평 페이지(9개씩)
+let cmtPage=-1;            // 일촌평 페이지(9개씩). -1=진입 시 마지막(최신) 페이지
 let qnaPage=0;             // QnA 페이지(2개씩)
 function todayQuizIndex(){
   const qs=DATA.quizzes||[];
@@ -1985,6 +1987,7 @@ function go(page,btn){
   noticeEditing=null;
   diaryEditing=null;
   qnaEditing=null; qnaAnsEditing=null;
+  if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -2082,25 +2085,33 @@ function pageHome(){
     : '<div style="color:#5a7585;font-size:12px;padding:14px;line-height:1.6;">다가오는 일정이 아직 없어요.<br>일정안내에서 정기훈련을 등록해보세요 :)</div>';
   // 선택된 글 본문
   const cur=top[feedSel]||top[0];
+  const gotoBtn = (cur && cur._t==='notice')
+    ? `<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🏃🏻‍♀️</button>`
+    : '';
   const detail = cur
     ? `<div class="feed-detail">
          <div class="fd-h"><span class="feed-label ${feedColor(cur)}">${cur.label}</span> ${esc(cur.title)}</div>
          <div class="fd-body">${cur._t==='notice'?bodyRender(cur.text):(esc(cur.text)||'(내용 없음)')}</div>
+         ${gotoBtn}
        </div>`
     : '';
 
-  // 일촌평 (미니룸 아래) — 9개 단위 페이지, 오래된 글이 1페이지
+  // 일촌평 (미니룸 아래) — 9개 단위 페이지.
+  // 1페이지=가장 오래된 글, 신규는 뒤 페이지에 쌓임(기본 진입 = 마지막 페이지).
+  // 페이지 안에서는 최신이 위로 표시.
   const recentC=DATA.comments.slice(0,5);
   const a1c=adminLevel()===1;
   const CMT_PER=9;
   const cmtPages=Math.max(1,Math.ceil(DATA.comments.length/CMT_PER));
+  if(cmtPage===-1) cmtPage=cmtPages-1; // 진입 시 마지막(최신) 페이지
   if(cmtPage>cmtPages-1) cmtPage=cmtPages-1;
   if(cmtPage<0) cmtPage=0;
   const cmtStart=cmtPage*CMT_PER;
-  // 원본 인덱스(i) 유지한 채 오래된 순으로 정렬 후 페이지 슬라이스
-  const cmtSorted=DATA.comments.map((c,i)=>({c,i})).sort((a,b)=>(a.c.ts||0)-(b.c.ts||0));
-  const list=cmtSorted
+  // 오래된 순으로 페이지에 배분한 뒤, 페이지 안에서만 최신이 위로 오도록 뒤집어 표시
+  const cmtSortedOld=DATA.comments.map((c,i)=>({c,i})).sort((a,b)=>(a.c.ts||0)-(b.c.ts||0));
+  const list=cmtSortedOld
     .slice(cmtStart, cmtStart+CMT_PER)
+    .slice().reverse()
     .map(({c,i})=>{
     const canDel=canDelOwn(c.by);
     const t=c.ts?new Date(c.ts):null;
@@ -2181,7 +2192,7 @@ function addComment(){
   if(!t)return;
   const arr=DATA.comments.slice();
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
-  cmtPage=Math.max(0,Math.ceil(arr.length/9)-1); // 새 일촌평은 마지막 페이지(왼쪽 끝)에 쌓임
+  cmtPage=Math.max(0,Math.ceil(arr.length/9)-1); // 새 일촌평은 마지막(최신) 페이지에 쌓임
   logActivity('ilchon');
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
@@ -2581,6 +2592,14 @@ function pageNotice(){
 }
 function toggleNoticeWrite(){ noticeWriting=!noticeWriting; noticeEditing=null; renderPage('notice'); }
 function toggleNoticeOpen(i){ noticeOpen=(noticeOpen===i)?null:i; renderPage('notice'); }
+// 홈 새소식 → 공지사항 게시판으로 이동하면서 해당 글 펼치기
+function gotoNoticePost(i){
+  noticeOpen=i;
+  const tab=document.querySelector('[data-page="notice"]');
+  go('notice', tab);
+  // 펼쳐진 글로 스크롤
+  setTimeout(()=>{ const c=document.getElementById('centerArea'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+}
 function addNoticeBoard(){
   if(rankOf(me)!=='exec') return alert('임원만 공지를 작성할 수 있어요.');
   const title=document.getElementById('ntTitle').value.trim();
@@ -3135,13 +3154,11 @@ function pageMember(){
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 function pageActivity(){
-  // 활동현황 이름 마스킹: 본인·관리자1은 전체, 그 외 회원은 가운데만 노출
+  // 활동현황 이름 마스킹: 본인·관리자1은 전체(호출부에서 처리), 그 외 회원은 가운데만 노출
   //  3글자 박지예 → ＊지＊ / 4글자 박새로이 → ＊새로＊ / 2글자 김민 → ＊민
   const a1mask=adminLevel()===1;
   function maskName(name){
     const n=String(name||'');
-    if(a1mask) return n;            // 관리자1 모드: 다 보임
-    if(me && n===me) return n;      // 본인: 온전히 보임
     const len=n.length;
     if(len<=1) return n;
     if(len===2) return '＊'+n.slice(1);             // 두 글자: 끝 글자만
@@ -3150,19 +3167,20 @@ function pageActivity(){
   // 가입 회원들의 활동 레벨 (임원/회원 구분 없이 Lv로만 표시)
   const approvedUsers=Object.entries(DATA.users)
     .filter(([k,u])=>u.approved)
-    .map(([k,u])=>({name:u.name, score:activityScore(u.name)}));
+    .map(([k,u])=>({key:k, name:u.name, score:activityScore(u.name)}));
   // 점수 높은 순(레벨업한 사람이 위로)
   approvedUsers.sort((a,b)=> b.score-a.score || String(a.name).localeCompare(String(b.name),'ko'));
 
   const cards=approvedUsers.map((m,rank)=>{
     const lv=scoreToLevel(m.score);
     const info=nextLevelInfo(m.score);
-    const isMe = me && m.name===me;
+    const isMe = me && (m.key===me || m.name===me);
     const crown = rank===0 && m.score>0 ? '<span class="lv-crown">👑</span>' : '';
+    const shownName = (a1mask || isMe) ? m.name : maskName(m.name);
     return `<div class="lv-card${isMe?' me':''}">
       ${crown}
       <div class="lv-face">${levelFace(lv,72)}</div>
-      <div class="lv-name">${esc(maskName(m.name))}</div>
+      <div class="lv-name">${esc(shownName)}</div>
       <div class="lv-badge">${levelName(lv)}</div>
       <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/LEVEL_STEP)*100):100}%;"></div></div>
       <div class="lv-score">${(+m.score.toFixed(1))}점${info.next?` · 다음 레벨까지 ${(+info.need.toFixed(1))}점`:' · 최고 레벨!'}</div>
@@ -3187,16 +3205,18 @@ function pageActivity(){
 function pageQna(){
   const isExec=rankOf(me)==='exec';
   const a1=adminLevel()===1;
-  // 원본 인덱스 부여 후 오래된 순 정렬(1페이지 = 가장 오래된 글)
+  // 원본 인덱스 부여 후 오래된 순 정렬(1페이지 = 가장 오래된 글, 신규는 뒤 페이지)
   const threads=(DATA.qna_threads||[]).map((t,idx)=>Object.assign({},t,{_origIdx:idx}))
     .sort((x,y)=>(x.ts||0)-(y.ts||0));
 
-  // 페이지네이션 (2개씩) — 신규는 뒤 페이지에 쌓임
+  // 페이지네이션 (2개씩). 1페이지=오래된 글, 기본은 마지막 페이지(최신)
   const QNA_PER=2;
   const qnaPages=Math.max(1,Math.ceil(threads.length/QNA_PER));
+  if(qnaPage===-1) qnaPage=qnaPages-1; // 진입 시: 최신이 있는 마지막 페이지
   if(qnaPage>qnaPages-1) qnaPage=qnaPages-1;
   if(qnaPage<0) qnaPage=0;
-  const pageThreads=threads.slice(qnaPage*QNA_PER, qnaPage*QNA_PER+QNA_PER);
+  // 해당 페이지 글을 잘라낸 뒤, 페이지 안에서는 최신이 위로 오도록 뒤집어 표시
+  const pageThreads=threads.slice(qnaPage*QNA_PER, qnaPage*QNA_PER+QNA_PER).slice().reverse();
 
   // 질문 입력창
   const askBox=`
@@ -3219,7 +3239,7 @@ function pageQna(){
     if(t.secret && !canSeeSecret){
       return `
       <div class="qna-thread secret-locked">
-        <div class="qna-q"><b>Q.</b> <span class="qna-secret">🔒 비밀글입니다 (작성자와 관리자만 볼 수 있어요. 익명은 유지되니 편하게 질문해 주세요😊)</span></div>
+        <div class="qna-q"><b>Q.</b> <span class="qna-secret">🔒 비밀글입니다 (작성자와 관리자만 볼 수 있어요)</span></div>
       </div>`;
     }
     const secretTag = t.secret ? '<span class="qna-secret-tag">🔒비밀</span> ' : '';
@@ -3382,7 +3402,7 @@ async function submitQna(){
     else { thinking.style.display='block'; thinking.style.color='#b0772b'; thinking.textContent=statusMsg; setTimeout(()=>{if(thinking)thinking.style.display='none';},12000); }
   }
   // 새 질문은 가장 최신 → 마지막 페이지에 표시되도록 이동
-  qnaPage=Math.max(0,Math.ceil(((DATA.qna_threads||[]).length)/2)-1);
+  qnaPage=Math.max(0,Math.ceil(((DATA.qna_threads||[]).length)/2)-1); // 새 질문은 마지막(최신) 페이지
   if(currentPage==='qna'){ const c=document.getElementById('centerArea'); c.innerHTML=pageQna(); bindQnaForm(); }
 }
 function answerQna(origIdx){
