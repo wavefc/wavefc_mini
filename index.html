@@ -1345,7 +1345,7 @@ function emergencyRecover(){
   const push = (user,type,ts,note)=>{ if(!user) return; log.push({user:user, type:type, ts:ts||0, pts:actPoints(type), backfill:true, note:note||'복구'}); };
   // 2-1) 퀴즈 정답 → 2점
   recs.forEach(r=>{ if(r.correct) push(r.user,'quiz',r.ts,'퀴즈복구'); });
-  // 2-2) 일촌평(comments의 by) → 2점
+  // 2-2) 일촌평(comments의 by) → 1점
   (DATA.comments||[]).forEach(c=>{ if(c&&c.by) push(c.by,'ilchon',c.ts,'일촌평복구'); });
   // 2-3) QnA(qna_threads의 byKey) → 2점
   (DATA.qna_threads||[]).forEach(t=>{ if(t&&t.byKey) push(t.byKey,'qna',t.ts,'QnA복구'); });
@@ -1850,7 +1850,19 @@ function renderAll(){
   const editable=(adminLevel()===1);
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
   startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
-  renderPage(currentPage);
+  // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
+  if(currentPage==='video' && document.querySelector('iframe.yt-player')){
+    refreshVideoPlayCounts();
+  } else {
+    renderPage(currentPage);
+  }
+}
+// 영상 카드를 다시 그리지 않고 재생 숫자(▶ N회)만 DB 값으로 갱신
+function refreshVideoPlayCounts(){
+  (DATA.videos||[]).forEach((v,i)=>{
+    const sp=document.getElementById('vp_'+i);
+    if(sp){ const p=(v&&v.plays)||0; sp.textContent='▶ '+p.toLocaleString()+'회'; }
+  });
 }
 function editMood(){
   if(adminLevel()!==1) return;
@@ -3082,7 +3094,7 @@ function pageActivity(){
   // 레벨 안내(진화 단계)
   const guide=`<div class="lv-guide">
     <b>🎮 레벨은 이렇게 올라가요!</b> 활동할 때마다 점수가 쌓이고, 50점마다 레벨이 올라요.<br>
-    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지) · 그 외 히든점수</span>
+    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 1점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 미니룸 말풍선 클릭 0.1점(하루 0.5점까지) · 그 외 히든점수</span>
     <div class="lv-guide-faces">
       ${[1,2,3,4,5,6,7,8,9,10,11].map(l=>`<span class="lv-guide-face">${levelFace(l,38)}<br><span style="font-size:10px;color:#8aa;">Lv.${l}</span></span>`).join('')}
     </div>
