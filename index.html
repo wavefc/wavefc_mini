@@ -556,7 +556,7 @@
     <div><b>🙋 가입 승인 대기</b></div>
     <div id="pendingList" style="font-size:10px;">없음</div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
-    <div><b>👥 회원 등급 관리</b> (👑임원 / 🌊일반)</div>
+    <div><b>👥 회원 등급 관리</b> (👑임원 / 🌊멤버 / 🤍응원단 / 🌱새내기 / 👤방문객)</div>
     <div id="memberManage" style="font-size:10px;">승인된 회원 없음</div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>👤 멤버 명단 관리</b> (실제 뛰는 멤버)</div>
@@ -701,19 +701,36 @@ const RANK_ICON={
   member:"data:image/png;base64,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",
   guest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACMElEQVR4nO2dQU7EMAxFKepR4Aawh5PDHm4AdykroCOI5CjOPFd9bzWbaTN6+pbrZtrlBuLu4Wn7/vzx9oKs4f7x+efz5/vrQqzhljip/KIAmHXky/sycnQiv2VGmTIBMAqAGSpBe0Y6mX03knXMCJHjt9aWhQmAUQCMAmAUAKMAmLQuKEJvRzGjO5rd1fRiAmAUABMqQTNmPr1zlZE1ZJWd/Rqy5kImAEYBMN1dUIX5Se/xs2ZK+/NmlSMTAKMAmGYJyup8srqFyHFm36Hbl7KscmQCYBQAcxGXVoRHOp/Z+21G1pzFyG83ATAKgGl2Qa0IRy6CqG1+1BbHVncUwQTAKABm7b14icRtxtj2iNsgI2s2ATAKgFlHOoeRTmkEqtsZobVmEwCjABgFwCgARgEwCoBRAIwCYNJ2R0fmQvIXEwCjAJjuEkRtC4ys4YgzIhMAowAYBcAoAEYBMCUe1pF1rmt2R1nnMgEwCoBRAIwCYBQAs2zb9u+4uMLMJ4uRjiVrj5P7goqiAJjQhVhrh/PZ7nbNeMCICYBRAMxa7RFeM6j8gBETAKMAmJX6S2kFZv+733/KHwAFwEzZmlh5LtTCl/icFAXApMWuwnN7WlR+wIgJgFEAzJTYVStHFV5Z2MIEwCgAZnocI3eFekvTyOjYEiQXKABm+kt8qt3Qb53XC7GTogCYq75HrEWFN2JQmAAYBcAoAEYBMAqAKdEFVbhrRmECYBQAowAYBcAoAOYLhq7JD5m4adQAAAAASUVORK5CYII="
 };
-const RANK_NAME={exec:"임원",member:"일반 회원",guest:"방문객"};
+const RANK_NAME={exec:"임원",member:"멤버",cheer:"응원단",rookie:"새내기",visitor:"방문객",guest:"방문객"};
+// 등급: exec(임원) > member(멤버) > cheer(응원단) > rookie(새내기) > visitor(방문객) > guest(미승인/비로그인)
 function rankOf(userKey){
   const u=DATA.users[userKey];
   if(!u||!u.approved) return 'guest';
-  return u.role==='exec' ? 'exec' : 'member';
+  const r=u.role;
+  if(r==='exec') return 'exec';
+  if(r==='cheer') return 'cheer';
+  if(r==='rookie') return 'rookie';
+  if(r==='visitor') return 'visitor';
+  return 'member';
 }
+// 승인된 회원인지(로그인 + 승인). 방문객 포함 모든 등급.
+function isApproved(){ if(!me) return false; const u=DATA.users[me]; return !!(u && u.approved===true); }
+// 멤버 전용 페이지(일정/훈련일지/출석/멤버현황/활동현황) 접근 권한: 방문객·미승인 제외
+function canViewMemberPages(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='cheer'||r==='rookie'; }
+// QnA 접근/작성 권한: 방문객·미승인 제외
+function canQna(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='cheer'||r==='rookie'; }
+// 비밀댓글 작성 권한: 방문객·미승인 제외
+function canSecretComment(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='cheer'||r==='rookie'; }
+// 멤버현황 이름 풀표시(마스킹 면제): 임원·멤버·관리자1 (응원단·새내기·방문객은 마스킹)
+function nameUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||adminLevel()===1; }
 function rankImg(rank,size){
   size=size||18;
-  if(rank==='exec'){
-    return '<span title="'+RANK_NAME[rank]+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">👑</span>';
+  const emoji={exec:'👑',cheer:'🤍',rookie:'🌱',visitor:'👤',guest:'⚽'};
+  if(rank==='member'){
+    return '<span title="멤버" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">🌊</span>';
   }
-  if(rank==='guest'){
-    return '<span title="'+RANK_NAME[rank]+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">⚽</span>';
+  if(emoji[rank]){
+    return '<span title="'+(RANK_NAME[rank]||'')+'" style="font-size:'+size+'px;vertical-align:middle;line-height:1;">'+emoji[rank]+'</span>';
   }
   return '<img src="'+RANK_ICON[rank]+'" alt="'+RANK_NAME[rank]+'" title="'+RANK_NAME[rank]+'" style="width:'+size+'px;height:'+size+'px;vertical-align:middle;image-rendering:pixelated;">';
 }
@@ -932,6 +949,8 @@ function clickExtLink(){ logActivityCapped('extlink', 0.5); }
 // counted=true 면 횟수 카운트까지(첫 재생), false 면 점수만(유튜브에서 보기 링크)
 let _playedVi={}; // 이번 페이지에서 카운트 처리한 영상(중복 transaction 방지)
 function playVideo(vIndex, countPlays){
+  // 방문객(visitor)은 참고영상 카운트·점수에 영향을 주지 않음
+  if(rankOf(me)==='visitor') return;
   logActivityCapped('vidplay', 9);
   if(countPlays!==false && typeof vIndex==='number' && vIndex>=0){
     if(_playedVi[vIndex]) return;   // 이미 +1 한 영상은 다시 안 올림
@@ -1898,8 +1917,10 @@ function modalSubmit(){
 
 /* 자물쇠 표시 */
 function updateLocks(){
-  const show=isMember()?'none':'inline';
-  ['lk1','lk2','lk3','lk4','lk5','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
+  const show=canViewMemberPages()?'none':'inline';
+  // lk5(활동현황)은 방문객 포함 승인 회원이면 잠금 해제
+  ['lk1','lk2','lk3','lk4','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
+  const lk5=document.getElementById('lk5'); if(lk5) lk5.style.display=isApproved()?'none':'inline';
 }
 
 function renderAll(){
@@ -1979,8 +2000,12 @@ function renderProfile(){
 function showMiniRoom(it){const m=document.getElementById('mrImg');if(m)m.src=it.url;}
 
 function go(page,btn){
-  // 권한 체크
-  if(['diary','cal','attend','member','activity','qna'].includes(page) && !isMember()){
+  // 권한 체크: 일정/훈련일지/출석/멤버현황/QnA 는 새내기 이상만 (방문객·미승인 차단)
+  // 활동현황(activity)은 승인된 회원이면 방문객도 접근 가능
+  const memberOnly=['diary','cal','attend','member','qna'];
+  const blocked = (memberOnly.includes(page) && !canViewMemberPages())
+                || (page==='activity' && !isApproved());
+  if(blocked){
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     if(btn) btn.classList.add('active');
     currentPage=page;
@@ -2002,7 +2027,8 @@ function go(page,btn){
 }
 function renderPage(page){
   const c=document.getElementById('centerArea');
-  if(['diary','cal','attend','member','activity','qna'].includes(page)&&!isMember()){c.innerHTML=lockedView();return;}
+  if((['diary','cal','attend','member','qna'].includes(page)&&!canViewMemberPages())
+     || (page==='activity'&&!isApproved())){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
   else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; } }
   else if(page==='notice')c.innerHTML=pageNotice();
@@ -2136,7 +2162,7 @@ function pageHome(){
       return `<div class="reply"><span class="rface">↳</span><span class="rtxt">${esc(r.text)}<span class="rtime">${rtstr}</span></span>${rWho}${rCanDel?`<span class="del" onclick="delReply('${pid}',${r.ts})">삭제</span>`:''}</div>`;
     }).join('');
     const replyBlock = replyList?`<div class="reply-wrap">${replyList}</div>`:'';
-    const replyUI = isMember()
+    const replyUI = isApproved()
       ? `<div class="reply-toggle" onclick="toggleReply('${pid}')">💬 답글 ${myReplies.length?('('+myReplies.length+')'):''}</div>
          <div class="reply-form" id="rf_${pid}" style="display:none;">
            <input id="ri_${pid}" maxlength="40" placeholder="익명 답글 (40자)">
@@ -2153,7 +2179,7 @@ function pageHome(){
     cmtPager=`<div class="vpager rtl">${btns}</div>`;
   }
   let form;
-  if(isMember()){
+  if(isApproved()){
     const faceSpans=FACES.map(f=>`<span onclick="pickFace('${f}',this)" class="${f===selFace?'sel':''}">${f}</span>`).join('');
     const customSpan = customFace
       ? `<span onclick="pickFace('${customFace}',this)" class="${customFace===selFace?'sel':''}" title="내가 추가한 이모지">${customFace}</span>`
@@ -2216,7 +2242,7 @@ function onCustomFaceInput(inp){
 }
 function bindCommentForm(){const t=document.getElementById('cmtText');if(t)t.addEventListener('keydown',e=>{if(e.key==='Enter')addComment();});}
 function addComment(){
-  if(!isMember())return;
+  if(!isApproved())return;
   const t=document.getElementById('cmtText').value.trim();
   if(!t)return;
   const arr=DATA.comments.slice();
@@ -2227,7 +2253,7 @@ function addComment(){
   document.getElementById('cmtText').value='';
 }
 // 댓글/일촌평 삭제 권한: 작성자 본인 또는 관리자1 모드
-function canDelOwn(by){ return isMember() && ((by&&by===me) || adminLevel()===1); }
+function canDelOwn(by){ return isApproved() && ((by&&by===me) || adminLevel()===1); }
 function delComment(i){
   const c=DATA.comments[i]; if(!c) return;
   if(!canDelOwn(c.by)) return;
@@ -2241,7 +2267,7 @@ function toggleReply(pid){
   if(show){const inp=document.getElementById('ri_'+pid);if(inp)inp.focus();}
 }
 function addReply(pid){
-  if(!isMember())return;
+  if(!isApproved())return;
   const inp=document.getElementById('ri_'+pid);
   if(!inp)return;
   const t=inp.value.trim();
@@ -2473,7 +2499,7 @@ function addReactComment(node,idx){
   if(!inp) return;
   const txt=inp.value.trim(); if(!txt) return;
   const sc=document.getElementById('rcsec_'+node+'_'+idx);
-  const secret=!!(sc&&sc.checked);
+  const secret=!!(sc&&sc.checked) && canSecretComment(); // 방문객은 비밀댓글 불가
   const arr=JSON.parse(JSON.stringify(_reactArr(node)));
   const item=arr[idx]; if(!item) return;
   item.comments=item.comments||[];
@@ -2526,7 +2552,7 @@ function reactBox(node,idx){
       <input id="rc_${node}_${idx}" maxlength="200" placeholder="익명 댓글 달기…" onkeydown="if(event.key==='Enter')addReactComment('${node}',${idx})">
       <button onclick="addReactComment('${node}',${idx})">확인</button>
     </div>
-    <label class="rc-seclabel"><input type="checkbox" id="rcsec_${node}_${idx}"> 🔒 비밀댓글</label>
+    ${canSecretComment()?`<label class="rc-seclabel"><input type="checkbox" id="rcsec_${node}_${idx}"> 🔒 비밀댓글</label>`:''}
   </div>`;
 }
 function pageNotice(){
@@ -3138,6 +3164,16 @@ function memSortKey(m){
   return [5,999,m.name];
 }
 function pageMember(){
+  // 멤버현황 이름 마스킹: 임원·멤버·관리자1은 전체, 응원단·새내기는 가운데만 노출
+  const memUnmasked=nameUnmasked();
+  function maskMemName(name){
+    if(memUnmasked) return name;
+    const n=String(name||'');
+    const len=n.length;
+    if(len<=1) return n;
+    if(len===2) return '＊'+n.slice(1);
+    return '＊'+n.slice(1,len-1)+'＊';
+  }
   const all=DATA.roster.slice();
   all.sort((a,b)=>{
     const ka=memSortKey(a), kb=memSortKey(b);
@@ -3169,7 +3205,7 @@ function pageMember(){
     return `<div class="member-card ${cls}">
       <div class="mc-badgeslot">${topBadge||''}</div>
       <div class="av">${av}</div>
-      <div class="nm">${rankImg(rank,16)} ${esc(m.name)}</div>
+      <div class="nm">${rankImg(rank,16)} ${esc(maskMemName(m.name))}</div>
       <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
     </div>`;
   }).join('');
@@ -3536,23 +3572,32 @@ function renderPending(){
   const el=document.getElementById('pendingList');
   const pend=Object.entries(DATA.users).filter(([k,u])=>!u.approved);
   el.innerHTML = pend.length
-    ? pend.map(([k,u])=>`<div class="pending">${esc(u.name)}
-        <button onclick="approveUser('${k}','member')">일반승인</button>
-        <button onclick="approveUser('${k}','exec')" style="background:#e0a93b;">임원승인</button>
+    ? pend.map(([k,u])=>`<div class="pending" style="flex-wrap:wrap;">${esc(u.name)}
+        <button onclick="approveUser('${k}','rookie')" style="background:#5bbf6a;">🌱새내기</button>
+        <button onclick="approveUser('${k}','member')">🌊멤버</button>
+        <button onclick="approveUser('${k}','cheer')" style="background:#9b8cf0;">🤍응원단</button>
+        <button onclick="approveUser('${k}','visitor')" style="background:#9aa6ae;">👤방문객</button>
+        <button onclick="approveUser('${k}','exec')" style="background:#e0a93b;">👑임원</button>
         <button class="rej" onclick="rejectUser('${k}')">거절</button></div>`).join('')
     : '없음';
 
   // 기존 회원 등급 관리
   const me2=document.getElementById('memberManage');
   if(me2){
+    const ICON={exec:'👑',member:'🌊',cheer:'🤍',rookie:'🌱',visitor:'👤'};
     const apr=Object.entries(DATA.users).filter(([k,u])=>u.approved);
     me2.innerHTML = apr.length
       ? apr.map(([k,u])=>{
-          const isExec=u.role==='exec';
-          return `<div class="pending">${isExec?'👑 ':'🌊 '}${esc(u.name)}
-            ${isExec
-              ? `<button onclick="setRole('${k}','member')">일반으로</button>`
-              : `<button onclick="setRole('${k}','exec')" style="background:#e0a93b;">임원으로</button>`}
+          const cur=(u.role==='exec'||u.role==='cheer'||u.role==='rookie'||u.role==='visitor')?u.role:'member';
+          const opt=(val,label)=>`<option value="${val}"${cur===val?' selected':''}>${label}</option>`;
+          return `<div class="pending">${ICON[cur]||'🌊'} ${esc(u.name)}
+            <select onchange="setRole('${k}',this.value)" style="font-family:inherit;font-size:10px;padding:2px;border:1px solid #c9d6df;border-radius:3px;">
+              ${opt('exec','👑 임원')}
+              ${opt('member','🌊 멤버')}
+              ${opt('cheer','🤍 응원단')}
+              ${opt('rookie','🌱 새내기')}
+              ${opt('visitor','👤 방문객')}
+            </select>
             <button onclick="resetMemberPw('${k}')" style="background:#3a9bd8;">비번초기화</button>
             <button class="rej" onclick="rejectUser('${k}')">삭제</button></div>`;
         }).join('')
@@ -3560,10 +3605,14 @@ function renderPending(){
   }
 }
 function approveUser(k,role){
+  const valid=['exec','member','cheer','rookie','visitor'];
   ROOT.child('users/'+k+'/approved').set(true);
-  ROOT.child('users/'+k+'/role').set(role==='exec'?'exec':'member');
+  ROOT.child('users/'+k+'/role').set(valid.includes(role)?role:'member');
 }
-function setRole(k,role){ROOT.child('users/'+k+'/role').set(role);}
+function setRole(k,role){
+  const valid=['exec','member','cheer','rookie','visitor'];
+  ROOT.child('users/'+k+'/role').set(valid.includes(role)?role:'member');
+}
 // 관리자가 회원 비밀번호를 임시 비번으로 초기화
 function resetMemberPw(k){
   if(adminLevel()<1) return alert('관리자만 비밀번호를 초기화할 수 있어요.');
