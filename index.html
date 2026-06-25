@@ -144,9 +144,11 @@
   .vcat-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
   .vcat-btn{padding:4px 12px;border:1px solid #cfe3d6;border-radius:14px;cursor:pointer;font-size:13px;background:#fff;color:#2176a8;}
   .vcat-btn.on{background:#3aa0d8;color:#fff;border-color:#3aa0d8;}
-  .vsearch-row{position:relative;display:flex;align-items:center;}
+  .vsearch-row{position:relative;display:flex;align-items:center;gap:6px;}
   .vsearch-row input{flex:1;padding:7px 30px 7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;}
-  .vsearch-clear{position:absolute;right:8px;cursor:pointer;color:#999;font-size:13px;}
+  .vsearch-btn{flex:0 0 auto;padding:7px 16px;border:none;border-radius:6px;background:var(--frame);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .vsearch-btn:hover{background:var(--frame-dark);}
+  .vsearch-clear{position:absolute;right:74px;cursor:pointer;color:#999;font-size:13px;}
   .video-section-h{font-weight:700;color:var(--frame-dark);font-size:15px;margin:14px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px;}
   .video-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   .shorts-list{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
@@ -947,6 +949,11 @@ function _clearYtTimers(){
   _ytTimers={};
   _ytWatched={};
 }
+// 참고영상 페이지에 새로 들어올 때만 카운트 잠금 초기화(검색/필터 재렌더에서는 호출 안 함)
+function resetVideoCountLocks(){
+  _ytCounted={};
+  _playedVi={};
+}
 // 현재 참고영상 페이지의 iframe들에 플레이어 연결
 function bindVideoPlayers(){
   loadYouTubeAPI();
@@ -954,8 +961,7 @@ function bindVideoPlayers(){
   _clearYtTimers();
   try{ _ytPlayers.forEach(p=>{ if(p&&p.destroy) p.destroy(); }); }catch(e){}
   _ytPlayers=[];
-  _ytCounted={};
-  _playedVi={};
+  // _ytCounted / _playedVi 는 의도적으로 초기화하지 않음(재바인딩 시 중복 카운트 방지)
   if(!_ytApiReady){ return; } // 준비되면 onYouTubeIframeAPIReady에서 다시 호출됨
   const frames=document.querySelectorAll('iframe.yt-player');
   const _bound={}; // 이번 바인딩에서 이미 player를 만든 vi (중복 iframe 방지)
@@ -981,9 +987,7 @@ function bindVideoPlayers(){
                   _ytCounted[vi]=true; // 가장 먼저 잠금(중복 카운트 방지)
                   clearInterval(_ytTimers[vi]); delete _ytTimers[vi];
                   playVideo(vi, true);
-                  // 화면의 재생 숫자도 즉시 +1 (실제 값은 DB onValue로 다시 동기화됨)
-                  const sp=document.getElementById('vp_'+vi);
-                  if(sp){ const cur=parseInt((DATA.videos&&DATA.videos[vi]&&DATA.videos[vi].plays)||0,10)+1; sp.textContent='▶ '+cur.toLocaleString()+'회'; }
+                  // 화면 숫자는 DB 변경 콜백(refreshVideoPlayCounts)이 실제값으로 갱신함
                 }
               }, 500);
             } else {
@@ -1470,9 +1474,8 @@ function pageVideo(){
       <div class="vcat-row">${catBtns}</div>
       <div class="vsearch-row">
         <input id="vdSearch" placeholder="제목 검색 (예: 수비)" value="${esc(videoSearch)}"
-          oninput="if(event.isComposing)return;videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();"
-          oncompositionend="videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();"
-          onkeydown="if(event.key==='Enter'){videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();}">
+          onkeydown="if(event.key==='Enter'){doVideoSearch();}">
+        <button class="vsearch-btn" onclick="doVideoSearch()">검색</button>
         ${videoSearch?`<span class="vsearch-clear" onclick="videoSearch='';rerenderVideo();">✕</span>`:''}
       </div>
     </div>`;
@@ -1564,6 +1567,13 @@ function rerenderVideo(){
   const c=document.getElementById('centerArea'); if(c){ c.innerHTML=pageVideo();
     bindVideoPlayers();
     const s=document.getElementById('vdSearch'); if(s){ s.focus(); s.setSelectionRange(s.value.length,s.value.length); } }
+}
+// 검색 버튼/엔터로만 검색 실행 (입력창 값을 읽어 적용)
+function doVideoSearch(){
+  const s=document.getElementById('vdSearch');
+  videoSearch=s?s.value:'';
+  videoPage=0; shortsPage=0;
+  rerenderVideo();
 }
 function setVideoCat(c){ videoCatFilter=c; videoPage=0; shortsPage=0; rerenderVideo(); }
 function toggleVideoWrite(){ videoWriting=!videoWriting; rerenderVideo(); }
@@ -1981,7 +1991,7 @@ function renderPage(page){
   else if(page==='activity')c.innerHTML=pageActivity();
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
-  else if(page==='video'){c.innerHTML=pageVideo();bindVideoPlayers();}
+  else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
