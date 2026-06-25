@@ -911,9 +911,12 @@ function logActivityCapped(type, dailyCap){
 function clickExtLink(){ logActivityCapped('extlink', 0.5); }
 // 참고영상 재생 → 1회 3점, 하루 9점 한도 (+ 영상별 재생 카운트, 모두에게 연동)
 // counted=true 면 횟수 카운트까지(첫 재생), false 면 점수만(유튜브에서 보기 링크)
+let _playedVi={}; // 이번 페이지에서 카운트 처리한 영상(중복 transaction 방지)
 function playVideo(vIndex, countPlays){
   logActivityCapped('vidplay', 9);
   if(countPlays!==false && typeof vIndex==='number' && vIndex>=0){
+    if(_playedVi[vIndex]) return;   // 이미 +1 한 영상은 다시 안 올림
+    _playedVi[vIndex]=true;
     ROOT.child('videos/'+vIndex+'/plays').transaction(c=>(c||0)+1);
   }
 }
@@ -952,10 +955,16 @@ function bindVideoPlayers(){
   try{ _ytPlayers.forEach(p=>{ if(p&&p.destroy) p.destroy(); }); }catch(e){}
   _ytPlayers=[];
   _ytCounted={};
+  _playedVi={};
   if(!_ytApiReady){ return; } // 준비되면 onYouTubeIframeAPIReady에서 다시 호출됨
   const frames=document.querySelectorAll('iframe.yt-player');
+  const _bound={}; // 이번 바인딩에서 이미 player를 만든 vi (중복 iframe 방지)
   frames.forEach(fr=>{
     const vi=parseInt(fr.getAttribute('data-vi'),10);
+    if(_bound[vi]) return;      // 같은 영상 iframe이 둘 이상이면 첫 번째만 연결
+    if(fr.dataset.ytBound==='1') return; // 이미 player가 붙은 iframe은 건너뜀
+    _bound[vi]=true;
+    fr.dataset.ytBound='1';
     try{
       const player=new YT.Player(fr,{
         events:{
@@ -1461,7 +1470,8 @@ function pageVideo(){
       <div class="vcat-row">${catBtns}</div>
       <div class="vsearch-row">
         <input id="vdSearch" placeholder="제목 검색 (예: 수비)" value="${esc(videoSearch)}"
-          oninput="videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();"
+          oninput="if(event.isComposing)return;videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();"
+          oncompositionend="videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();"
           onkeydown="if(event.key==='Enter'){videoSearch=this.value;videoPage=0;shortsPage=0;rerenderVideo();}">
         ${videoSearch?`<span class="vsearch-clear" onclick="videoSearch='';rerenderVideo();">✕</span>`:''}
       </div>
