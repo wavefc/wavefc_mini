@@ -160,6 +160,10 @@
   .video-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .video-link{font-size:12px;color:#c0392b;text-decoration:none;white-space:nowrap;}
   .video-link:hover{text-decoration:underline;}
+  .video-play-ov{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000;cursor:pointer;z-index:2;}
+  .video-play-ov img{width:100%;height:100%;object-fit:cover;opacity:0.85;}
+  .video-play-ov .pbtn{position:absolute;width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;border:2px solid #fff;pointer-events:none;}
+  .video-plays{font-size:12px;color:#8aa;white-space:nowrap;}
   .video-move{font-size:11px;padding:2px 4px;border:1px solid var(--line);border-radius:4px;color:#2176a8;}
   .vpager{display:flex;justify-content:center;gap:6px;margin:14px 0 4px;}
   .vpage{min-width:26px;text-align:center;padding:4px 8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;font-size:13px;background:#fff;color:#2176a8;}
@@ -512,8 +516,8 @@
       <button class="tab-btn" data-page="qna" onclick="go('qna',this)">QnA<span class="lock" id="lk6">🔒</span></button>
       <div class="minicards">
         <div class="mc-title">WAVE 더 구경하기</div>
-        <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener">📷 인스타</a>
-        <a class="c c2" href="https://www.youtube.com/@WAVE_FC" target="_blank" rel="noopener">▶ 유튜브</a>
+        <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener" onclick="clickExtLink()">📷 인스타</a>
+        <a class="c c2" href="https://www.youtube.com/@WAVE_FC" target="_blank" rel="noopener" onclick="clickExtLink()">▶ 유튜브</a>
       </div>
     </div>
   </div>
@@ -807,7 +811,9 @@ const ACT_POINTS={
   quiz:2,     // 퀴즈 정답
   qna:2,      // QnA 작성
   login:5,    // 접속(하루 1회)
-  roomtip:0.1 // 미니룸 말풍선(하루 0.5점 한도)
+  roomtip:0.1,// 미니룸 말풍선(하루 0.5점 한도)
+  extlink:0.1,// WAVE 더 구경하기(인스타/유튜브) 클릭, 하루 0.5점 한도
+  vidplay:3   // 참고영상 재생/유튜브에서 보기, 하루 9점 한도
 };
 function actPoints(type){ return ACT_POINTS[type]!==undefined?ACT_POINTS[type]:1; }
 // 하루 1회 접속 점수 (중복 방지: 오늘 login 기록 없을 때만)
@@ -891,6 +897,36 @@ function logActivity(type){
   const arr=(DATA.activity_log||[]).slice();
   arr.push({user:me, type:type, ts:Date.now(), pts:actPoints(type)});
   ROOT.child('activity_log').set(arr);
+}
+// 하루 한도가 있는 활동 기록 (오늘 누적 점수가 한도 미만일 때만 기록)
+function logActivityCapped(type, dailyCap){
+  if(!me) return;       // 비로그인은 점수 없음
+  if(!isMember()) return; // 승인된 회원만 점수
+  const today=_dayKey(Date.now());
+  const got=(DATA.activity_log||[]).filter(r=>r.user===me && r.type===type && _dayKey(r.ts)===today)
+    .reduce((s,r)=>s+(typeof r.pts==='number'?r.pts:actPoints(type)),0);
+  if(got>=dailyCap) return; // 오늘 한도 도달
+  const arr=(DATA.activity_log||[]).slice();
+  arr.push({user:me, type:type, ts:Date.now(), pts:actPoints(type)});
+  ROOT.child('activity_log').set(arr);
+}
+// WAVE 더 구경하기(인스타/유튜브) 클릭 → 0.1점, 하루 0.5점 한도
+function clickExtLink(){ logActivityCapped('extlink', 0.5); }
+// 참고영상 재생/유튜브에서 보기 → 1회 3점, 하루 9점 한도 (+ 영상별 재생 카운트)
+function playVideo(vIndex){
+  logActivityCapped('vidplay', 9);
+  // 영상별 재생 숫자 누적 (모두에게 연동)
+  if(typeof vIndex==='number' && vIndex>=0){
+    ROOT.child('videos/'+vIndex+'/plays').transaction(c=>(c||0)+1);
+  }
+}
+// 카드의 재생 오버레이를 클릭하면 자동재생 iframe으로 교체 + 점수/카운트 반영
+function loadVideoFrame(vIndex, id){
+  const fr=document.getElementById('vf_'+vIndex);
+  if(fr){
+    fr.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" title="참고영상" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>';
+  }
+  playVideo(vIndex);
 }
 // 좋아요 취소 시 최근 활동 1건 회수
 function revokeActivity(type){
@@ -1392,14 +1428,19 @@ function pageVideo(){
     const moveSel=isExec?`<select class="video-move" onchange="moveVideoCat(${v._i},this.value)" title="카테고리 이동">
         <option value="">이동▾</option>${cats.map(c=>`<option value="${esc(c)}" ${(v.cat||'기본')===c?'disabled':''}>${esc(c)}</option>`).join('')}
       </select>`:'';
+    const plays=v.plays||0;
     return `<div class="video-card${shortStyle?' short':''}">
-      <div class="video-frame${shortStyle?' short':''}">
-        <iframe src="https://www.youtube.com/embed/${id}" title="${esc(v.title||'참고영상')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="video-frame${shortStyle?' short':''}" id="vf_${v._i}">
+        <div class="video-play-ov" onclick="loadVideoFrame(${v._i},'${id}')">
+          <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="${esc(v.title||'참고영상')}" loading="lazy">
+          <span class="pbtn">▶</span>
+        </div>
       </div>
       <div class="video-meta">
         <span class="video-title">${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
         <div class="video-actions">
-          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener">▶ 유튜브</a>
+          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i})">▶ 유튜브에서 보기</a>
+          <span class="video-plays" id="vp_${v._i}">▶ ${plays.toLocaleString()}회</span>
           ${moveSel}
           ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}
         </div>
@@ -1566,6 +1607,7 @@ const DEFAULT={
   profile:{url:"",cap:"WAVE FC 라커룸"},
   bubble:"WAVE FC 미니홈피에 오신 걸 환영합니다!",
   visits:1,
+  daily_visits:{},
   mood:"오늘도 즐겁게 뛰어보자…⚽",
   intro:"매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!",
   ruleHtml:"<h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul><h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul><h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>",
@@ -1655,6 +1697,7 @@ ROOT.on('value',snap=>{
     bubble:(v.bubble!==undefined?v.bubble:DEFAULT.bubble),
     intro:(v.intro!==undefined?v.intro:DEFAULT.intro),
     visits:v.visits||1,mood:v.mood||DEFAULT.mood,
+    daily_visits:(v.daily_visits||{}),
     qna_kb:v.qna_kb||DEFAULT.qna_kb,
     qna_threads:v.qna_threads||[],
     bgImages:v.bgImages||[],
@@ -1682,7 +1725,12 @@ ROOT.on('value',snap=>{
 },()=>setStatus(false));
 
 function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
-function countVisit(){ROOT.child('visits').transaction(c=>(c||0)+1);}
+function countVisit(){
+  ROOT.child('visits').transaction(c=>(c||0)+1);
+  // TODAY: KST 날짜별 방문수 (날짜가 바뀌면 새 키 → 자동 리셋), 모두에게 연동/누적
+  const today=_dayKey(Date.now());
+  ROOT.child('daily_visits/'+today).transaction(c=>(c||0)+1);
+}
 countVisit();
 
 /* 로그인 상태 헬퍼 */
@@ -1754,6 +1802,8 @@ function updateLocks(){
 
 function renderAll(){
   document.getElementById('totalCnt').textContent=DATA.visits.toLocaleString();
+  const todayEl=document.getElementById('todayCnt');
+  if(todayEl){ const tk=_dayKey(Date.now()); todayEl.textContent=((DATA.daily_visits&&DATA.daily_visits[tk])||0).toLocaleString(); }
   const mb=document.getElementById('moodBox'); if(mb) mb.textContent=DATA.mood;
   const it=document.getElementById('introText');
   if(it && it.dataset.editing!=='1'){ it.innerHTML=(DATA.intro||DEFAULT.intro||'매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!'); it.onclick=function(){editIntro();}; }
@@ -2974,7 +3024,7 @@ function pageActivity(){
   // 레벨 안내(진화 단계)
   const guide=`<div class="lv-guide">
     <b>🎮 레벨은 이렇게 올라가요!</b> 활동할 때마다 점수가 쌓이고, 50점마다 레벨이 올라요.<br>
-    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지)</span>
+    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지) · 그 외 히든 점수</span>
     <div class="lv-guide-faces">
       ${[1,2,3,4,5,6,7,8,9,10,11].map(l=>`<span class="lv-guide-face">${levelFace(l,38)}<br><span style="font-size:10px;color:#8aa;">Lv.${l}</span></span>`).join('')}
     </div>
