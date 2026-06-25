@@ -165,6 +165,7 @@
   .video-plays{font-size:12px;color:#8aa;white-space:nowrap;}
   .video-move{font-size:11px;padding:2px 4px;border:1px solid var(--line);border-radius:4px;color:#2176a8;}
   .vpager{display:flex;justify-content:center;gap:6px;margin:14px 0 4px;}
+  .vpager.rtl{flex-direction:row-reverse;}
   .vpage{min-width:26px;text-align:center;padding:4px 8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;font-size:13px;background:#fff;color:#2176a8;}
   .vpage.on{background:#3aa0d8;color:#fff;border-color:#3aa0d8;}
   @media(max-width:760px){ .video-list{grid-template-columns:1fr;} .shorts-list{grid-template-columns:repeat(3,1fr);} }
@@ -1067,6 +1068,7 @@ let videoPage=0;           // 일반영상 페이지(6개씩)
 let shortsPage=0;          // 숏츠 페이지(6개씩)
 let videoWriting=false;    // 참고영상 추가 폼 펼침
 let cmtPage=0;             // 일촌평 페이지(9개씩)
+let qnaPage=0;             // QnA 페이지(2개씩)
 function todayQuizIndex(){
   const qs=DATA.quizzes||[];
   if(!qs.length) return -1;
@@ -2076,7 +2078,7 @@ function pageHome(){
        </div>`
     : '';
 
-  // 일촌평 (미니룸 아래) — 9개 단위 페이지
+  // 일촌평 (미니룸 아래) — 9개 단위 페이지, 오래된 글이 1페이지
   const recentC=DATA.comments.slice(0,5);
   const a1c=adminLevel()===1;
   const CMT_PER=9;
@@ -2084,7 +2086,9 @@ function pageHome(){
   if(cmtPage>cmtPages-1) cmtPage=cmtPages-1;
   if(cmtPage<0) cmtPage=0;
   const cmtStart=cmtPage*CMT_PER;
-  const list=DATA.comments.map((c,i)=>({c,i}))
+  // 원본 인덱스(i) 유지한 채 오래된 순으로 정렬 후 페이지 슬라이스
+  const cmtSorted=DATA.comments.map((c,i)=>({c,i})).sort((a,b)=>(a.c.ts||0)-(b.c.ts||0));
+  const list=cmtSorted
     .slice(cmtStart, cmtStart+CMT_PER)
     .map(({c,i})=>{
     const canDel=canDelOwn(c.by);
@@ -2116,7 +2120,7 @@ function pageHome(){
   if(cmtPages>1){
     let btns='';
     for(let i=0;i<cmtPages;i++){ btns+=`<span class="vpage ${i===cmtPage?'on':''}" onclick="goCmtPage(${i})">${i+1}</span>`; }
-    cmtPager=`<div class="vpager">${btns}</div>`;
+    cmtPager=`<div class="vpager rtl">${btns}</div>`;
   }
   let form;
   if(isMember()){
@@ -2166,7 +2170,7 @@ function addComment(){
   if(!t)return;
   const arr=DATA.comments.slice();
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
-  cmtPage=0; // 새 일촌평은 첫 페이지에 보이도록
+  cmtPage=Math.max(0,Math.ceil(arr.length/9)-1); // 새 일촌평은 마지막 페이지(왼쪽 끝)에 쌓임
   logActivity('ilchon');
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
@@ -3152,9 +3156,16 @@ function pageActivity(){
 function pageQna(){
   const isExec=rankOf(me)==='exec';
   const a1=adminLevel()===1;
-  // 원본 인덱스 부여 후 최신순 정렬
+  // 원본 인덱스 부여 후 오래된 순 정렬(1페이지 = 가장 오래된 글)
   const threads=(DATA.qna_threads||[]).map((t,idx)=>Object.assign({},t,{_origIdx:idx}))
-    .sort((x,y)=>(y.ts||0)-(x.ts||0));
+    .sort((x,y)=>(x.ts||0)-(y.ts||0));
+
+  // 페이지네이션 (2개씩) — 신규는 뒤 페이지에 쌓임
+  const QNA_PER=2;
+  const qnaPages=Math.max(1,Math.ceil(threads.length/QNA_PER));
+  if(qnaPage>qnaPages-1) qnaPage=qnaPages-1;
+  if(qnaPage<0) qnaPage=0;
+  const pageThreads=threads.slice(qnaPage*QNA_PER, qnaPage*QNA_PER+QNA_PER);
 
   // 질문 입력창
   const askBox=`
@@ -3166,7 +3177,7 @@ function pageQna(){
     </div>`;
 
   // 질문/답변 스레드 목록
-  const items=threads.map((t,i)=>{
+  const items=pageThreads.map((t,i)=>{
     const answered=t.answer&&t.answer.trim();
     const badge=answered
       ? '<span class="qna-badge ok">답변완료</span>'
@@ -3232,10 +3243,19 @@ function pageQna(){
     ? `<div class="qna-kbinfo">📚 현재 지식베이스 항목 <b>${(DATA.qna_kb||[]).length}개</b> · 관리(⚙)에서 추가/삭제할 수 있어요.</div>`
     : '';
 
+  // 페이지 버튼 (오른쪽이 1번, 왼쪽으로 갈수록 큰 번호)
+  let qnaPager='';
+  if(qnaPages>1){
+    let btns='';
+    for(let p=0;p<qnaPages;p++){ btns+=`<span class="vpage ${p===qnaPage?'on':''}" onclick="goQnaPage(${p})">${p+1}</span>`; }
+    qnaPager=`<div class="vpager rtl">${btns}</div>`;
+  }
+
   return `<div class="page-h">💬 QnA</div>
     ${askBox}
     ${kbInfo}
-    <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">아직 등록된 질문이 없어요. 첫 질문을 남겨보세요!</div>'}</div>`;
+    <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">아직 등록된 질문이 없어요. 첫 질문을 남겨보세요!</div>'}</div>
+    ${qnaPager}`;
 }
 
 function bindQnaForm(){
@@ -3245,6 +3265,12 @@ function bindQnaForm(){
       if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ submitQna(); }
     });
   }
+}
+// QnA 페이지 이동
+function goQnaPage(p){
+  qnaPage=p;
+  const c=document.getElementById('centerArea');
+  if(c){ c.innerHTML=pageQna(); bindQnaForm(); }
 }
 
 // 지식베이스를 프롬프트로 구성, AI는 이 안에서만 답함
@@ -3309,10 +3335,10 @@ async function submitQna(){
     if(answer){ thinking.style.display='none'; }
     else { thinking.style.display='block'; thinking.style.color='#b0772b'; thinking.textContent=statusMsg; setTimeout(()=>{if(thinking)thinking.style.display='none';},12000); }
   }
+  // 새 질문은 가장 최신 → 마지막 페이지에 표시되도록 이동
+  qnaPage=Math.max(0,Math.ceil(((DATA.qna_threads||[]).length)/2)-1);
   if(currentPage==='qna'){ const c=document.getElementById('centerArea'); c.innerHTML=pageQna(); bindQnaForm(); }
 }
-
-// 관리자1이 미답변 질문에 답변 등록 → 스레드 갱신 + 지식베이스 추가
 function answerQna(origIdx){
   if(adminLevel()!==1) return alert('관리자1만 답변을 등록할 수 있어요.');
   // origIdx 기준 textarea 찾기: 정렬 화면에서 매핑된 id 사용
