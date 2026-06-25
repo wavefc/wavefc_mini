@@ -802,7 +802,7 @@ function editRoomTip(i){
 // ===== 활동 점수 & 레벨 시스템 =====
 // 활동별 점수 가중치
 const ACT_POINTS={
-  ilchon:2,   // 일촌평
+  ilchon:1,   // 일촌평
   comment:1,  // 댓글
   like:0.5,   // 좋아요
   quiz:2,     // 퀴즈 정답
@@ -917,10 +917,13 @@ function playVideo(vIndex, countPlays){
     ROOT.child('videos/'+vIndex+'/plays').transaction(c=>(c||0)+1);
   }
 }
-// ===== YouTube IFrame API: 영상 첫 재생 감지 =====
+// ===== YouTube IFrame API: 영상 재생 감지 (최소 5초 재생 시 카운트) =====
 let _ytApiReady=false;
 let _ytPlayers=[];      // 현재 페이지의 플레이어 인스턴스
 let _ytCounted={};      // 이번 페이지에서 이미 카운트한 영상(중복 방지): {vi:true}
+let _ytTimers={};       // 영상별 누적시간 측정 인터벌: {vi:intervalId}
+let _ytWatched={};      // 영상별 실제 재생 누적시간(초): {vi:seconds}
+const PLAY_MIN_SEC=5;   // 최소 재생 시간(초). 이 시간 이상 재생해야 카운트
 // API 스크립트 로드 (1회)
 function loadYouTubeAPI(){
   if(window.YT && window.YT.Player){ _ytApiReady=true; return; }
@@ -935,10 +938,17 @@ window.onYouTubeIframeAPIReady=function(){
   _ytApiReady=true;
   bindVideoPlayers(); // 준비되면 현재 화면의 영상에 플레이어 연결
 };
+// 영상별 대기 타이머 모두 취소
+function _clearYtTimers(){
+  Object.keys(_ytTimers).forEach(k=>{ clearInterval(_ytTimers[k]); });
+  _ytTimers={};
+  _ytWatched={};
+}
 // 현재 참고영상 페이지의 iframe들에 플레이어 연결
 function bindVideoPlayers(){
   loadYouTubeAPI();
-  // 이전 플레이어 정리
+  // 이전 플레이어/타이머 정리
+  _clearYtTimers();
   try{ _ytPlayers.forEach(p=>{ if(p&&p.destroy) p.destroy(); }); }catch(e){}
   _ytPlayers=[];
   _ytCounted={};
@@ -950,13 +960,26 @@ function bindVideoPlayers(){
       const player=new YT.Player(fr,{
         events:{
           'onStateChange':function(ev){
-            // PLAYING(1) 상태로 처음 진입할 때만 1회 카운트
-            if(ev.data===YT.PlayerState.PLAYING && !_ytCounted[vi]){
-              _ytCounted[vi]=true;
-              playVideo(vi, true);
-              // 화면의 재생 숫자도 즉시 +1 (실제 값은 DB onValue로 다시 동기화됨)
-              const sp=document.getElementById('vp_'+vi);
-              if(sp){ const cur=parseInt((DATA.videos&&DATA.videos[vi]&&DATA.videos[vi].plays)||0,10)+1; sp.textContent='▶ '+cur.toLocaleString()+'회'; }
+            if(_ytCounted[vi]) return; // 이미 카운트한 영상은 무시
+            if(ev.data===YT.PlayerState.PLAYING){
+              // 재생 중일 때만 0.5초마다 누적 시간을 잰다. 멈추면 인터벌이 멈춰 더 안 늘어남.
+              if(_ytTimers[vi]) return; // 이미 측정 중
+              if(_ytWatched[vi]==null) _ytWatched[vi]=0;
+              _ytTimers[vi]=setInterval(()=>{
+                _ytWatched[vi]+=0.5;
+                if(_ytWatched[vi]>=PLAY_MIN_SEC){
+                  clearInterval(_ytTimers[vi]); delete _ytTimers[vi];
+                  if(_ytCounted[vi]) return;
+                  _ytCounted[vi]=true;
+                  playVideo(vi, true);
+                  // 화면의 재생 숫자도 즉시 +1 (실제 값은 DB onValue로 다시 동기화됨)
+                  const sp=document.getElementById('vp_'+vi);
+                  if(sp){ const cur=parseInt((DATA.videos&&DATA.videos[vi]&&DATA.videos[vi].plays)||0,10)+1; sp.textContent='▶ '+cur.toLocaleString()+'회'; }
+                }
+              }, 500);
+            } else {
+              // 멈추면 측정만 정지(누적시간은 유지). 다시 재생하면 이어서 잰다.
+              if(_ytTimers[vi]){ clearInterval(_ytTimers[vi]); delete _ytTimers[vi]; }
             }
           }
         }
@@ -1345,7 +1368,7 @@ function emergencyRecover(){
   const push = (user,type,ts,note)=>{ if(!user) return; log.push({user:user, type:type, ts:ts||0, pts:actPoints(type), backfill:true, note:note||'복구'}); };
   // 2-1) 퀴즈 정답 → 2점
   recs.forEach(r=>{ if(r.correct) push(r.user,'quiz',r.ts,'퀴즈복구'); });
-  // 2-2) 일촌평(comments의 by) → 1점
+  // 2-2) 일촌평(comments의 by) → 2점
   (DATA.comments||[]).forEach(c=>{ if(c&&c.by) push(c.by,'ilchon',c.ts,'일촌평복구'); });
   // 2-3) QnA(qna_threads의 byKey) → 2점
   (DATA.qna_threads||[]).forEach(t=>{ if(t&&t.byKey) push(t.byKey,'qna',t.ts,'QnA복구'); });
