@@ -160,9 +160,6 @@
   .video-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .video-link{font-size:12px;color:#c0392b;text-decoration:none;white-space:nowrap;}
   .video-link:hover{text-decoration:underline;}
-  .video-play-ov{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000;cursor:pointer;z-index:2;}
-  .video-play-ov img{width:100%;height:100%;object-fit:cover;opacity:0.85;}
-  .video-play-ov .pbtn{position:absolute;width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;border:2px solid #fff;pointer-events:none;}
   .video-plays{font-size:12px;color:#8aa;white-space:nowrap;}
   .video-move{font-size:11px;padding:2px 4px;border:1px solid var(--line);border-radius:4px;color:#2176a8;}
   .vpager{display:flex;justify-content:center;gap:6px;margin:14px 0 4px;}
@@ -912,21 +909,61 @@ function logActivityCapped(type, dailyCap){
 }
 // WAVE 더 구경하기(인스타/유튜브) 클릭 → 0.1점, 하루 0.5점 한도
 function clickExtLink(){ logActivityCapped('extlink', 0.5); }
-// 참고영상 재생/유튜브에서 보기 → 1회 3점, 하루 9점 한도 (+ 영상별 재생 카운트)
-function playVideo(vIndex){
+// 참고영상 재생 → 1회 3점, 하루 9점 한도 (+ 영상별 재생 카운트, 모두에게 연동)
+// counted=true 면 횟수 카운트까지(첫 재생), false 면 점수만(유튜브에서 보기 링크)
+function playVideo(vIndex, countPlays){
   logActivityCapped('vidplay', 9);
-  // 영상별 재생 숫자 누적 (모두에게 연동)
-  if(typeof vIndex==='number' && vIndex>=0){
+  if(countPlays!==false && typeof vIndex==='number' && vIndex>=0){
     ROOT.child('videos/'+vIndex+'/plays').transaction(c=>(c||0)+1);
   }
 }
-// 카드의 재생 오버레이를 클릭하면 자동재생 iframe으로 교체 + 점수/카운트 반영
-function loadVideoFrame(vIndex, id){
-  const fr=document.getElementById('vf_'+vIndex);
-  if(fr){
-    fr.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" title="참고영상" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>';
-  }
-  playVideo(vIndex);
+// ===== YouTube IFrame API: 영상 첫 재생 감지 =====
+let _ytApiReady=false;
+let _ytPlayers=[];      // 현재 페이지의 플레이어 인스턴스
+let _ytCounted={};      // 이번 페이지에서 이미 카운트한 영상(중복 방지): {vi:true}
+// API 스크립트 로드 (1회)
+function loadYouTubeAPI(){
+  if(window.YT && window.YT.Player){ _ytApiReady=true; return; }
+  if(document.getElementById('yt-iframe-api')) return; // 로딩 중
+  const tag=document.createElement('script');
+  tag.id='yt-iframe-api';
+  tag.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}
+// API 준비 콜백 (유튜브가 자동 호출)
+window.onYouTubeIframeAPIReady=function(){
+  _ytApiReady=true;
+  bindVideoPlayers(); // 준비되면 현재 화면의 영상에 플레이어 연결
+};
+// 현재 참고영상 페이지의 iframe들에 플레이어 연결
+function bindVideoPlayers(){
+  loadYouTubeAPI();
+  // 이전 플레이어 정리
+  try{ _ytPlayers.forEach(p=>{ if(p&&p.destroy) p.destroy(); }); }catch(e){}
+  _ytPlayers=[];
+  _ytCounted={};
+  if(!_ytApiReady){ return; } // 준비되면 onYouTubeIframeAPIReady에서 다시 호출됨
+  const frames=document.querySelectorAll('iframe.yt-player');
+  frames.forEach(fr=>{
+    const vi=parseInt(fr.getAttribute('data-vi'),10);
+    try{
+      const player=new YT.Player(fr,{
+        events:{
+          'onStateChange':function(ev){
+            // PLAYING(1) 상태로 처음 진입할 때만 1회 카운트
+            if(ev.data===YT.PlayerState.PLAYING && !_ytCounted[vi]){
+              _ytCounted[vi]=true;
+              playVideo(vi, true);
+              // 화면의 재생 숫자도 즉시 +1 (실제 값은 DB onValue로 다시 동기화됨)
+              const sp=document.getElementById('vp_'+vi);
+              if(sp){ const cur=parseInt((DATA.videos&&DATA.videos[vi]&&DATA.videos[vi].plays)||0,10)+1; sp.textContent='▶ '+cur.toLocaleString()+'회'; }
+            }
+          }
+        }
+      });
+      _ytPlayers.push(player);
+    }catch(e){}
+  });
 }
 // 좋아요 취소 시 최근 활동 1건 회수
 function revokeActivity(type){
@@ -993,6 +1030,7 @@ let videoSearch='';        // 참고영상 검색어
 let videoPage=0;           // 일반영상 페이지(6개씩)
 let shortsPage=0;          // 숏츠 페이지(6개씩)
 let videoWriting=false;    // 참고영상 추가 폼 펼침
+let cmtPage=0;             // 일촌평 페이지(9개씩)
 function todayQuizIndex(){
   const qs=DATA.quizzes||[];
   if(!qs.length) return -1;
@@ -1430,16 +1468,16 @@ function pageVideo(){
       </select>`:'';
     const plays=v.plays||0;
     return `<div class="video-card${shortStyle?' short':''}">
-      <div class="video-frame${shortStyle?' short':''}" id="vf_${v._i}">
-        <div class="video-play-ov" onclick="loadVideoFrame(${v._i},'${id}')">
-          <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="${esc(v.title||'참고영상')}" loading="lazy">
-          <span class="pbtn">▶</span>
-        </div>
+      <div class="video-frame${shortStyle?' short':''}">
+        <iframe class="yt-player" data-vi="${v._i}" data-vid="${id}"
+          src="https://www.youtube.com/embed/${id}?enablejsapi=1"
+          title="${esc(v.title||'참고영상')}" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
       </div>
       <div class="video-meta">
         <span class="video-title">${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
         <div class="video-actions">
-          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i})">▶ 유튜브에서 보기</a>
+          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, true)">▶ 유튜브에서 보기</a>
           <span class="video-plays" id="vp_${v._i}">▶ ${plays.toLocaleString()}회</span>
           ${moveSel}
           ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}
@@ -1491,6 +1529,7 @@ function pageVideo(){
 }
 function rerenderVideo(){
   const c=document.getElementById('centerArea'); if(c){ c.innerHTML=pageVideo();
+    bindVideoPlayers();
     const s=document.getElementById('vdSearch'); if(s){ s.focus(); s.setSelectionRange(s.value.length,s.value.length); } }
 }
 function setVideoCat(c){ videoCatFilter=c; videoPage=0; shortsPage=0; rerenderVideo(); }
@@ -1897,7 +1936,7 @@ function renderPage(page){
   else if(page==='activity')c.innerHTML=pageActivity();
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
-  else if(page==='video')c.innerHTML=pageVideo();
+  else if(page==='video'){c.innerHTML=pageVideo();bindVideoPlayers();}
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
@@ -1982,10 +2021,17 @@ function pageHome(){
        </div>`
     : '';
 
-  // 일촌평 (미니룸 아래)
+  // 일촌평 (미니룸 아래) — 9개 단위 페이지
   const recentC=DATA.comments.slice(0,5);
   const a1c=adminLevel()===1;
-  const list=DATA.comments.map((c,i)=>{
+  const CMT_PER=9;
+  const cmtPages=Math.max(1,Math.ceil(DATA.comments.length/CMT_PER));
+  if(cmtPage>cmtPages-1) cmtPage=cmtPages-1;
+  if(cmtPage<0) cmtPage=0;
+  const cmtStart=cmtPage*CMT_PER;
+  const list=DATA.comments.map((c,i)=>({c,i}))
+    .slice(cmtStart, cmtStart+CMT_PER)
+    .map(({c,i})=>{
     const canDel=canDelOwn(c.by);
     const t=c.ts?new Date(c.ts):null;
     const tstr=t?`${t.getMonth()+1}/${t.getDate()}`:'';
@@ -2010,6 +2056,13 @@ function pageHome(){
       : (replyList?'':'');
     return `<div class="guest"><span class="gface">${c.face}</span><span class="gtxt">${esc(c.text)}<span class="gtime">${tstr}</span></span>${who}${canDel?`<span class="del" onclick="delComment(${i})">삭제</span>`:''}</div>${replyBlock}${replyUI}`;
   }).join('') || '<div style="font-size:11px;color:#8aa;text-align:center;padding:14px;">아직 일촌평이 없어요. 첫 댓글을 남겨보세요!</div>';
+  // 일촌평 페이지네이션 버튼
+  let cmtPager='';
+  if(cmtPages>1){
+    let btns='';
+    for(let i=0;i<cmtPages;i++){ btns+=`<span class="vpage ${i===cmtPage?'on':''}" onclick="goCmtPage(${i})">${i+1}</span>`; }
+    cmtPager=`<div class="vpager">${btns}</div>`;
+  }
   let form;
   if(isMember()){
     form=`<div class="cmt-form">
@@ -2044,7 +2097,11 @@ function pageHome(){
     </div>
     <div class="guest-h">📝 일촌평 (${DATA.comments.length})</div>
     ${form}
-    <div class="guest-list" style="margin-top:8px;">${list}</div>`;
+    <div class="guest-list" style="margin-top:8px;">${list}</div>
+    ${cmtPager}`;
+}
+function goCmtPage(p){ cmtPage=p; renderPage('home'); bindCommentForm();
+  const gl=document.querySelector('.guest-h'); if(gl) gl.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function pickFace(f,el){selFace=f;document.querySelectorAll('#facePick span').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');}
 function bindCommentForm(){const t=document.getElementById('cmtText');if(t)t.addEventListener('keydown',e=>{if(e.key==='Enter')addComment();});}
@@ -2054,6 +2111,7 @@ function addComment(){
   if(!t)return;
   const arr=DATA.comments.slice();
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
+  cmtPage=0; // 새 일촌평은 첫 페이지에 보이도록
   logActivity('ilchon');
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
@@ -3024,7 +3082,7 @@ function pageActivity(){
   // 레벨 안내(진화 단계)
   const guide=`<div class="lv-guide">
     <b>🎮 레벨은 이렇게 올라가요!</b> 활동할 때마다 점수가 쌓이고, 50점마다 레벨이 올라요.<br>
-    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지) · 그 외 히든 점수</span>
+    <span style="font-size:12px;color:#567;">접속 5점(하루 1회) · 일촌평 2점 · QnA 2점 · 퀴즈 정답 2점 · 댓글 1점 · 좋아요 0.5점 · 미니룸 말풍선 0.1점(하루 0.5점까지) · 그 외 히든점수</span>
     <div class="lv-guide-faces">
       ${[1,2,3,4,5,6,7,8,9,10,11].map(l=>`<span class="lv-guide-face">${levelFace(l,38)}<br><span style="font-size:10px;color:#8aa;">Lv.${l}</span></span>`).join('')}
     </div>
