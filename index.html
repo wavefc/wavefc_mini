@@ -1988,6 +1988,7 @@ function go(page,btn){
   diaryEditing=null;
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
+  if(page==='home') cmtPage=-1; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -2086,7 +2087,7 @@ function pageHome(){
   // 선택된 글 본문
   const cur=top[feedSel]||top[0];
   const gotoBtn = (cur && cur._t==='notice')
-    ? `<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🏃🏻‍♀️</button>`
+    ? `<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🤍</button>`
     : '';
   const detail = cur
     ? `<div class="feed-detail">
