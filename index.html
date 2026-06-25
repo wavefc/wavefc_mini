@@ -966,11 +966,11 @@ function bindVideoPlayers(){
               if(_ytTimers[vi]) return; // 이미 측정 중
               if(_ytWatched[vi]==null) _ytWatched[vi]=0;
               _ytTimers[vi]=setInterval(()=>{
+                if(_ytCounted[vi]){ clearInterval(_ytTimers[vi]); delete _ytTimers[vi]; return; }
                 _ytWatched[vi]+=0.5;
                 if(_ytWatched[vi]>=PLAY_MIN_SEC){
+                  _ytCounted[vi]=true; // 가장 먼저 잠금(중복 카운트 방지)
                   clearInterval(_ytTimers[vi]); delete _ytTimers[vi];
-                  if(_ytCounted[vi]) return;
-                  _ytCounted[vi]=true;
                   playVideo(vi, true);
                   // 화면의 재생 숫자도 즉시 +1 (실제 값은 DB onValue로 다시 동기화됨)
                   const sp=document.getElementById('vp_'+vi);
@@ -1500,7 +1500,7 @@ function pageVideo(){
       <div class="video-meta">
         <span class="video-title">${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
         <div class="video-actions">
-          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, true)">▶ 유튜브에서 보기</a>
+          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, false)">▶ 유튜브에서 보기</a>
           <span class="video-plays" id="vp_${v._i}">▶ ${plays.toLocaleString()}회</span>
           ${moveSel}
           ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}
