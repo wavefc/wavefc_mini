@@ -723,6 +723,10 @@ function canQna(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='che
 function canSecretComment(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='cheer'||r==='rookie'; }
 // 멤버현황 이름 풀표시(마스킹 면제): 임원·멤버·관리자1 (응원단·새내기·방문객은 마스킹)
 function nameUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||adminLevel()===1; }
+// 출석현황 접근: 임원·멤버·새내기 (응원단·방문객·미승인 제외)
+function canViewAttend(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='rookie'; }
+// 출석현황 이름 풀표시: 임원·멤버·관리자1 (새내기는 마스킹)
+function attendUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||adminLevel()===1; }
 function rankImg(rank,size){
   size=size||18;
   const emoji={exec:'👑',cheer:'🤍',rookie:'🌱',visitor:'👤',guest:'⚽'};
@@ -1910,6 +1914,7 @@ function modalSubmit(){
     if(u.pw!==pw) return alert('비밀번호가 틀립니다');
     if(!u.approved) {me=key;localStorage.setItem('wavefc_user',key);renderLoginBox();return alert('아직 승인 대기 중입니다');}
     me=key;localStorage.setItem('wavefc_user',key);
+    sessionStorage.removeItem('wavefc_admin'); // 계정 전환 시 관리자 모드 해제
     closeModal();renderLoginBox();updateLocks();renderPage(currentPage);
     markLoginToday();
   }
@@ -1918,9 +1923,10 @@ function modalSubmit(){
 /* 자물쇠 표시 */
 function updateLocks(){
   const show=canViewMemberPages()?'none':'inline';
-  // lk5(활동현황)은 방문객 포함 승인 회원이면 잠금 해제
-  ['lk1','lk2','lk3','lk4','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
+  // lk5(활동현황): 방문객 포함 승인 회원이면 해제 / lk4(출석현황): 임원·멤버·새내기만 해제
+  ['lk1','lk2','lk3','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
   const lk5=document.getElementById('lk5'); if(lk5) lk5.style.display=isApproved()?'none':'inline';
+  const lk4=document.getElementById('lk4'); if(lk4) lk4.style.display=canViewAttend()?'none':'inline';
 }
 
 function renderAll(){
@@ -2002,9 +2008,10 @@ function showMiniRoom(it){const m=document.getElementById('mrImg');if(m)m.src=it
 function go(page,btn){
   // 권한 체크: 일정/훈련일지/출석/멤버현황/QnA 는 새내기 이상만 (방문객·미승인 차단)
   // 활동현황(activity)은 승인된 회원이면 방문객도 접근 가능
-  const memberOnly=['diary','cal','attend','member','qna'];
+  const memberOnly=['diary','cal','member','qna'];
   const blocked = (memberOnly.includes(page) && !canViewMemberPages())
-                || (page==='activity' && !isApproved());
+                || (page==='activity' && !isApproved())
+                || (page==='attend' && !canViewAttend());
   if(blocked){
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     if(btn) btn.classList.add('active');
@@ -2027,8 +2034,9 @@ function go(page,btn){
 }
 function renderPage(page){
   const c=document.getElementById('centerArea');
-  if((['diary','cal','attend','member','qna'].includes(page)&&!canViewMemberPages())
-     || (page==='activity'&&!isApproved())){c.innerHTML=lockedView();return;}
+  if((['diary','cal','member','qna'].includes(page)&&!canViewMemberPages())
+     || (page==='activity'&&!isApproved())
+     || (page==='attend'&&!canViewAttend())){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
   else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; } }
   else if(page==='notice')c.innerHTML=pageNotice();
@@ -2977,6 +2985,16 @@ function attMonthLabel(key){
 }
 function pageAttend(){
   const isExec=adminLevel()>=1; // 관리자 모드(1 또는 2)면 출석 관리 가능
+  // 출석현황 이름 마스킹: 임원·멤버·관리자1은 전체, 새내기는 가운데만
+  const attUnmasked=attendUnmasked();
+  function maskAttName(name){
+    if(attUnmasked) return name;
+    const n=String(name||'');
+    const len=n.length;
+    if(len<=1) return n;
+    if(len===2) return '＊'+n.slice(1);
+    return '＊'+n.slice(1,len-1)+'＊';
+  }
   const roster=DATA.roster.filter(m=>memStatus(m)!=='honor');
   const members=roster.slice().sort((a,b)=>{
     const ra=memStatus(a)==='rest'?1:0, rb=memStatus(b)==='rest'?1:0;
@@ -3056,7 +3074,7 @@ function pageAttend(){
       if(st==='O'||st==='E') oCnt++; // 체험은 출석으로 인정 (무단결석은 X와 함께 결석 처리)
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
-    return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(name)}</td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
+    return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))}</td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
   }).join('');
 
   const addBtn=isExec?`<button class="cal-addbtn" onclick="addAttendSession()">+ 출석일 추가</button>`:'';
