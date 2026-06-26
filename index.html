@@ -327,16 +327,17 @@
   .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin-top:7px;}
   /* 뒷면: 위 유니폼·이름(중앙), 아래 스탯(중앙) */
   .member-card.flip .mc-back{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;}
-  .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;}
+  .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;cursor:pointer;position:relative;z-index:2;}
   .mc-back-jersey{font-size:22px;line-height:1;}
   .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:2px;word-break:keep-all;}
-  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;}
+  .mc-back-close{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#5aa9e6;margin-top:1px;}
+  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:3;}
   .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;justify-content:center;}
   .stat-name{flex:0 0 42px;color:#5a7585;text-align:right;}
   .stat-bar{display:flex;gap:2px;}
   .stat-pip{width:10px;height:10px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
   .stat-pip.on{background:#3aa0d8;border-color:#3aa0d8;}
-  .stat-ctrl{display:flex;gap:2px;}
+  .stat-ctrl{display:flex;gap:2px;position:relative;z-index:4;}
   .stat-ctrl button{width:17px;height:17px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:11px;}
   .stat-ctrl button:hover{background:#eaf4fb;}
   /* 전체 멤버 구경 칭찬 토스트 */
@@ -532,21 +533,22 @@
     .right .minicards{flex:1 1 100%;}
     /* 멤버 카드: 모바일 2열, 글자·간격 축소, 스탯이 칸 안에 들어오게 */
     .member-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
-    .member-card.flip{height:210px;}
-    .member-card.flip .mc-front,.member-card.flip .mc-back{padding:6px;}
-    .member-card.flip .mc-front .nm{font-size:14px;}
-    .member-card.flip .mc-front .po{font-size:11px;}
-    .member-card.flip .mc-front .av{font-size:26px;height:54px;}
-    .member-card.flip .mc-front .badge-status{font-size:13px;}
-    .mc-back-head{margin-bottom:3px;}
-    .mc-back-jersey{font-size:18px;}
-    .mc-back-name{font-size:10px;}
-    .stat-row{font-size:9px;gap:2px;margin:0;}
-    .stat-name{flex:0 0 30px;}
-    .stat-bar{gap:1px;}
-    .stat-pip{width:8px;height:8px;}
-    .stat-ctrl button{width:13px;height:13px;font-size:9px;}
-    .mc-fliphint{font-size:10px;}
+    .member-card.flip{height:240px;}
+    .member-card.flip .mc-front,.member-card.flip .mc-back{padding:8px;}
+    .member-card.flip .mc-front .nm{font-size:16px;}
+    .member-card.flip .mc-front .po{font-size:12px;}
+    .member-card.flip .mc-front .av{font-size:30px;height:60px;}
+    .member-card.flip .mc-front .badge-status{font-size:14px;}
+    .mc-back-head{margin-bottom:4px;}
+    .mc-back-jersey{font-size:22px;}
+    .mc-back-name{font-size:12px;}
+    .mc-back-close{font-size:10px;}
+    .stat-row{font-size:11px;gap:3px;margin:1px 0;}
+    .stat-name{flex:0 0 38px;}
+    .stat-bar{gap:2px;}
+    .stat-pip{width:9px;height:9px;}
+    .stat-ctrl button{width:16px;height:16px;font-size:11px;}
+    .mc-fliphint{font-size:11px;}
   }
 </style>
 </head>
@@ -2090,7 +2092,7 @@ function go(page,btn){
   diaryEditing=null;
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
-  if(page==='member') _flippedCards={}; // 멤버현황 진입 시 카드 앞면부터
+  if(page==='member'){ _flippedCards={}; _peekedThisVisit={}; _praisedThisVisit=false; } // 멤버현황 진입 시 초기화
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -3306,6 +3308,8 @@ function markViewed(name){
 }
 // 멤버 카드 뒤집기
 let _flippedCards={}; // {idx:true} 현재 뒤집힌 카드 (재렌더 후 복원용)
+let _peekedThisVisit={}; // 이번 멤버현황 방문에서 펼쳐본 멤버 (칭찬 판정용, 진입 시 초기화)
+let _praisedThisVisit=false; // 이번 방문에서 칭찬 떴는지
 function flipMemberCard(idx){
   const card=document.getElementById('mcard_'+idx);
   if(!card) return;
@@ -3314,12 +3318,13 @@ function flipMemberCard(idx){
   const willOpen=!card.classList.contains('flipped');
   card.classList.toggle('flipped');
   if(willOpen) _flippedCards[idx]=true; else delete _flippedCards[idx];
-  // 다른 사람 카드를 '처음' 펼쳐볼 때만 구경 점수 + 기록
+  // 다른 사람 카드를 펼쳐볼 때: 점수(하루 한도) + 이번 방문 칭찬 판정
   if(willOpen && name && name!==myRealName()){
     if(markViewed(name)){
-      logActivityCapped('peek', 3); // 구경 0.1점, 하루 한도(activity 표 참고)
-      checkAllViewed();
+      logActivityCapped('peek', 3); // 구경 0.1점, 하루 한도
     }
+    _peekedThisVisit[name]=true; // 점수와 무관하게 이번 방문 기록
+    checkAllViewed();
   }
 }
 // 재렌더 후 뒤집힌 카드 상태 복원 (스탯 조절 시 앞면으로 튕김 방지)
@@ -3329,25 +3334,38 @@ function restoreFlippedCards(){
     if(card) card.classList.add('flipped');
   });
 }
-// 하루에 전체 멤버를 다 본 사람에게 칭찬 메시지
+// 이번 방문에서 전체 멤버를 다 펼쳐본 사람에게 랜덤 칭찬 메시지
 function checkAllViewed(){
+  if(_praisedThisVisit) return; // 이번 방문엔 한 번만
   const names=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor').map(m=>m.name)
     .filter(n=>n!==myRealName()); // 본인 제외
   if(!names.length) return;
-  const viewed=getViewedToday();
-  const allSeen=names.every(n=>viewed.includes(n));
-  if(allSeen && !sessionStorage.getItem('wavefc_allviewed_'+_dayKey(Date.now()))){
-    sessionStorage.setItem('wavefc_allviewed_'+_dayKey(Date.now()),'1');
+  const allSeen=names.every(n=>_peekedThisVisit[n]);
+  if(allSeen){
+    _praisedThisVisit=true;
     showAllViewedPraise();
   }
 }
+const PEEK_PRAISES=[
+  '뜨거운 관심 완전 좋아요💙<br>WAVE를 사랑해주셔서 감사합니다.',
+  '우리 팀을 이렇게 아껴주다니!💙<br>당신은 진정한 WAVE 팬이에요.',
+  '모든 멤버를 다 살펴봤어요!👀<br>관심 가득한 당신, 최고예요!',
+  '와! 한 명도 빠짐없이 구경 완료✨<br>WAVE 사랑이 느껴져요!',
+  '멤버 한 명 한 명 다 봐주셔서 고마워요🙌<br>함께라서 더 즐거운 WAVE!',
+  '당신의 관심이 팀을 더 단단하게 해요💪<br>오늘도 무브무브!',
+  '전원 출석 체크 완료!📋<br>이 정도면 WAVE 박사님💙',
+  '꼼꼼한 당신, 멋져요!🌊<br>WAVE와 함께 달려요!',
+  '모두를 향한 따뜻한 관심 감사해요☺️<br>우리 곧 그라운드에서 만나요!',
+  '구석구석 다 봐주셨네요👏<br>WAVE는 당신 같은 팬이 있어 행복해요!'
+];
 function showAllViewedPraise(){
+  const msg=PEEK_PRAISES[Math.floor(Math.random()*PEEK_PRAISES.length)];
   const d=document.createElement('div');
   d.className='peek-praise';
-  d.innerHTML='뜨거운 관심 완전 좋아요💙<br>WAVE를 사랑해주셔서 감사합니다.';
+  d.innerHTML=msg;
   document.body.appendChild(d);
   setTimeout(()=>{ d.classList.add('show'); }, 30);
-  setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3500);
+  setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3800);
 }
 // 본인 스탯 조절(+/-) 후 저장 (idx = 정렬된 카드 인덱스). 본인 또는 관리자1만
 function setMyStat(idx, key, delta){
@@ -3407,13 +3425,13 @@ function pageMember(){
     const statRows=STAT_KEYS.map(k=>{
       const v=stats[k];
       const ctrl=canEdit
-        ? `<span class="stat-ctrl"><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',-1)">−</button><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',1)">＋</button></span>`
+        ? `<span class="stat-ctrl"><button type="button" onclick="event.stopPropagation();setMyStat(${idx},'${k}',-1)">−</button><button type="button" onclick="event.stopPropagation();setMyStat(${idx},'${k}',1)">＋</button></span>`
         : '';
       return `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-bar">${statBarHtml(v)}</span>${ctrl}</div>`;
     }).join('');
-    return `<div class="member-card flip ${cls}" id="mcard_${idx}" onclick="flipMemberCard(${idx})">
+    return `<div class="member-card flip ${cls}" id="mcard_${idx}">
       <div class="mc-inner">
-        <div class="mc-front">
+        <div class="mc-front" onclick="flipMemberCard(${idx})">
           <div class="mc-badgeslot">${topBadge||''}</div>
           <div class="av">${av}</div>
           <div class="nm">${rankImg(rank,18)} ${esc(maskMemName(m.name))}</div>
@@ -3421,9 +3439,10 @@ function pageMember(){
           <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
         </div>
         <div class="mc-back">
-          <div class="mc-back-head">
+          <div class="mc-back-head" onclick="flipMemberCard(${idx})">
             <span class="mc-back-jersey">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
+            <span class="mc-back-close">↩ 앞면</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
         </div>
