@@ -483,8 +483,14 @@
     .minisection{flex-direction:column;}
     .mr-left{flex:1 1 auto;max-width:100%;}
     .cal-cell{min-height:54px;}
-    .cal-ev{font-size:11px;padding:2px 3px;line-height:1.25;}
-    .cal-ev .cal-place{font-size:10px;}
+    /* 화요일(3열)만 넓게, 나머지 요일은 좁게 */
+    .cal-grid{grid-template-columns:0.8fr 0.8fr 1.7fr 0.8fr 0.8fr 0.8fr 0.8fr;}
+    .cal-cell{padding:2px;}
+    .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
+    .cal-h{font-size:12px;padding:4px 0;}
+    .cal-ev{font-size:10px;padding:2px 3px;line-height:1.2;}
+    .cal-ev .cal-time{white-space:nowrap;font-size:10px;}
+    .cal-ev .cal-place{font-size:9px;}
     /* 모바일 메뉴 위치: 로그인(.left) 아래, 게시판(.center) 위로 */
     .left{order:1;}
     .right{order:2;}
@@ -3016,7 +3022,8 @@ function attMonthLabel(key){
   const p=key.split('-'); return p[0]+'년 '+p[1]+'월';
 }
 function pageAttend(){
-  const isExec=adminLevel()>=1; // 관리자 모드(1 또는 2)면 출석 관리 가능
+  // 출석 입력·수정 권한: 임원 등급 또는 관리자1 모드만 (멤버·새내기는 보기 전용)
+  const isExec=(rankOf(me)==='exec')||(adminLevel()===1);
   // 출석현황 이름 마스킹: 임원·멤버·관리자1은 전체, 새내기는 가운데만
   const attUnmasked=attendUnmasked();
   function maskAttName(name){
@@ -3159,7 +3166,7 @@ function sortAttendance(arr){
   return arr.slice().sort((a,b)=>attDateKey(a.date)-attDateKey(b.date));
 }
 function addAttendSession(){
-  if(adminLevel()<1) return;
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
   const date=prompt('출석일 (예: 6/14)');
   if(!date) return;
   const arr=DATA.attendance.slice();
@@ -3169,7 +3176,7 @@ function addAttendSession(){
   try{ attViewMode='month'; attMonth=attMonthKey(date.trim()); }catch(e){}
 }
 function cycleAttend(si,name){
-  if(adminLevel()<1) return;
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   const cur=arr[si].present[name];
@@ -3185,7 +3192,7 @@ function cycleAttend(si,name){
   ROOT.child('attendance').set(arr);
 }
 function delAttendSession(si){
-  if(adminLevel()<1) return;
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
   if(!confirm('이 출석일을 삭제할까요?')) return;
   const arr=sortAttendance(DATA.attendance);arr.splice(si,1);ROOT.child('attendance').set(arr);
 }
