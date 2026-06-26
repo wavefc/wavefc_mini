@@ -298,7 +298,7 @@
   @media(max-width:760px){ .cal-grid{grid-template-columns:0.78fr 0.78fr 1.9fr 0.78fr 0.78fr 0.78fr 0.78fr !important;} }
   .manner-single ul{margin:0;padding-left:20px;}
   .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
-  .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+  .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
   .member-card{border:2px solid #6ab8e8;padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
   .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
@@ -311,23 +311,24 @@
   .member-card .po{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#8aa;}
   .rank-legend{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
   /* 멤버 카드 뒤집기(스탯) */
-  .member-card.flip{position:relative;perspective:800px;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;min-height:128px;}
-  .member-card.flip .mc-inner{position:relative;width:100%;min-height:128px;transition:transform .5s;transform-style:preserve-3d;}
+  .member-card.flip{position:relative;perspective:900px;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;height:230px;}
+  .member-card.flip .mc-inner{position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d;transform:rotateY(0deg);}
   .member-card.flip.flipped .mc-inner{transform:rotateY(180deg);}
-  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:8px;border-radius:4px;}
+  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:8px;border-radius:6px;overflow:hidden;}
   .member-card.flip.is-exec .mc-front,.member-card.flip.is-exec .mc-back{border-color:#e0a93b;background:linear-gradient(#fffaf0,#fff3da);}
   .member-card.flip.is-honor .mc-front,.member-card.flip.is-honor .mc-back{border-color:#2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);}
   .member-card.flip.is-rest .mc-front,.member-card.flip.is-rest .mc-back{border-color:#b8c0c7;background:#f1f3f5;}
+  .member-card.flip .mc-front{display:flex;flex-direction:column;align-items:center;justify-content:center;}
   .member-card.flip .mc-back{transform:rotateY(180deg);text-align:left;display:flex;flex-direction:column;}
-  .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5aa9e6;margin-top:5px;}
-  .stat-title{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);text-align:center;margin-bottom:5px;}
-  .stat-row{display:flex;align-items:center;gap:4px;margin:2px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;}
-  .stat-name{flex:0 0 48px;color:#5a7585;}
+  .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5aa9e6;margin-top:6px;}
+  .stat-title{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);text-align:center;margin-bottom:4px;}
+  .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;}
+  .stat-name{flex:0 0 44px;color:#5a7585;}
   .stat-bar{flex:1;display:flex;gap:2px;}
-  .stat-pip{width:11px;height:11px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
+  .stat-pip{width:10px;height:10px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
   .stat-pip.on{background:#3aa0d8;border-color:#3aa0d8;}
   .stat-ctrl{display:flex;gap:2px;}
-  .stat-ctrl button{width:18px;height:18px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:12px;}
+  .stat-ctrl button{width:17px;height:17px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:11px;}
   .stat-ctrl button:hover{background:#eaf4fb;}
   .stat-hint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#9aa6ae;margin-top:auto;text-align:center;}
   /* 전체 멤버 구경 칭찬 토스트 */
@@ -496,8 +497,9 @@
     table.lst th,table.lst td{padding:9px 12px;}
     .page-h{font-size:19px;}
     .cmt{font-size:13px;}
-    .member-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
-    .member-card{padding:12px;font-size:13px;}
+    .member-grid{grid-template-columns:repeat(6,1fr);gap:12px;}
+    .member-card{font-size:13px;}
+    .member-card:not(.flip){padding:12px;}
     .member-card .av{font-size:34px;}
     .room{min-height:300px;}
   }
@@ -512,7 +514,7 @@
     .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
     .cal-h{font-size:12px;padding:4px 0;}
     .cal-ev{font-size:10px;padding:2px 3px;line-height:1.2;}
-    .cal-ev .cal-time{white-space:nowrap;font-size:10px;}
+    .cal-ev .cal-time{font-size:10px;}
     .cal-ev .cal-place{font-size:9px;}
     /* 모바일 메뉴 위치: 로그인(.left) 아래, 게시판(.center) 위로 */
     .left{order:1;}
@@ -520,6 +522,20 @@
     .center{order:3;}
     /* 우측 '더 구경하기' 카드는 메뉴 묶음 안에서 한 줄 차지 */
     .right .minicards{flex:1 1 100%;}
+    /* 멤버 카드: 모바일 2열, 글자·간격 축소, 스탯이 칸 안에 들어오게 */
+    .member-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
+    .member-card.flip{height:218px;}
+    .member-card.flip .mc-front,.member-card.flip .mc-back{padding:6px;}
+    .member-card .nm{font-size:13px;}
+    .member-card .po{font-size:10px;}
+    .stat-title{font-size:11px;margin-bottom:3px;}
+    .stat-row{font-size:10px;gap:3px;margin:0;}
+    .stat-name{flex:0 0 38px;}
+    .stat-bar{gap:2px;}
+    .stat-pip{width:9px;height:9px;}
+    .stat-ctrl button{width:15px;height:15px;font-size:10px;}
+    .stat-hint{font-size:9px;}
+    .mc-fliphint{font-size:10px;}
   }
 </style>
 </head>
@@ -2979,7 +2995,7 @@ function pageCalendar(){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(shortTime(e.time))+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(shortPlace(e.place))+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(e.time)+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
       <div class="cal-d">${d}</div>${evHtml}</div>`;
   }
@@ -3246,7 +3262,7 @@ function memSortKey(m){
   return [5,999,m.name];
 }
 // ===== 멤버 능력치(스탯) 카드 =====
-const STAT_KEYS=['속력','밸런스','패스','수비','피지컬','골결정력','슛파워'];
+const STAT_KEYS=['속력','밸런스','패스','수비','적극성','피지컬','골결정력','슛파워'];
 const STAT_MAX=5;
 // 스탯 저장 키 (Firebase 경로 안전화)
 function statKey(name){ return String(name||'').replace(/[.#$\[\]\/]/g,'_'); }
