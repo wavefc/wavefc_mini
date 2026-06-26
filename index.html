@@ -409,7 +409,7 @@
   .cal-cell.sun .cal-d{color:#c0392b;}.cal-cell.sat .cal-d{color:#2176a8;}
   .cal-cell[onclick]{cursor:pointer;}
   .cal-cell[onclick]:hover{background:#f0f8ff;}
-  .cal-ev{color:#fff;font-size:14px;padding:4px 6px;border-radius:3px;margin-bottom:2px;line-height:1.4;word-break:break-all;}
+  .cal-ev{color:#fff;font-size:14px;padding:4px 6px;border-radius:3px;margin-bottom:2px;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;}
   .cal-place{display:inline-block;background:rgba(255,255,255,.3);padding:1px 5px;border-radius:3px;font-size:13px;margin-top:2px;}
   .cal-time{display:inline-block;background:rgba(0,0,0,.18);padding:0 4px;border-radius:3px;font-size:13px;}
   .cal-addbtn{font-size:13px;cursor:pointer;background:var(--frame);color:#fff;border:none;padding:7px 14px;}
@@ -483,6 +483,14 @@
     .minisection{flex-direction:column;}
     .mr-left{flex:1 1 auto;max-width:100%;}
     .cal-cell{min-height:54px;}
+    .cal-ev{font-size:11px;padding:2px 3px;line-height:1.25;}
+    .cal-ev .cal-place{font-size:10px;}
+    /* 모바일 메뉴 위치: 로그인(.left) 아래, 게시판(.center) 위로 */
+    .left{order:1;}
+    .right{order:2;}
+    .center{order:3;}
+    /* 우측 '더 구경하기' 카드는 메뉴 묶음 안에서 한 줄 차지 */
+    .right .minicards{flex:1 1 100%;}
   }
 </style>
 </head>
@@ -2894,6 +2902,30 @@ function eventColor(e){
   if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#e84a8a'; // FC스퀘어 = 핑크
   return etypeColor(e.etype);
 }
+// 시간 표시 축약: "20:00-22:00" → "8-10시", "20:00" → "8시"
+function shortTime(t){
+  if(!t) return '';
+  const to12=(hhmm)=>{
+    const m=String(hhmm).match(/(\d{1,2}):?(\d{2})?/);
+    if(!m) return hhmm;
+    let h=parseInt(m[1],10); const mm=m[2]||'00';
+    if(h>12) h-=12; if(h===0) h=12;
+    return mm==='00' ? (''+h) : (h+':'+mm);
+  };
+  const parts=String(t).split(/\s*[-~]\s*/);
+  if(parts.length>=2) return to12(parts[0])+'-'+to12(parts[1])+'시';
+  return to12(parts[0])+'시';
+}
+// 장소 표시 축약: 앞 두~세 글자 (BJ / 내서 / 원계 / 스퀘어 등)
+function shortPlace(p){
+  if(!p) return '';
+  const s=String(p).replace(/\s/g,'');
+  if(/^BJ/i.test(s)) return 'BJ';
+  if(/내서/.test(s)) return '내서';
+  if(/원계/.test(s)) return '원계';
+  if(/스퀘어|FC스퀘/i.test(s)) return '스퀘어';
+  return s.slice(0,3);
+}
 function pageCalendar(){
   const now=new Date();
   if(calYear===null){calYear=now.getFullYear();calMonth=now.getMonth();}
@@ -2916,7 +2948,7 @@ function pageCalendar(){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(e.time)+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(shortTime(e.time))+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(shortPlace(e.place))+'</span>':''}${isExec?` <span onclick="event.stopPropagation();delCalEvent(${e._i})" style="cursor:pointer;float:right;">×</span>`:''}</div>`).join('');
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
       <div class="cal-d">${d}</div>${evHtml}</div>`;
   }
