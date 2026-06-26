@@ -3411,13 +3411,22 @@ function bindStatButtons(){
   grid._statBound=true;
   grid.addEventListener('click', function(e){
     const btn=e.target.closest('.stat-btn');
-    if(!btn) return;
-    e.stopPropagation();
-    e.preventDefault();
-    const idx=parseInt(btn.getAttribute('data-idx'),10);
-    const key=btn.getAttribute('data-key');
-    const delta=parseInt(btn.getAttribute('data-delta'),10);
-    setMyStat(idx, key, delta);
+    if(btn){
+      // +/- 버튼: 스탯만 조정, 카드는 그대로 둠
+      e.stopPropagation();
+      e.preventDefault();
+      const idx=parseInt(btn.getAttribute('data-idx'),10);
+      const key=btn.getAttribute('data-key');
+      const delta=parseInt(btn.getAttribute('data-delta'),10);
+      setMyStat(idx, key, delta);
+      return;
+    }
+    // 뒷면의 버튼 아닌 곳을 누르면 앞면으로 복귀
+    const back=e.target.closest('.mc-back');
+    if(back){
+      const card=back.closest('.member-card.flip');
+      if(card){ const idx=parseInt(card.id.replace('mcard_',''),10); flipMemberCard(idx); }
+    }
   });
 }
 // 이번 방문에서 전체 멤버를 다 펼쳐본 사람에게 랜덤 칭찬 메시지
@@ -3531,7 +3540,7 @@ function pageMember(){
           <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
           <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
         </div>
-        <div class="mc-back" onclick="flipMemberCard(${idx})">
+        <div class="mc-back">
           <div class="mc-back-head">
             <span class="mc-back-jersey">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
