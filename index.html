@@ -294,6 +294,8 @@
   .manner-cols h4{margin:0 0 8px;}
   .manner-cols p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;column-count:2;column-gap:32px;}
   @media(max-width:760px){ .manner-cols ul, .manner-cols p{column-count:1;} }
+  /* 모바일: 화요일(3열)만 넓게, 나머지 요일은 좁게 */
+  @media(max-width:760px){ .cal-grid{grid-template-columns:0.78fr 0.78fr 1.9fr 0.78fr 0.78fr 0.78fr 0.78fr !important;} }
   .manner-single ul{margin:0;padding-left:20px;}
   .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
@@ -308,6 +310,29 @@
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
   .member-card .po{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#8aa;}
   .rank-legend{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
+  /* 멤버 카드 뒤집기(스탯) */
+  .member-card.flip{position:relative;perspective:800px;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;min-height:128px;}
+  .member-card.flip .mc-inner{position:relative;width:100%;min-height:128px;transition:transform .5s;transform-style:preserve-3d;}
+  .member-card.flip.flipped .mc-inner{transform:rotateY(180deg);}
+  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:8px;border-radius:4px;}
+  .member-card.flip.is-exec .mc-front,.member-card.flip.is-exec .mc-back{border-color:#e0a93b;background:linear-gradient(#fffaf0,#fff3da);}
+  .member-card.flip.is-honor .mc-front,.member-card.flip.is-honor .mc-back{border-color:#2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);}
+  .member-card.flip.is-rest .mc-front,.member-card.flip.is-rest .mc-back{border-color:#b8c0c7;background:#f1f3f5;}
+  .member-card.flip .mc-back{transform:rotateY(180deg);text-align:left;display:flex;flex-direction:column;}
+  .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5aa9e6;margin-top:5px;}
+  .stat-title{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);text-align:center;margin-bottom:5px;}
+  .stat-row{display:flex;align-items:center;gap:4px;margin:2px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;}
+  .stat-name{flex:0 0 48px;color:#5a7585;}
+  .stat-bar{flex:1;display:flex;gap:2px;}
+  .stat-pip{width:11px;height:11px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
+  .stat-pip.on{background:#3aa0d8;border-color:#3aa0d8;}
+  .stat-ctrl{display:flex;gap:2px;}
+  .stat-ctrl button{width:18px;height:18px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:12px;}
+  .stat-ctrl button:hover{background:#eaf4fb;}
+  .stat-hint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#9aa6ae;margin-top:auto;text-align:center;}
+  /* 전체 멤버 구경 칭찬 토스트 */
+  .peek-praise{position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);background:linear-gradient(#3aa0d8,#2176a8);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:15px;line-height:1.6;text-align:center;padding:16px 22px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .4s,transform .4s;z-index:9999;pointer-events:none;}
+  .peek-praise.show{opacity:1;transform:translate(-50%,0);}
   /* QnA */
   .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:14px;margin-bottom:14px;border-radius:4px;}
   .qna-ask-h{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:16px;color:var(--frame-dark);margin-bottom:10px;}
@@ -483,8 +508,6 @@
     .minisection{flex-direction:column;}
     .mr-left{flex:1 1 auto;max-width:100%;}
     .cal-cell{min-height:54px;}
-    /* 화요일(3열)만 넓게, 나머지 요일은 좁게 */
-    .cal-grid{grid-template-columns:0.8fr 0.8fr 1.7fr 0.8fr 0.8fr 0.8fr 0.8fr;}
     .cal-cell{padding:2px;}
     .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
     .cal-h{font-size:12px;padding:4px 0;}
@@ -864,7 +887,8 @@ const ACT_POINTS={
   login:5,    // 접속(하루 1회)
   roomtip:0.1,// 미니룸 말풍선(하루 0.5점 한도)
   extlink:0.1,// WAVE 더 구경하기(인스타/유튜브) 클릭, 하루 0.5점 한도
-  vidplay:3   // 참고영상 재생/유튜브에서 보기, 하루 9점 한도
+  vidplay:3,  // 참고영상 재생/유튜브에서 보기, 하루 9점 한도
+  peek:0.1    // 멤버 스탯 구경, 하루 3점 한도
 };
 function actPoints(type){ return ACT_POINTS[type]!==undefined?ACT_POINTS[type]:1; }
 // 하루 1회 접속 점수 (중복 방지: 오늘 login 기록 없을 때만)
@@ -2039,6 +2063,7 @@ function go(page,btn){
   diaryEditing=null;
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
+  if(page==='member') _flippedCards={}; // 멤버현황 진입 시 카드 앞면부터
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -2057,7 +2082,7 @@ function renderPage(page){
   else if(page==='diary')c.innerHTML=pageDiary();
   else if(page==='cal')c.innerHTML=pageCalendar();
   else if(page==='attend')c.innerHTML=pageAttend();
-  else if(page==='member')c.innerHTML=pageMember();
+  else if(page==='member'){c.innerHTML=pageMember();restoreFlippedCards();}
   else if(page==='activity')c.innerHTML=pageActivity();
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
@@ -3220,6 +3245,90 @@ function memSortKey(m){
   if(st==='honor') return [4, 999, m.name];               // ★
   return [5,999,m.name];
 }
+// ===== 멤버 능력치(스탯) 카드 =====
+const STAT_KEYS=['속력','밸런스','패스','수비','피지컬','골결정력','슛파워'];
+const STAT_MAX=5;
+// 스탯 저장 키 (Firebase 경로 안전화)
+function statKey(name){ return String(name||'').replace(/[.#$\[\]\/]/g,'_'); }
+// 멤버 스탯 가져오기 (없으면 전부 0)
+function getMemberStats(name){
+  const s=(DATA.member_stats&&DATA.member_stats[statKey(name)])||{};
+  const out={};
+  STAT_KEYS.forEach(k=>{ out[k]=Math.max(0,Math.min(STAT_MAX,parseInt(s[k]||0,10)||0)); });
+  return out;
+}
+// 로그인 사용자의 실명 (본인 카드 판별용)
+function myRealName(){ const u=me&&DATA.users[me]; return u?u.name:''; }
+// 스탯 막대 HTML (■ 채움 / □ 빈칸)
+function statBarHtml(val){
+  let h='';
+  for(let i=0;i<STAT_MAX;i++){ h+=`<span class="stat-pip ${i<val?'on':''}"></span>`; }
+  return h;
+}
+// 오늘 카드 뒤집어 본 멤버 집합 (구경 기록) — localStorage 일자별
+function _viewedKey(){ return 'wavefc_viewed_'+_dayKey(Date.now()); }
+function getViewedToday(){
+  try{ return JSON.parse(localStorage.getItem(_viewedKey())||'[]'); }catch(e){ return []; }
+}
+function markViewed(name){
+  const v=getViewedToday();
+  if(v.includes(name)) return false; // 이미 오늘 본 멤버
+  v.push(name); 
+  try{ localStorage.setItem(_viewedKey(), JSON.stringify(v)); }catch(e){}
+  return true; // 새로 본 멤버
+}
+// 멤버 카드 뒤집기
+let _flippedCards={}; // {idx:true} 현재 뒤집힌 카드 (재렌더 후 복원용)
+function flipMemberCard(idx, name){
+  const card=document.getElementById('mcard_'+idx);
+  if(!card) return;
+  const willOpen=!card.classList.contains('flipped');
+  card.classList.toggle('flipped');
+  if(willOpen) _flippedCards[idx]=true; else delete _flippedCards[idx];
+  // 다른 사람 카드를 '처음' 펼쳐볼 때만 구경 점수 + 기록
+  if(willOpen && name && name!==myRealName()){
+    if(markViewed(name)){
+      logActivityCapped('peek', 3); // 구경 0.1점, 하루 한도(activity 표 참고)
+      checkAllViewed();
+    }
+  }
+}
+// 재렌더 후 뒤집힌 카드 상태 복원 (스탯 조절 시 앞면으로 튕김 방지)
+function restoreFlippedCards(){
+  Object.keys(_flippedCards).forEach(idx=>{
+    const card=document.getElementById('mcard_'+idx);
+    if(card) card.classList.add('flipped');
+  });
+}
+// 하루에 전체 멤버를 다 본 사람에게 칭찬 메시지
+function checkAllViewed(){
+  const names=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor').map(m=>m.name)
+    .filter(n=>n!==myRealName()); // 본인 제외
+  if(!names.length) return;
+  const viewed=getViewedToday();
+  const allSeen=names.every(n=>viewed.includes(n));
+  if(allSeen && !sessionStorage.getItem('wavefc_allviewed_'+_dayKey(Date.now()))){
+    sessionStorage.setItem('wavefc_allviewed_'+_dayKey(Date.now()),'1');
+    showAllViewedPraise();
+  }
+}
+function showAllViewedPraise(){
+  const d=document.createElement('div');
+  d.className='peek-praise';
+  d.innerHTML='뜨거운 관심 완전 좋아요💙<br>WAVE를 사랑해주셔서 감사합니다.';
+  document.body.appendChild(d);
+  setTimeout(()=>{ d.classList.add('show'); }, 30);
+  setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3500);
+}
+// 본인 스탯 조절(+/-) 후 저장
+function setMyStat(name, key, delta){
+  if(name!==myRealName()) return; // 본인만
+  const cur=getMemberStats(name);
+  let v=(cur[key]||0)+delta;
+  v=Math.max(0,Math.min(STAT_MAX,v));
+  cur[key]=v;
+  ROOT.child('member_stats/'+statKey(name)).set(cur);
+}
 function pageMember(){
   // 멤버현황 이름 마스킹: 임원·멤버·관리자1은 전체, 응원단·새내기는 가운데만 노출
   const memUnmasked=nameUnmasked();
@@ -3238,7 +3347,7 @@ function pageMember(){
     if(ka[1]!==kb[1]) return ka[1]-kb[1];
     return String(ka[2]).localeCompare(String(kb[2]),'ko');
   });
-  const cards=all.map(m=>{
+  const cards=all.map((m,idx)=>{
     const st=memStatus(m);
     const num=memNumber(m);
     const isExec=m.role==='exec';
@@ -3259,11 +3368,34 @@ function pageMember(){
     else if(st==='honor') roleLabel='명예회원';
     else if(st==='rest') roleLabel='휴식 멤버';
     else roleLabel='일반 회원';
-    return `<div class="member-card ${cls}">
-      <div class="mc-badgeslot">${topBadge||''}</div>
-      <div class="av">${av}</div>
-      <div class="nm">${rankImg(rank,16)} ${esc(maskMemName(m.name))}</div>
-      <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
+    // 스탯(뒷면)
+    const stats=getMemberStats(m.name);
+    const isMine=(m.name===myRealName());
+    const statRows=STAT_KEYS.map(k=>{
+      const v=stats[k];
+      const ctrl=isMine
+        ? `<span class="stat-ctrl"><button onclick="event.stopPropagation();setMyStat('${esc(m.name).replace(/'/g,"\\'")}','${k}',-1)">−</button><button onclick="event.stopPropagation();setMyStat('${esc(m.name).replace(/'/g,"\\'")}','${k}',1)">＋</button></span>`
+        : '';
+      return `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-bar">${statBarHtml(v)}</span>${ctrl}</div>`;
+    }).join('');
+    const backHint = isMine
+      ? '<div class="stat-hint">내 능력치 — ＋/− 로 직접 설정해요</div>'
+      : '<div class="stat-hint">탭하면 앞면으로</div>';
+    return `<div class="member-card flip ${cls}" id="mcard_${idx}" onclick="flipMemberCard(${idx},'${esc(m.name).replace(/'/g,"\\'")}')">
+      <div class="mc-inner">
+        <div class="mc-front">
+          <div class="mc-badgeslot">${topBadge||''}</div>
+          <div class="av">${av}</div>
+          <div class="nm">${rankImg(rank,16)} ${esc(maskMemName(m.name))}</div>
+          <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
+          <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
+        </div>
+        <div class="mc-back">
+          <div class="stat-title">🔹 ${esc(maskMemName(m.name))} 스탯 🔹</div>
+          ${statRows}
+          ${backHint}
+        </div>
+      </div>
     </div>`;
   }).join('');
   const legend=`<div class="rank-legend">
@@ -3273,6 +3405,7 @@ function pageMember(){
     · 등번호가 있으면 유니폼으로 표시</div>`;
   return `<div class="page-h">👕 멤버 현황 (${all.length}명)</div>
     ${legend}
+    <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요!</div>
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 function pageActivity(){
