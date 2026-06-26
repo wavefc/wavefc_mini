@@ -331,7 +331,7 @@
   .mc-back-jersey{font-size:22px;line-height:1;}
   .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:2px;word-break:keep-all;}
   .mc-back-close{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#5aa9e6;margin-top:1px;}
-  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:3;}
+  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:3;transform:translateZ(1px);}
   .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;justify-content:center;}
   .stat-name{flex:0 0 42px;color:#5a7585;text-align:right;}
   .stat-bar{display:flex;gap:2px;}
@@ -642,6 +642,16 @@
     <button onclick="addRosterMember()">멤버 추가</button>
     <div id="rosterListAdmin" style="font-size:10px;margin-top:6px;"></div>
     <div class="admin-a1only">
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>💙 전체 구경 칭찬 메시지</b> (멤버 카드 다 보면 랜덤 표시)</div>
+    <div style="font-size:10px;color:#5a7585;margin:2px 0;">한 줄에 하나씩. 줄바꿈은 메시지 안에서 \\n 으로(또는 그냥 한 메시지로). 비우면 기본 문구 사용.</div>
+    <textarea id="praiseEditor" rows="6" placeholder="예) 뜨거운 관심 완전 좋아요💙 WAVE를 사랑해주셔서 감사합니다."></textarea>
+    <button onclick="savePraises()">칭찬 메시지 저장</button>
+    <button onclick="resetPraises()" style="background:#c0392b;">기본값으로</button>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>📌 홈 공지 순서·기본 펼침</b></div>
+    <div style="font-size:10px;color:#5a7585;margin:2px 0;">▲▼로 순서 변경, ⭐로 기본 펼쳐질 글 선택.</div>
+    <div id="noticeOrderAdmin" style="font-size:10px;"></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🔑 관리자1 비밀번호 변경</b> (대표·전체권한)</div>
     <input id="newAdminPw" placeholder="새 관리자1 비밀번호"><button onclick="changeAdminPw(1)">변경</button>
@@ -2006,7 +2016,7 @@ function renderAll(){
   // 관리자1이면 사이드바 문구 편집 가능 표시
   const editable=(adminLevel()===1);
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
-  startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
+  startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
@@ -2093,6 +2103,7 @@ function go(page,btn){
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
   if(page==='member'){ _flippedCards={}; _peekedThisVisit={}; _praisedThisVisit=false; } // 멤버현황 진입 시 초기화
+  if(page==='home') applyNoticeDefaultOpen(); // 홈 진입 시 기본 펼침 공지 선택
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -2176,6 +2187,14 @@ function buildFeed(){
   return items;
 }
 let feedSel=0;
+// 관리자가 지정한 기본 펼침 공지를 홈 새소식에서 선택
+function applyNoticeDefaultOpen(){
+  const di=DATA.notice_default_open;
+  if(typeof di!=='number'){ feedSel=0; return; }
+  const top=buildFeed().slice(0,4);
+  const pos=top.findIndex(it=>it._t==='notice' && it._i===di);
+  feedSel=(pos>=0)?pos:0;
+}
 function pageHome(){
   const feed=buildFeed();
   const top=feed.slice(0,4);
@@ -3333,6 +3352,23 @@ function restoreFlippedCards(){
     const card=document.getElementById('mcard_'+idx);
     if(card) card.classList.add('flipped');
   });
+  bindStatButtons();
+}
+// 스탯 +/- 버튼 이벤트 위임 (3D 카드에서도 확실히 클릭되도록)
+function bindStatButtons(){
+  const grid=document.querySelector('.member-grid');
+  if(!grid || grid._statBound) return;
+  grid._statBound=true;
+  grid.addEventListener('click', function(e){
+    const btn=e.target.closest('.stat-btn');
+    if(!btn) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const idx=parseInt(btn.getAttribute('data-idx'),10);
+    const key=btn.getAttribute('data-key');
+    const delta=parseInt(btn.getAttribute('data-delta'),10);
+    setMyStat(idx, key, delta);
+  });
 }
 // 이번 방문에서 전체 멤버를 다 펼쳐본 사람에게 랜덤 칭찬 메시지
 function checkAllViewed(){
@@ -3346,23 +3382,30 @@ function checkAllViewed(){
     showAllViewedPraise();
   }
 }
-const PEEK_PRAISES=[
-  '뜨거운 관심 완전 좋아요💙<br>WAVE를 사랑해주셔서 감사합니다.',
-  '우리 팀을 이렇게 아껴주다니!💙<br>당신은 진정한 WAVE 팬이에요.',
-  '모든 멤버를 다 살펴봤어요!👀<br>관심 가득한 당신, 최고예요!',
-  '와! 한 명도 빠짐없이 구경 완료✨<br>WAVE 사랑이 느껴져요!',
-  '멤버 한 명 한 명 다 봐주셔서 고마워요🙌<br>함께라서 더 즐거운 WAVE!',
-  '당신의 관심이 팀을 더 단단하게 해요💪<br>오늘도 무브무브!',
-  '전원 출석 체크 완료!📋<br>이 정도면 WAVE 박사님💙',
-  '꼼꼼한 당신, 멋져요!🌊<br>WAVE와 함께 달려요!',
-  '모두를 향한 따뜻한 관심 감사해요☺️<br>우리 곧 그라운드에서 만나요!',
-  '구석구석 다 봐주셨네요👏<br>WAVE는 당신 같은 팬이 있어 행복해요!'
+const PEEK_PRAISES_DEFAULT=[
+  '뜨거운 관심 완전 좋아요💙\nWAVE를 사랑해주셔서 감사합니다.',
+  '우리 팀을 이렇게 아껴주다니!💙\n당신은 진정한 WAVE 팬이에요.',
+  '모든 멤버를 다 살펴봤어요!👀\n관심 가득한 당신, 최고예요!',
+  '와! 한 명도 빠짐없이 구경 완료✨\nWAVE 사랑이 느껴져요!',
+  '멤버 한 명 한 명 다 봐주셔서 고마워요🙌\n함께라서 더 즐거운 WAVE!',
+  '당신의 관심이 팀을 더 단단하게 해요💪\n오늘도 무브무브!',
+  '전원 출석 체크 완료!📋\n이 정도면 WAVE 박사님💙',
+  '꼼꼼한 당신, 멋져요!🌊\nWAVE와 함께 달려요!',
+  '모두를 향한 따뜻한 관심 감사해요☺️\n우리 곧 그라운드에서 만나요!',
+  '구석구석 다 봐주셨네요👏\nWAVE는 당신 같은 팬이 있어 행복해요!'
 ];
+// 저장된 칭찬 메시지(관리자 편집) 또는 기본값
+function getPeekPraises(){
+  const arr=DATA.peek_praises;
+  if(Array.isArray(arr) && arr.filter(x=>x&&x.trim()).length) return arr.filter(x=>x&&x.trim());
+  return PEEK_PRAISES_DEFAULT;
+}
 function showAllViewedPraise(){
-  const msg=PEEK_PRAISES[Math.floor(Math.random()*PEEK_PRAISES.length)];
+  const list=getPeekPraises();
+  const raw=list[Math.floor(Math.random()*list.length)];
   const d=document.createElement('div');
   d.className='peek-praise';
-  d.innerHTML=msg;
+  d.innerHTML=esc(raw).replace(/\n/g,'<br>'); // 안전하게 표시(줄바꿈만 br)
   document.body.appendChild(d);
   setTimeout(()=>{ d.classList.add('show'); }, 30);
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3800);
@@ -3425,7 +3468,7 @@ function pageMember(){
     const statRows=STAT_KEYS.map(k=>{
       const v=stats[k];
       const ctrl=canEdit
-        ? `<span class="stat-ctrl"><button type="button" onclick="event.stopPropagation();setMyStat(${idx},'${k}',-1)">−</button><button type="button" onclick="event.stopPropagation();setMyStat(${idx},'${k}',1)">＋</button></span>`
+        ? `<span class="stat-ctrl"><button type="button" class="stat-btn" data-idx="${idx}" data-key="${k}" data-delta="-1">−</button><button type="button" class="stat-btn" data-idx="${idx}" data-key="${k}" data-delta="1">＋</button></span>`
         : '';
       return `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-bar">${statBarHtml(v)}</span>${ctrl}</div>`;
     }).join('');
@@ -3965,6 +4008,60 @@ function addLog(){
   ROOT.child('logs').set(a);
   document.getElementById('newLogDate').value='';
   document.getElementById('newLogText').value='';
+}
+// ===== 칭찬 메시지 편집 (관리자1) =====
+function renderPraiseEditor(){
+  const ta=document.getElementById('praiseEditor');
+  if(!ta || ta.dataset.editing==='1') return;
+  const arr=(Array.isArray(DATA.peek_praises)&&DATA.peek_praises.length)?DATA.peek_praises:PEEK_PRAISES_DEFAULT;
+  ta.value=arr.join('\n');
+}
+function savePraises(){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const ta=document.getElementById('praiseEditor');
+  const lines=(ta.value||'').split('\n').map(s=>s.trim()).filter(s=>s);
+  if(!lines.length) return alert('한 줄 이상 입력하세요. (비우려면 기본값으로 버튼)');
+  ROOT.child('peek_praises').set(lines);
+  alert('칭찬 메시지를 저장했어요! ('+lines.length+'개)');
+}
+function resetPraises(){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  if(!confirm('기본 칭찬 메시지로 되돌릴까요?')) return;
+  ROOT.child('peek_praises').remove();
+}
+// ===== 홈 공지 순서·기본 펼침 (관리자1) =====
+function renderNoticeOrderAdmin(){
+  const el=document.getElementById('noticeOrderAdmin');
+  if(!el) return;
+  const ns=DATA.notices||[];
+  if(!ns.length){ el.innerHTML='등록된 공지가 없어요.'; return; }
+  el.innerHTML=ns.map((n,i)=>{
+    const isDefault=(DATA.notice_default_open===i);
+    return `<div style="display:flex;align-items:center;gap:3px;padding:2px 0;border-bottom:1px dotted #e0d4b0;">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${n.pinned?'📌':''}${esc(n.title||'(제목없음)')}</span>
+      <a href="#" onclick="moveNotice(${i},-1);return false;" style="color:#2176a8;text-decoration:none;">▲</a>
+      <a href="#" onclick="moveNotice(${i},1);return false;" style="color:#2176a8;text-decoration:none;">▼</a>
+      <a href="#" onclick="setNoticeDefaultOpen(${i});return false;" style="color:${isDefault?'#e0a93b':'#9aa6ae'};text-decoration:none;" title="기본 펼침">${isDefault?'⭐':'☆'}</a>
+    </div>`;
+  }).join('');
+}
+function moveNotice(i,dir){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const a=DATA.notices.slice();
+  const j=i+dir;
+  if(j<0||j>=a.length) return;
+  const tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  // 기본 펼침 인덱스도 따라 이동
+  let def=(typeof DATA.notice_default_open==='number')?DATA.notice_default_open:null;
+  if(def===i) def=j; else if(def===j) def=i;
+  ROOT.child('notices').set(a);
+  if(def!==null) ROOT.child('notice_default_open').set(def);
+}
+function setNoticeDefaultOpen(i){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const cur=DATA.notice_default_open;
+  if(cur===i) ROOT.child('notice_default_open').remove(); // 다시 누르면 해제
+  else ROOT.child('notice_default_open').set(i);
 }
 function delLog(i){const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').set(a);}
 function addRosterMember(){
