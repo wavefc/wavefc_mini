@@ -310,11 +310,14 @@
   .member-card .nm{font-weight:bold;color:var(--frame-dark);margin-top:2px;}
   .member-card .po{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#8aa;}
   .rank-legend{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5a7585;margin-bottom:12px;padding:6px 8px;background:#f0f7fc;border:1px solid var(--line);}
-  /* 멤버 카드 뒤집기(스탯) */
-  .member-card.flip{position:relative;perspective:900px;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;height:230px;}
-  .member-card.flip .mc-inner{position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d;transform:rotateY(0deg);}
-  .member-card.flip.flipped .mc-inner{transform:rotateY(180deg);}
-  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:10px;border-radius:6px;overflow:hidden;}
+  /* 멤버 카드 뒤집기(스탯) — display 전환 방식(클릭 안정) */
+  .member-card.flip{position:relative;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;min-height:230px;}
+  .member-card.flip .mc-inner{position:relative;width:100%;height:100%;}
+  .member-card.flip .mc-front,.member-card.flip .mc-back{width:100%;min-height:230px;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:10px;border-radius:6px;}
+  .member-card.flip .mc-back{display:none;animation:cardflipin .35s ease;}
+  .member-card.flip.flipped .mc-front{display:none;}
+  .member-card.flip.flipped .mc-back{display:flex;}
+  @keyframes cardflipin{from{transform:scaleX(.4);opacity:.3;}to{transform:scaleX(1);opacity:1;}}
   .member-card.flip.is-exec .mc-front,.member-card.flip.is-exec .mc-back{border-color:#e0a93b;background:linear-gradient(#fffaf0,#fff3da);}
   .member-card.flip.is-honor .mc-front,.member-card.flip.is-honor .mc-back{border-color:#2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);}
   .member-card.flip.is-rest .mc-front,.member-card.flip.is-rest .mc-back{border-color:#b8c0c7;background:#f1f3f5;}
@@ -326,23 +329,30 @@
   .member-card.flip .mc-front .po{font-size:13px;color:#8aa;line-height:1.5;margin-top:2px;}
   .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin-top:7px;}
   /* 뒷면: 위 유니폼·이름(중앙), 아래 스탯(중앙) */
-  .member-card.flip .mc-back{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;}
-  .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;cursor:pointer;position:relative;z-index:2;}
+  .member-card.flip .mc-back{flex-direction:column;align-items:center;}
+  .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;cursor:pointer;}
   .mc-back-jersey{font-size:22px;line-height:1;}
   .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:2px;word-break:keep-all;}
   .mc-back-close{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#5aa9e6;margin-top:1px;}
-  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:3;transform:translateZ(1px);}
+  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;}
   .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;justify-content:center;}
   .stat-name{flex:0 0 42px;color:#5a7585;text-align:right;}
   .stat-bar{display:flex;gap:2px;}
   .stat-pip{width:10px;height:10px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
   .stat-pip.on{background:#3aa0d8;border-color:#3aa0d8;}
-  .stat-ctrl{display:flex;gap:2px;position:relative;z-index:4;}
-  .stat-ctrl button{width:17px;height:17px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:11px;}
+  .stat-ctrl{display:flex;gap:2px;}
+  .stat-ctrl button{width:18px;height:18px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:12px;}
   .stat-ctrl button:hover{background:#eaf4fb;}
+  .stat-ctrl button:active{background:#3aa0d8;color:#fff;}
   /* 전체 멤버 구경 칭찬 토스트 */
   .peek-praise{position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);background:linear-gradient(#3aa0d8,#2176a8);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:15px;line-height:1.6;text-align:center;padding:16px 22px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .4s,transform .4s;z-index:9999;pointer-events:none;}
   .peek-praise.show{opacity:1;transform:translate(-50%,0);}
+  /* 스크롤 위로/아래로 버튼 */
+  .scroll-nav{position:fixed;right:18px;bottom:60px;display:none;flex-direction:column;gap:8px;z-index:8000;}
+  .scroll-nav.show{display:flex;}
+  .scroll-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:46px;height:46px;border:none;border-radius:50%;background:rgba(90,100,110,.85);color:#fff;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.3);line-height:1;}
+  .scroll-btn span{font-size:8px;letter-spacing:.5px;}
+  .scroll-btn:hover{background:rgba(60,70,80,.95);}
   /* QnA */
   .qna-ask{background:#f0f7fc;border:1px solid var(--line);padding:14px;margin-bottom:14px;border-radius:4px;}
   .qna-ask-h{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:16px;color:var(--frame-dark);margin-bottom:10px;}
@@ -533,8 +543,8 @@
     .right .minicards{flex:1 1 100%;}
     /* 멤버 카드: 모바일 2열, 글자·간격 축소, 스탯이 칸 안에 들어오게 */
     .member-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
-    .member-card.flip{height:240px;}
-    .member-card.flip .mc-front,.member-card.flip .mc-back{padding:8px;}
+    .member-card.flip{min-height:240px;}
+    .member-card.flip .mc-front,.member-card.flip .mc-back{min-height:240px;padding:8px;}
     .member-card.flip .mc-front .nm{font-size:16px;}
     .member-card.flip .mc-front .po{font-size:12px;}
     .member-card.flip .mc-front .av{font-size:30px;height:60px;}
@@ -649,10 +659,6 @@
     <button onclick="savePraises()">칭찬 메시지 저장</button>
     <button onclick="resetPraises()" style="background:#c0392b;">기본값으로</button>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
-    <div><b>📌 홈 공지 순서·기본 펼침</b></div>
-    <div style="font-size:10px;color:#5a7585;margin:2px 0;">▲▼로 순서 변경, ⭐로 기본 펼쳐질 글 선택.</div>
-    <div id="noticeOrderAdmin" style="font-size:10px;"></div>
-    <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🔑 관리자1 비밀번호 변경</b> (대표·전체권한)</div>
     <input id="newAdminPw" placeholder="새 관리자1 비밀번호"><button onclick="changeAdminPw(1)">변경</button>
     <div style="margin-top:6px;"><b>🔑 관리자2 비밀번호 변경</b> (회원·출석만)</div>
@@ -726,11 +732,22 @@ OX | 골키퍼는 손을 쓸 수 없다 | X" style="width:100%;box-sizing:border
     <label style="font-size:10px;"><input type="checkbox" id="newNoticePin" style="width:auto;"> 상단 고정(홈 최상단)</label>
     <button onclick="addNotice()">공지 추가</button>
     <div id="noticeListAdmin" style="font-size:10px;margin-top:6px;"></div>
+    <div class="admin-a1only" style="margin-top:8px;">
+      <div><b>📌 홈 공지 순서·기본 펼침</b></div>
+      <div style="font-size:10px;color:#5a7585;margin:2px 0;">▲▼로 순서 변경, ☆/⭐로 기본 펼쳐질 글 선택.</div>
+      <div id="noticeOrderAdmin" style="font-size:10px;"></div>
+    </div>
     <div style="margin-top:6px;font-size:10px;color:#8aa;">📝 훈련일지는 '훈련일지' 메뉴에서 작성·수정합니다.<br>📅 일정안내(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
     </div>
   </div>
 
   <div class="taskbar"><span class="start">⊞ 시작</span><span>WAVE FC.exe</span><span class="clock" id="clock">오후 6:00</span></div>
+</div>
+
+<!-- 스크롤 위로/아래로 버튼 (PC) -->
+<div id="scrollNav" class="scroll-nav">
+  <button type="button" class="scroll-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲<span>TOP</span></button>
+  <button type="button" class="scroll-btn" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로"><span>DOWN</span>▼</button>
 </div>
 
 <!-- 로그인/가입 모달 -->
@@ -1918,7 +1935,10 @@ ROOT.on('value',snap=>{
     _backfilled:(v._backfilled===true),
     _manualAdj1:(v._manualAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
-    _sampleQuizRemoved:(v._sampleQuizRemoved===true)};
+    _sampleQuizRemoved:(v._sampleQuizRemoved===true),
+    member_stats:(v.member_stats&&typeof v.member_stats==='object'?v.member_stats:{}),
+    peek_praises:(Array.isArray(v.peek_praises)?v.peek_praises:null),
+    notice_default_open:(typeof v.notice_default_open==='number'?v.notice_default_open:null)};
     _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
@@ -1927,6 +1947,14 @@ ROOT.on('value',snap=>{
 },()=>setStatus(false));
 
 function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
+// 스크롤 위로/아래로 버튼 표시 제어 (스크롤이 충분히 길 때만)
+window.addEventListener('scroll',function(){
+  const nav=document.getElementById('scrollNav');
+  if(!nav) return;
+  const canScroll=document.body.scrollHeight - window.innerHeight > 400;
+  if(canScroll && window.scrollY>200) nav.classList.add('show');
+  else nav.classList.remove('show');
+});
 function countVisit(){
   ROOT.child('visits').transaction(c=>(c||0)+1);
   // TODAY: KST 날짜별 방문수 (날짜가 바뀌면 새 키 → 자동 리셋), 모두에게 연동/누적
