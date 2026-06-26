@@ -325,17 +325,15 @@
   .member-card.flip .mc-front .nm{font-size:16px;font-weight:bold;color:var(--frame-dark);margin-top:3px;}
   .member-card.flip .mc-front .po{font-size:13px;color:#8aa;line-height:1.5;margin-top:2px;}
   .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin-top:7px;}
-  /* 뒷면: 왼쪽 유니폼·이름 / 오른쪽 스탯 */
-  .member-card.flip .mc-back{transform:rotateY(180deg);}
-  .mc-back-grid{display:flex;gap:8px;height:100%;align-items:center;}
-  .mc-back-id{flex:0 0 56px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-  .mc-back-jersey{font-size:24px;line-height:1;}
-  .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:3px;word-break:keep-all;}
-  .mc-back-num{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#8aa;}
-  .mc-back-stats{flex:1;min-width:0;}
-  .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;}
-  .stat-name{flex:0 0 44px;color:#5a7585;}
-  .stat-bar{flex:1;display:flex;gap:2px;}
+  /* 뒷면: 위 유니폼·이름(중앙), 아래 스탯(중앙) */
+  .member-card.flip .mc-back{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;}
+  .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;}
+  .mc-back-jersey{font-size:22px;line-height:1;}
+  .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:2px;word-break:keep-all;}
+  .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;}
+  .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;justify-content:center;}
+  .stat-name{flex:0 0 42px;color:#5a7585;text-align:right;}
+  .stat-bar{display:flex;gap:2px;}
   .stat-pip{width:10px;height:10px;border:1px solid #9bbcd0;border-radius:2px;background:#fff;}
   .stat-pip.on{background:#3aa0d8;border-color:#3aa0d8;}
   .stat-ctrl{display:flex;gap:2px;}
@@ -540,16 +538,14 @@
     .member-card.flip .mc-front .po{font-size:11px;}
     .member-card.flip .mc-front .av{font-size:26px;height:54px;}
     .member-card.flip .mc-front .badge-status{font-size:13px;}
-    .mc-back-grid{gap:5px;}
-    .mc-back-id{flex:0 0 42px;}
-    .mc-back-jersey{font-size:19px;}
+    .mc-back-head{margin-bottom:3px;}
+    .mc-back-jersey{font-size:18px;}
     .mc-back-name{font-size:10px;}
-    .mc-back-num{font-size:9px;}
     .stat-row{font-size:9px;gap:2px;margin:0;}
-    .stat-name{flex:0 0 32px;}
+    .stat-name{flex:0 0 30px;}
     .stat-bar{gap:1px;}
     .stat-pip{width:8px;height:8px;}
-    .stat-ctrl button{width:14px;height:14px;font-size:9px;}
+    .stat-ctrl button{width:13px;height:13px;font-size:9px;}
     .mc-fliphint{font-size:10px;}
   }
 </style>
@@ -3277,7 +3273,7 @@ function memSortKey(m){
   return [5,999,m.name];
 }
 // ===== 멤버 능력치(스탯) 카드 =====
-const STAT_KEYS=['속력','밸런스','패스','수비','적극성','피지컬','골결정력','슛파워'];
+const STAT_KEYS=['속력','밸런스','패스','수비','움직임','피지컬','결정력','슛파워'];
 const STAT_MAX=5;
 // 스탯 저장 키 (Firebase 경로 안전화)
 function statKey(name){ return String(name||'').replace(/[.#$\[\]\/]/g,'_'); }
@@ -3353,12 +3349,12 @@ function showAllViewedPraise(){
   setTimeout(()=>{ d.classList.add('show'); }, 30);
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3500);
 }
-// 본인 스탯 조절(+/-) 후 저장 (idx = 정렬된 카드 인덱스)
+// 본인 스탯 조절(+/-) 후 저장 (idx = 정렬된 카드 인덱스). 본인 또는 관리자1만
 function setMyStat(idx, key, delta){
   const m=(window._memberCardOrder||[])[idx];
   if(!m) return;
   const name=m.name;
-  if(name!==myRealName()) return; // 본인만
+  if(name!==myRealName() && adminLevel()!==1) return; // 본인 또는 관리자1만
   const cur=getMemberStats(name);
   let v=(cur[key]||0)+delta;
   v=Math.max(0,Math.min(STAT_MAX,v));
@@ -3407,10 +3403,10 @@ function pageMember(){
     else roleLabel='일반 회원';
     // 스탯(뒷면)
     const stats=getMemberStats(m.name);
-    const isMine=(m.name===myRealName());
+    const canEdit=(m.name===myRealName())||(adminLevel()===1); // 본인 또는 관리자1
     const statRows=STAT_KEYS.map(k=>{
       const v=stats[k];
-      const ctrl=isMine
+      const ctrl=canEdit
         ? `<span class="stat-ctrl"><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',-1)">−</button><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',1)">＋</button></span>`
         : '';
       return `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-bar">${statBarHtml(v)}</span>${ctrl}</div>`;
@@ -3425,14 +3421,11 @@ function pageMember(){
           <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
         </div>
         <div class="mc-back">
-          <div class="mc-back-grid">
-            <div class="mc-back-id">
-              <div class="mc-back-jersey">${avSmall}</div>
-              <div class="mc-back-name">${esc(maskMemName(m.name))}</div>
-              ${num?`<div class="mc-back-num">#${esc(num)}</div>`:''}
-            </div>
-            <div class="mc-back-stats">${statRows}</div>
+          <div class="mc-back-head">
+            <span class="mc-back-jersey">${avSmall}</span>
+            <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
+          <div class="mc-back-stats">${statRows}</div>
         </div>
       </div>
     </div>`;
