@@ -314,14 +314,25 @@
   .member-card.flip{position:relative;perspective:900px;cursor:pointer;border:none;padding:0;background:none;box-shadow:none;height:230px;}
   .member-card.flip .mc-inner{position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d;transform:rotateY(0deg);}
   .member-card.flip.flipped .mc-inner{transform:rotateY(180deg);}
-  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:8px;border-radius:6px;overflow:hidden;}
+  .member-card.flip .mc-front,.member-card.flip .mc-back{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #6ab8e8;background:#f7fbfe;box-sizing:border-box;padding:10px;border-radius:6px;overflow:hidden;}
   .member-card.flip.is-exec .mc-front,.member-card.flip.is-exec .mc-back{border-color:#e0a93b;background:linear-gradient(#fffaf0,#fff3da);}
   .member-card.flip.is-honor .mc-front,.member-card.flip.is-honor .mc-back{border-color:#2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);}
   .member-card.flip.is-rest .mc-front,.member-card.flip.is-rest .mc-back{border-color:#b8c0c7;background:#f1f3f5;}
+  /* 앞면: 크게 */
   .member-card.flip .mc-front{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  .member-card.flip .mc-back{transform:rotateY(180deg);text-align:left;display:flex;flex-direction:column;}
-  .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5aa9e6;margin-top:6px;}
-  .stat-title{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);text-align:center;margin-bottom:4px;}
+  .member-card.flip .mc-front .badge-status{font-size:15px;padding:3px 12px;}
+  .member-card.flip .mc-front .av{font-size:30px;height:62px;margin:2px 0;}
+  .member-card.flip .mc-front .nm{font-size:16px;font-weight:bold;color:var(--frame-dark);margin-top:3px;}
+  .member-card.flip .mc-front .po{font-size:13px;color:#8aa;line-height:1.5;margin-top:2px;}
+  .mc-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin-top:7px;}
+  /* 뒷면: 왼쪽 유니폼·이름 / 오른쪽 스탯 */
+  .member-card.flip .mc-back{transform:rotateY(180deg);}
+  .mc-back-grid{display:flex;gap:8px;height:100%;align-items:center;}
+  .mc-back-id{flex:0 0 56px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  .mc-back-jersey{font-size:24px;line-height:1;}
+  .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:3px;word-break:keep-all;}
+  .mc-back-num{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#8aa;}
+  .mc-back-stats{flex:1;min-width:0;}
   .stat-row{display:flex;align-items:center;gap:4px;margin:1px 0;font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;}
   .stat-name{flex:0 0 44px;color:#5a7585;}
   .stat-bar{flex:1;display:flex;gap:2px;}
@@ -330,7 +341,6 @@
   .stat-ctrl{display:flex;gap:2px;}
   .stat-ctrl button{width:17px;height:17px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:11px;}
   .stat-ctrl button:hover{background:#eaf4fb;}
-  .stat-hint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#9aa6ae;margin-top:auto;text-align:center;}
   /* 전체 멤버 구경 칭찬 토스트 */
   .peek-praise{position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);background:linear-gradient(#3aa0d8,#2176a8);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:15px;line-height:1.6;text-align:center;padding:16px 22px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .4s,transform .4s;z-index:9999;pointer-events:none;}
   .peek-praise.show{opacity:1;transform:translate(-50%,0);}
@@ -524,17 +534,22 @@
     .right .minicards{flex:1 1 100%;}
     /* 멤버 카드: 모바일 2열, 글자·간격 축소, 스탯이 칸 안에 들어오게 */
     .member-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
-    .member-card.flip{height:218px;}
+    .member-card.flip{height:210px;}
     .member-card.flip .mc-front,.member-card.flip .mc-back{padding:6px;}
-    .member-card .nm{font-size:13px;}
-    .member-card .po{font-size:10px;}
-    .stat-title{font-size:11px;margin-bottom:3px;}
-    .stat-row{font-size:10px;gap:3px;margin:0;}
-    .stat-name{flex:0 0 38px;}
-    .stat-bar{gap:2px;}
-    .stat-pip{width:9px;height:9px;}
-    .stat-ctrl button{width:15px;height:15px;font-size:10px;}
-    .stat-hint{font-size:9px;}
+    .member-card.flip .mc-front .nm{font-size:14px;}
+    .member-card.flip .mc-front .po{font-size:11px;}
+    .member-card.flip .mc-front .av{font-size:26px;height:54px;}
+    .member-card.flip .mc-front .badge-status{font-size:13px;}
+    .mc-back-grid{gap:5px;}
+    .mc-back-id{flex:0 0 42px;}
+    .mc-back-jersey{font-size:19px;}
+    .mc-back-name{font-size:10px;}
+    .mc-back-num{font-size:9px;}
+    .stat-row{font-size:9px;gap:2px;margin:0;}
+    .stat-name{flex:0 0 32px;}
+    .stat-bar{gap:1px;}
+    .stat-pip{width:8px;height:8px;}
+    .stat-ctrl button{width:14px;height:14px;font-size:9px;}
     .mc-fliphint{font-size:10px;}
   }
 </style>
@@ -3295,9 +3310,11 @@ function markViewed(name){
 }
 // 멤버 카드 뒤집기
 let _flippedCards={}; // {idx:true} 현재 뒤집힌 카드 (재렌더 후 복원용)
-function flipMemberCard(idx, name){
+function flipMemberCard(idx){
   const card=document.getElementById('mcard_'+idx);
   if(!card) return;
+  const m=(window._memberCardOrder||[])[idx];
+  const name=m?m.name:'';
   const willOpen=!card.classList.contains('flipped');
   card.classList.toggle('flipped');
   if(willOpen) _flippedCards[idx]=true; else delete _flippedCards[idx];
@@ -3336,8 +3353,11 @@ function showAllViewedPraise(){
   setTimeout(()=>{ d.classList.add('show'); }, 30);
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3500);
 }
-// 본인 스탯 조절(+/-) 후 저장
-function setMyStat(name, key, delta){
+// 본인 스탯 조절(+/-) 후 저장 (idx = 정렬된 카드 인덱스)
+function setMyStat(idx, key, delta){
+  const m=(window._memberCardOrder||[])[idx];
+  if(!m) return;
+  const name=m.name;
   if(name!==myRealName()) return; // 본인만
   const cur=getMemberStats(name);
   let v=(cur[key]||0)+delta;
@@ -3363,6 +3383,7 @@ function pageMember(){
     if(ka[1]!==kb[1]) return ka[1]-kb[1];
     return String(ka[2]).localeCompare(String(kb[2]),'ko');
   });
+  window._memberCardOrder=all; // setMyStat/flip 에서 idx로 참조
   const cards=all.map((m,idx)=>{
     const st=memStatus(m);
     const num=memNumber(m);
@@ -3375,9 +3396,9 @@ function pageMember(){
     else if(st==='rest'){ cls='is-rest'; topBadge='<span class="badge-status badge-rest">휴식중</span>'; }
     else { topBadge='<span class="badge-status badge-member">멤버</span>'; }
     // 아바타: 명예는 ★ 유니폼, 그 외는 번호(없으면 '-') 유니폼
-    let av;
-    if(st==='honor') av=jerseyImg('★',46);
-    else av=jerseyImg(num||'-',46);
+    let av, avSmall;
+    if(st==='honor'){ av=jerseyImg('★',58); avSmall=jerseyImg('★',40); }
+    else { av=jerseyImg(num||'-',58); avSmall=jerseyImg(num||'-',40); }
     // 직책/등급 표기
     let roleLabel;
     if(isExec) roleLabel = m.title?esc(m.title):'임원';
@@ -3390,26 +3411,28 @@ function pageMember(){
     const statRows=STAT_KEYS.map(k=>{
       const v=stats[k];
       const ctrl=isMine
-        ? `<span class="stat-ctrl"><button onclick="event.stopPropagation();setMyStat('${esc(m.name).replace(/'/g,"\\'")}','${k}',-1)">−</button><button onclick="event.stopPropagation();setMyStat('${esc(m.name).replace(/'/g,"\\'")}','${k}',1)">＋</button></span>`
+        ? `<span class="stat-ctrl"><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',-1)">−</button><button onclick="event.stopPropagation();setMyStat(${idx},'${k}',1)">＋</button></span>`
         : '';
       return `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-bar">${statBarHtml(v)}</span>${ctrl}</div>`;
     }).join('');
-    const backHint = isMine
-      ? '<div class="stat-hint">내 능력치 — ＋/− 로 직접 설정해요</div>'
-      : '<div class="stat-hint">탭하면 앞면으로</div>';
-    return `<div class="member-card flip ${cls}" id="mcard_${idx}" onclick="flipMemberCard(${idx},'${esc(m.name).replace(/'/g,"\\'")}')">
+    return `<div class="member-card flip ${cls}" id="mcard_${idx}" onclick="flipMemberCard(${idx})">
       <div class="mc-inner">
         <div class="mc-front">
           <div class="mc-badgeslot">${topBadge||''}</div>
           <div class="av">${av}</div>
-          <div class="nm">${rankImg(rank,16)} ${esc(maskMemName(m.name))}</div>
+          <div class="nm">${rankImg(rank,18)} ${esc(maskMemName(m.name))}</div>
           <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
           <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
         </div>
         <div class="mc-back">
-          <div class="stat-title">🔹 ${esc(maskMemName(m.name))} 스탯 🔹</div>
-          ${statRows}
-          ${backHint}
+          <div class="mc-back-grid">
+            <div class="mc-back-id">
+              <div class="mc-back-jersey">${avSmall}</div>
+              <div class="mc-back-name">${esc(maskMemName(m.name))}</div>
+              ${num?`<div class="mc-back-num">#${esc(num)}</div>`:''}
+            </div>
+            <div class="mc-back-stats">${statRows}</div>
+          </div>
         </div>
       </div>
     </div>`;
