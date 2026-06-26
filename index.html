@@ -2048,9 +2048,31 @@ function renderAll(){
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
+  } else if(currentPage==='member' && document.querySelector('.member-grid')){
+    // 멤버현황: 카드 수가 그대로면 스탯 막대만 갱신(출렁임 방지), 멤버 추가/삭제 시엔 전체 재렌더
+    const shown=document.querySelectorAll('.member-card.flip').length;
+    const cnt=(DATA.roster||[]).length;
+    if(shown===cnt) refreshMemberStats();
+    else renderPage(currentPage);
   } else {
     renderPage(currentPage);
   }
+}
+// 멤버 카드 스탯 막대만 DB값으로 갱신 (카드 재생성 없이)
+function refreshMemberStats(){
+  const order=window._memberCardOrder||[];
+  order.forEach((m,idx)=>{
+    const card=document.getElementById('mcard_'+idx);
+    if(!card) return;
+    const stats=getMemberStats(m.name);
+    const rows=card.querySelectorAll('.mc-back-stats .stat-row');
+    rows.forEach((row,ri)=>{
+      const key=STAT_KEYS[ri];
+      const v=stats[key]||0;
+      const pips=row.querySelectorAll('.stat-pip');
+      pips.forEach((p,pi)=>{ if(pi<v) p.classList.add('on'); else p.classList.remove('on'); });
+    });
+  });
 }
 // 영상 카드를 다시 그리지 않고 재생 숫자(▶ N회)만 DB 값으로 갱신
 function refreshVideoPlayCounts(){
@@ -3489,7 +3511,7 @@ function pageMember(){
     if(isExec) roleLabel = m.title?esc(m.title):'임원';
     else if(st==='honor') roleLabel='명예회원';
     else if(st==='rest') roleLabel='휴식 멤버';
-    else roleLabel='일반 회원';
+    else roleLabel='WAVE';
     // 스탯(뒷면)
     const stats=getMemberStats(m.name);
     const canEdit=(m.name===myRealName())||(adminLevel()===1); // 본인 또는 관리자1
@@ -3509,11 +3531,10 @@ function pageMember(){
           <div class="po">${roleLabel}${num?' · #'+esc(num):''}${m.join?'<br>가입 '+esc(m.join):''}</div>
           <div class="mc-fliphint">🔹 스탯 보기 🔹</div>
         </div>
-        <div class="mc-back">
-          <div class="mc-back-head" onclick="flipMemberCard(${idx})">
+        <div class="mc-back" onclick="flipMemberCard(${idx})">
+          <div class="mc-back-head">
             <span class="mc-back-jersey">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
-            <span class="mc-back-close">↩ 앞면</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
         </div>
