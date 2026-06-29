@@ -440,7 +440,8 @@
   .board-react-h{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;}
   .yt-embed{position:relative;width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;border-radius:8px;overflow:hidden;background:#000;}
   .dv-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
-  .dv-embed{position:relative;display:inline-block;border-radius:8px;overflow:hidden;background:#000;vertical-align:top;}
+  .dv-embed{position:relative;display:block;border-radius:8px;overflow:hidden;background:#000;}
+  .dv-row .dv-embed{display:inline-block;vertical-align:top;}
   .dv-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   .dv-wide{width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;}
   .dv-shorts{width:220px;aspect-ratio:9/16;margin:10px 0;}
@@ -532,7 +533,7 @@
   .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
   .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;align-items:stretch;}
   .att-card{flex:0 0 auto;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-  .att-card-stat{width:170px;text-align:center;}
+  .att-card-stat{width:170px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;}
   .att-card-t{font-size:14px;color:#9aa6ae;font-weight:700;margin-bottom:6px;}
   .att-card-v{font-size:42px;font-weight:900;line-height:1.1;text-align:center;}
   .att-card-top{flex:1 1 auto;min-width:260px;border-color:#bfe0f5;background:#f2fafe;}
@@ -553,7 +554,7 @@
 
   .right{width:100px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;}
   .tab-btn{background:var(--tab);color:#fff;border:1px solid var(--tab-active);font-size:15px;padding:12px 4px;cursor:pointer;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.15);position:relative;}
-  .tab-n{position:absolute;top:3px;right:4px;background:#ffd400;color:#7a4a00;font-size:10px;font-weight:900;line-height:1;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;box-shadow:0 1px 2px rgba(0,0,0,.25);}
+  .tab-n{position:absolute;top:2px;right:4px;background:transparent;color:#ffd400;font-size:14px;font-weight:900;line-height:1;-webkit-text-stroke:0.6px #fff;text-shadow:0 0 2px #fff,0 0 2px #fff;}
   .tab-btn:hover{background:#5fc0f0;}
   .tab-btn.active{background:var(--tab-active);box-shadow:inset 2px 2px 0 rgba(0,0,0,.2);}
   .tab-btn .lock{position:absolute;top:2px;right:3px;font-size:9px;}
@@ -827,8 +828,13 @@ OX | 골키퍼는 손을 쓸 수 없다 | X" style="width:100%;box-sizing:border
     <div id="noticeListAdmin" style="font-size:10px;margin-top:6px;"></div>
     <div class="admin-a1only" style="margin-top:8px;">
       <div><b>📌 홈 공지 순서·기본 펼침</b></div>
-      <div style="font-size:10px;color:#5a7585;margin:2px 0;">▲▼로 순서 변경, ☆/⭐로 기본 펼쳐질 글 선택.</div>
+      <div style="font-size:10px;color:#5a7585;margin:2px 0;">⭐로 기본 펼쳐질 글 선택, ▲▼로 순서 변경.</div>
       <div id="noticeOrderAdmin" style="font-size:10px;"></div>
+    </div>
+    <div class="admin-a1only" style="margin-top:8px;">
+      <div><b>📝 홈 훈련일지 노출 관리</b></div>
+      <div style="font-size:10px;color:#5a7585;margin:2px 0;">⭐로 홈 새소식에 보일 훈련일지 선택, ▲▼로 순서 변경. (선택 없으면 최신 2개 자동 노출)</div>
+      <div id="diaryHomeAdmin" style="font-size:10px;"></div>
     </div>
     <div style="margin-top:6px;font-size:10px;color:#8aa;">📝 훈련일지는 '훈련일지' 메뉴에서 작성·수정합니다.<br>📅 일정안내(달력)·✅출석은 각 메뉴에서 날짜를 눌러 등록하세요.</div>
     </div>
@@ -1459,7 +1465,7 @@ function pickQuiz(qIdx, val){
   if(me && !alreadySolved){
     const d=new Date();
     const dateStr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
-    const rec={user:me, qk:qk, q:(q.q||''), type:q.type, picked:val, correct:correct, date:dateStr, ts:Date.now()};
+    const rec={user:me, qk:qk, q:(q.q||''), type:q.type, picked:val, correct:correct, date:dateStr, ts:Date.now(), answer:q.answer, options:(q.options||null)};
     const arr=(DATA.quiz_records||[]).slice();
     arr.push(rec);
     ROOT.child('quiz_records').set(arr);
@@ -1636,24 +1642,40 @@ function pageQuiz(){
     const rate=total?Math.round(ok/total*100):0;
     const canEdit = showUser && isAdmin1; // 관리자1 전체기록에서만 정정
     const rows=list.map(r=>{
-      const pickTxt = r.type==='ox' ? r.picked : (typeof r.picked==='number'?(r.picked+1)+'번':r.picked);
+      // 보기 텍스트 변환 헬퍼
+      const toText=(v)=>{
+        if(r.type==='ox') return v;
+        if(typeof v==='number'){
+          if(Array.isArray(r.options) && r.options[v]!=null) return (v+1)+'. '+r.options[v];
+          return (v+1)+'번';
+        }
+        return v;
+      };
+      const myAns = toText(r.picked);
       const resultCell = canEdit
         ? `<span onclick="toggleQuizResult(${r._i})" style="cursor:pointer;border-radius:6px;padding:2px 6px;${r.correct?'color:#2e8b3d;background:#eafbef;':'color:#c0392b;background:#fdeaea;'}font-weight:700;" title="클릭하면 정답↔오답이 바뀌어요">${r.correct?'⭕ 정답':'❌ 오답'} ✏️</span>`
         : (r.correct?'<span style="color:#2e8b3d;font-weight:700;">⭕ 정답</span>':'<span style="color:#c0392b;font-weight:700;">❌ 오답</span>');
+      // 오답일 때 정답 코멘트 (구구단 선생님처럼)
+      let comment='';
+      if(!r.correct && r.answer!=null){
+        const ansTxt=toText(r.answer);
+        comment=`<div style="font-size:11px;color:#c0392b;margin-top:3px;">🧑‍🏫 아쉬워요! 정답은 <b>${esc(String(ansTxt))}</b> 였어요. 다음엔 맞힐 수 있어요!</div>`;
+      }
       return `<tr>
         <td style="font-size:12px;color:#888;white-space:nowrap;">${esc(r.date||'')}</td>
         ${showUser?`<td style="font-weight:600;white-space:nowrap;">${esc(r.user||'')}</td>`:''}
-        <td style="font-size:13px;line-height:1.5;white-space:normal;word-break:break-all;">${esc(r.q||'')}</td>
+        <td style="font-size:13px;line-height:1.5;white-space:normal;word-break:break-all;">${esc(r.q||'')}${comment}</td>
+        <td style="font-size:12px;text-align:center;white-space:normal;word-break:break-all;color:#555;">${esc(String(myAns||'-'))}</td>
         <td style="text-align:center;">${resultCell}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="${showUser?4:3}" style="color:#8aa;padding:14px;text-align:center;">아직 푼 퀴즈가 없어요.</td></tr>`;
+    }).join('') || `<tr><td colspan="${showUser?5:4}" style="color:#8aa;padding:14px;text-align:center;">아직 푼 퀴즈가 없어요.</td></tr>`;
     return `
       <div class="quiz-stat">
         <b>${title}</b> · 참여 ${total}회 · 정답 ${ok}회 · 정답률 <span style="color:#2e8b3d;font-weight:700;">${rate}%</span>
       </div>
       ${canEdit?'<div style="font-size:11px;color:#a06a00;margin-bottom:4px;">✏️ 결과를 클릭하면 정답↔오답을 바꿀 수 있어요 (점수도 자동 반영).</div>':''}
       <table class="lst" style="margin-bottom:18px;">
-        <tr><th>날짜</th>${showUser?'<th>이름</th>':''}<th>문제</th><th>결과</th></tr>
+        <tr><th>날짜</th>${showUser?'<th>이름</th>':''}<th>문제</th><th>나의 답</th><th>결과</th></tr>
         ${rows}
       </table>`;
   }
@@ -2026,6 +2048,7 @@ const DEFAULT={
   replies:[],
   activity_log:[],
   levelRewards:{},
+  diary_home_pick:[],
   videos:[],
   videoCats:["기초","기본","응용","경기"],
   roomTips:[
@@ -2121,7 +2144,8 @@ ROOT.on('value',snap=>{
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
     peek_praises:(Array.isArray(v.peek_praises)?v.peek_praises:null),
-    notice_default_open:(typeof v.notice_default_open==='number'?v.notice_default_open:null)};
+    notice_default_open:(typeof v.notice_default_open==='number'?v.notice_default_open:null),
+    diary_home_pick:(Array.isArray(v.diary_home_pick)?v.diary_home_pick:[])};
     _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
@@ -2271,7 +2295,7 @@ function renderAll(){
   // 관리자1이면 사이드바 문구 편집 가능 표시
   const editable=(adminLevel()===1);
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
-  startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
+  startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderDiaryHomeAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
@@ -2507,8 +2531,15 @@ function buildFeed(){
   // ③ 고정공지(pinned)는 항상 노출
   DATA.notices.forEach((n,i)=>{ if(n.pinned) items.push({kind:'공지사항',label:'[공지사항]',title:n.title||(n.text||'').slice(0,20),text:n.text||'',ts:n.ts||0,_t:'notice',_i:i,pinned:true,_sort:Number.MAX_SAFE_INTEGER}); });
 
-  // ④ 최신 훈련일지 (공개 글만, 최근 2개)
-  (DATA.logs||[]).filter(l=>l && !l.secret).slice(0,2).forEach((l)=>{
+  // ④ 훈련일지: 관리자가 ⭐로 고른 게 있으면 그 순서대로, 없으면 최신 2개(공개)
+  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[];
+  let diaryForFeed=[];
+  if(picks.length){
+    picks.forEach(ts=>{ const l=(DATA.logs||[]).find(x=>x&&x.ts===ts); if(l && !l.secret) diaryForFeed.push(l); });
+  } else {
+    diaryForFeed=(DATA.logs||[]).filter(l=>l && !l.secret).slice(0,2);
+  }
+  diaryForFeed.forEach((l)=>{
     const i=DATA.logs.indexOf(l);
     items.push({kind:'훈련일지',label:'[훈련일지]',title:l.title||('훈련일지'+(l.date?' '+l.date:'')),text:l.text||'',ts:l.ts||0,_t:'diary',_i:i,_sort:(l.ts||0)});
   });
@@ -2555,7 +2586,7 @@ function pageHome(){
   const cur=top[feedSel]||top[0];
   let gotoBtn='';
   if(cur && cur._t==='notice') gotoBtn=`<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🤍</button>`;
-  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">피드백까지 보고 좋아요/댓글 남기러 가기🤍</button>`;
+  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">더 자세히 보고 좋아요/댓글 남기러 가기🤍</button>`;
   // 본문: 공지는 그대로, 훈련일지는 앞 50자 미리보기, 일정은 텍스트
   let fdBody;
   if(!cur) fdBody='';
@@ -3131,28 +3162,9 @@ function pageNotice(){
   }
   function dstr(n){const t=n.ts?new Date(n.ts):null;return t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';}
 
-  // 대표글: 상단 고정이 있으면 그 첫 글, 없으면 가장 최신글
-  const featured = list.length ? list[0] : null;
-
-  // 대표글 본문(또는 편집폼)
-  let featuredHtml='';
-  if(featured){
-    if(isExec && noticeEditing===featured._i){
-      featuredHtml=editForm(featured);
-    }else{
-      featuredHtml=`
-      <div class="qna-thread" style="margin-bottom:14px;">
-        <div class="qna-q">${featured.secret?'🔒 ':''}${featured.pinned?'📌 ':'📢 '}${esc(featured.title||'')}<span class="qna-src" style="float:right;">${dstr(featured)}</span></div>
-        <div class="qna-a">${bodyRender(featured.text||'')}</div>
-        ${reactBox('notices',featured._i)}
-        ${adminBtns(featured)}
-      </div>`;
-    }
-  }
-
-  // 나머지 글 목록(대표글 제외) — 최대 5개 제목 리스트, 클릭하면 펼침
-  const rest=list.slice(1);
-  const listRows=rest.slice(0,5).map(n=>{
+  // 공지사항 페이지: 전체 글을 목록으로 (고정글 위 → 최신 → 오래된 순). 누르면 펼침.
+  // 홈의 대표글 노출과는 별개 연동.
+  const rowsHtml = list.length ? list.map(n=>{
     if(isExec && noticeEditing===n._i) return editForm(n);
     const opened = noticeOpen===n._i;
     return `
@@ -3164,17 +3176,12 @@ function pageNotice(){
         </div>
         ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
       </div>`;
-  }).join('');
-  const moreNote = rest.length>5 ? `<div style="font-size:11px;color:#8aa;text-align:center;padding:6px;">외 ${rest.length-5}개의 공지가 더 있어요.</div>` : '';
-  const listBlock = rest.length
-    ? `<div class="qna-ask-h" style="margin:6px 0;">📋 이전 공지</div><div class="qna-list">${listRows}${moreNote}</div>`
-    : '';
+  }).join('') : '<div style="color:#8aa;padding:16px;">등록된 공지가 없어요.</div>';
 
   return `<div class="page-h">📢 공지사항</div>
     ${writeToggle}
     ${writeBox}
-    ${featuredHtml || '<div style="color:#8aa;padding:16px;">등록된 공지가 없어요.</div>'}
-    ${listBlock}`;
+    <div class="qna-list">${rowsHtml}</div>`;
 }
 function toggleNoticeWrite(){ noticeWriting=!noticeWriting; noticeEditing=null; renderPage('notice'); }
 function toggleNoticeOpen(i){ noticeOpen=(noticeOpen===i)?null:i; renderPage('notice'); }
@@ -4861,11 +4868,11 @@ function renderNoticeOrderAdmin(){
   if(!ns.length){ el.innerHTML='등록된 공지가 없어요.'; return; }
   el.innerHTML=ns.map((n,i)=>{
     const isDefault=(DATA.notice_default_open===i);
-    return `<div style="display:flex;align-items:center;gap:3px;padding:2px 0;border-bottom:1px dotted #e0d4b0;">
+    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px dotted #e0d4b0;">
+      <a href="#" onclick="setNoticeDefaultOpen(${i});return false;" style="color:${isDefault?'#e0a93b':'#9aa6ae'};text-decoration:none;font-size:14px;flex-shrink:0;" title="기본 펼침으로 지정">${isDefault?'⭐':'☆'}</a>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${n.pinned?'📌':''}${esc(n.title||'(제목없음)')}</span>
-      <a href="#" onclick="moveNotice(${i},-1);return false;" style="color:#2176a8;text-decoration:none;">▲</a>
-      <a href="#" onclick="moveNotice(${i},1);return false;" style="color:#2176a8;text-decoration:none;">▼</a>
-      <a href="#" onclick="setNoticeDefaultOpen(${i});return false;" style="color:${isDefault?'#e0a93b':'#9aa6ae'};text-decoration:none;" title="기본 펼침">${isDefault?'⭐':'☆'}</a>
+      <a href="#" onclick="moveNotice(${i},-1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▲</a>
+      <a href="#" onclick="moveNotice(${i},1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▼</a>
     </div>`;
   }).join('');
 }
@@ -4886,6 +4893,40 @@ function setNoticeDefaultOpen(i){
   const cur=DATA.notice_default_open;
   if(cur===i) ROOT.child('notice_default_open').remove(); // 다시 누르면 해제
   else ROOT.child('notice_default_open').set(i);
+}
+// ===== 홈 훈련일지 노출 관리 (관리자1) =====
+// DATA.diary_home_pick : 홈 새소식에 보일 훈련일지 ts 배열(순서 = 노출 순서). 비어있으면 최신 2개 자동.
+function renderDiaryHomeAdmin(){
+  const el=document.getElementById('diaryHomeAdmin');
+  if(!el) return;
+  const logs=DATA.logs||[];
+  if(!logs.length){ el.innerHTML='등록된 훈련일지가 없어요.'; return; }
+  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[];
+  el.innerHTML=logs.map((l,i)=>{
+    const on=picks.indexOf(l.ts)>=0;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px dotted #e0d4b0;">
+      <a href="#" onclick="toggleDiaryHome(${l.ts||0});return false;" style="color:${on?'#e0a93b':'#9aa6ae'};text-decoration:none;font-size:14px;flex-shrink:0;" title="홈 노출">${on?'⭐':'☆'}</a>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.secret?'🔒':''}${esc(l.title||'(제목없음)')}</span>
+      <a href="#" onclick="moveDiaryHome(${l.ts||0},-1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▲</a>
+      <a href="#" onclick="moveDiaryHome(${l.ts||0},1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▼</a>
+    </div>`;
+  }).join('');
+}
+function toggleDiaryHome(ts){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[];
+  const idx=picks.indexOf(ts);
+  if(idx>=0) picks.splice(idx,1); else picks.push(ts);
+  ROOT.child('diary_home_pick').set(picks);
+}
+function moveDiaryHome(ts,dir){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[];
+  const i=picks.indexOf(ts);
+  if(i<0) return alert('먼저 ⭐로 홈 노출을 선택하세요.');
+  const j=i+dir; if(j<0||j>=picks.length) return;
+  const t=picks[i]; picks[i]=picks[j]; picks[j]=t;
+  ROOT.child('diary_home_pick').set(picks);
 }
 function delLog(i){const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').set(a);}
 function addRosterMember(){
@@ -5371,20 +5412,23 @@ function extractYouTubeIds(text){
 function diaryBodyRender(s){
   s=s||'';
   let base=bodyRender(s); // sanitize된 HTML 문자열
-  // <a href="...youtube...">...</a> → 평문 URL로 풀어 인라인 임베드가 자리에서 동작하도록
+  // <a href="...youtube...">...</a> → 평문 URL로 풀기
   base=base.replace(/<a\b[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>[\s\S]*?<\/a>/gi, (m,href)=>href);
-  // 유튜브 링크(평문 URL)를 자리에서 임베드로 치환 (숏츠는 9:16, 일반은 16:9)
+  // 유튜브 링크(평문 URL)를 자리에서 임베드로 치환 (숏츠 9:16 / 일반 16:9)
   const re=/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^\s"'<&]*&)*v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[^\s"'<]*)/g;
   let replaced=base.replace(re,(url,id)=>{
     const isShorts=/shorts\//.test(url);
     return `<span class="dv-embed ${isShorts?'dv-shorts':'dv-wide'}"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>`;
   });
-  // 연속된 임베드들을 한 줄(3개씩)로 묶기 (<br>·공백이 사이에 껴도 묶음)
-  replaced=replaced.replace(/(<span class="dv-embed[\s\S]*?<\/span>)((?:\s|<br\s*\/?>)*<span class="dv-embed[\s\S]*?<\/span>)+/g, m=>{
-    // 묶음 안의 <br>·공백 제거하고 임베드만 추출
-    const embeds=m.match(/<span class="dv-embed[\s\S]*?<\/span>/g)||[];
-    return `<span class="dv-row">${embeds.join('')}</span>`;
-  });
+  // 임베드 사이에 '오직 <br>/공백만' 있을 때(=텍스트 없음)만 가로로 묶음. 텍스트는 절대 버리지 않음.
+  replaced=replaced.replace(
+    /<span class="dv-embed[\s\S]*?<\/span>(?:(?:\s|<br\s*\/?>)*<span class="dv-embed[\s\S]*?<\/span>)+/g,
+    block=>{
+      // 이 블록은 임베드 + (br/공백)만으로 구성됨이 보장됨
+      const embeds=block.match(/<span class="dv-embed[\s\S]*?<\/span>/g)||[];
+      return `<span class="dv-row">${embeds.join('')}</span>`;
+    }
+  );
   return replaced;
 }
 
