@@ -512,11 +512,13 @@
   .att-card-t{font-size:12px;color:#9aa6ae;font-weight:600;margin-bottom:6px;}
   .att-card-v{font-size:26px;font-weight:800;line-height:1;}
   .att-card-top{flex:1 1 auto;min-width:300px;}
+  .att-card-yellow{flex:0 0 auto;width:200px;border-color:#ffe08a;background:#fffdf5;}
   .att-top5{margin-top:2px;}
   .att-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
   @media(max-width:600px){
     .att-card-stat{width:calc(50% - 6px);}
     .att-card-top{flex:1 1 100%;min-width:100%;}
+    .att-card-yellow{flex:1 1 100%;width:100%;}
     .att-card-v{font-size:22px;}
     .att-top-grid{grid-template-columns:1fr;}
   }
@@ -3639,14 +3641,24 @@ function pageAttend(){
 
   // 출석 상위 6명: 전체 출석 기록 누적 기준
   const allStats=calcStats(allSessions).stats;
-  const top6=allStats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,6);
-  const medal=['🥇','🥈','🥉','4.','5.','6.'];
-  const rowHtml=(t,i)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>${medal[i]} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
-  const leftCol=top6.slice(0,3).map((t,i)=>rowHtml(t,i)).join('');
-  const rightCol=top6.slice(3,6).map((t,i)=>rowHtml(t,i+3)).join('');
+  const top6=allStats.sort((a,b)=> b.rate-a.rate).slice(0,6);
+  // 같은 출석률은 공동 순위. 1~3위는 메달, 그 외는 'N.' 표기
+  const medalByRank=(r)=> r===1?'🥇':r===2?'🥈':r===3?'🥉':(r+'.');
+  let _prevRate=null, _rank=0;
+  top6.forEach((t,i)=>{ if(t.rate!==_prevRate){ _rank=i+1; _prevRate=t.rate; } t._rank=_rank; });
+  const rowHtml=(t)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>${medalByRank(t._rank)} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
+  const leftCol=top6.slice(0,3).map(t=>rowHtml(t)).join('');
+  const rightCol=top6.slice(3,6).map(t=>rowHtml(t)).join('');
   const top6Html = top6.length
     ? `<div class="att-top-grid"><div>${leftCol}</div><div>${rightCol}</div></div>`
     : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
+
+  // 옐로카드 명단: 출석률 25~49%(🥶 구간) 멤버 (전체 기록 기준)
+  const yellowList=allStats.filter(t=> t.rate>=25 && t.rate<50).sort((a,b)=> a.rate-b.rate);
+  const yellowHtml = yellowList.length
+    ? yellowList.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>🥶 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.rate}%</b></div>`).join('')
+    : `<div style="font-size:12px;color:#9aa6ae;">해당 멤버가 없어요 👍</div>`;
+
   const summaryCards=`
     <div class="att-summary">
       <div class="att-card att-card-stat">
@@ -3660,6 +3672,10 @@ function pageAttend(){
       <div class="att-card att-card-top">
         <div class="att-card-t">🏆 출석 상위 6명 (전체 출석)</div>
         <div class="att-top5">${top6Html}</div>
+      </div>
+      <div class="att-card att-card-yellow">
+        <div class="att-card-t">삐용삐용🚨 옐로카드🟨</div>
+        <div class="att-top5">${yellowHtml}</div>
       </div>
     </div>`;
 
