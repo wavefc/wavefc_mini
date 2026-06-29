@@ -505,6 +505,13 @@
   .att-table th,.att-table td{padding:8px 10px;white-space:nowrap;}
   .att-table td{font-size:15px;}
   .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
+  .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;}
+  .att-card{flex:1;min-width:150px;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .att-card-t{font-size:12px;color:#9aa6ae;font-weight:600;margin-bottom:6px;}
+  .att-card-v{font-size:26px;font-weight:800;line-height:1;}
+  .att-card-top{min-width:200px;}
+  .att-top5{margin-top:2px;}
+  @media(max-width:600px){.att-card{min-width:calc(50% - 6px);}.att-card-top{min-width:100%;}.att-card-v{font-size:22px;}}
   .locked-msg{text-align:center;padding:40px 16px;font-size:12px;color:#8aa;line-height:2;}
   .locked-msg .ic{font-size:36px;}
 
@@ -3470,49 +3477,96 @@ function pageAttend(){
     if(state==='E') return '<span style="color:#7b3fb5;font-weight:700;font-size:13px;">체험</span>';
     if(state==='A') return '<span style="color:#d40000;font-weight:700;font-size:13px;">무단</span>';
     if(state==='R') return '<span style="color:#9aa6ae;font-size:13px;">휴식중</span>';
+    if(state==='I') return '<span style="color:#e67e22;font-weight:700;font-size:13px;">🤕부상</span>';
+    if(state==='P') return '<span style="color:#2980b9;font-weight:700;font-size:13px;">🫡사정</span>';
     return '<span style="color:#c0392b;font-weight:600;font-size:20px;">×</span>';
   }
+  const memberStats=[]; // 요약 카드용 멤버별 출석률 수집
   const rows=members.map(m=>{
     const name=m.name;
     const isRest=memStatus(m)==='rest';
+    const joinKey = m.join ? attDateKey(m.join) : 0; // 가입일(없으면 0=처음부터)
+    // 멤버별 세션 상태 계산 함수 (가입 전이면 null)
+    const stateOf=(s)=>{
+      if(joinKey && attDateKey(s.date) < joinKey) return null; // 가입 전 → 해당없음
+      const raw=(s.present&&s.present[name]);
+      if(raw===true) return 'O';
+      if(raw==='E') return 'E';
+      if(raw==='A') return 'A';
+      if(raw==='R') return 'R';
+      if(raw==='I') return 'I';
+      if(raw==='P') return 'P';
+      if(raw===false||raw==='X') return 'X';
+      return isRest?'R':'X'; // 미입력 기본값
+    };
     const cells=sessions.map((s,si)=>{
-      let raw=(s.present&&s.present[name]);
-      let state;
-      if(raw===true) state='O';
-      else if(raw==='E') state='E';
-      else if(raw==='A') state='A';
-      else if(raw==='R') state='R';
-      else if(raw===false||raw==='X') state='X';
-      else state=isRest?'R':'X';
+      const state=stateOf(s);
+      if(state===null){
+        // 가입 전: 빈 칸(클릭 불가, 옅은 표시)
+        return `<td style="color:#d6dde2;">·</td>`;
+      }
       return `<td ${isExec?`style="cursor:pointer;" onclick="cycleAttend(${idxMap[si]},'${name.replace(/'/g,"\\'")}')"`:''}>${markHtml(state)}</td>`;
     }).join('');
-    let oCnt=0, denom=0;
+    let oCnt=0, denom=0, hasInjury=false, hasPersonal=false, anyValid=false;
     sessions.forEach(s=>{
-      const raw=(s.present&&s.present[name]);
-      let st;
-      if(raw===true) st='O';
-      else if(raw==='E') st='E';
-      else if(raw==='A') st='A';
-      else if(raw==='R') st='R';
-      else if(raw===false||raw==='X') st='X';
-      else st=isRest?'R':'X';
-      if(st==='R') return; // 휴식은 분모 제외
-      denom++;
-      if(st==='O'||st==='E') oCnt++; // 체험은 출석으로 인정 (무단결석은 X와 함께 결석 처리)
+      const st=stateOf(s);
+      if(st===null) return;       // 가입 전 제외
+      anyValid=true;
+      if(st==='I') hasInjury=true;
+      if(st==='P') hasPersonal=true;
+      if(st==='R') return;        // 휴식은 분모 제외
+      denom++;                    // 부상·개인사정은 분모 포함(0% 계산)
+      if(st==='O'||st==='E') oCnt++; // 출석 인정
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
-    // 출석률 이모티콘 (이름 오른쪽). 0% 구간은 휴식중 여부로 분기.
+    // 월별 이모티콘: 그 달에 부상/개인사정이 있으면 우선 표시
     let rateEmoji;
-    if(denom===0) rateEmoji=isRest?'😴':'😉'; // 평가할 출석 기록이 아예 없음
+    if(hasInjury) rateEmoji='🤕';
+    else if(hasPersonal) rateEmoji='🫡';
+    else if(!anyValid || denom===0) rateEmoji=isRest?'😴':'😉'; // 평가할 기록 없음(가입 전 포함)
     else if(rate>=100) rateEmoji='😍';
     else if(rate>=75) rateEmoji='😄';
     else if(rate>=50) rateEmoji='🥲';
     else if(rate>=25) rateEmoji='🥶';
     else rateEmoji=isRest?'😴':'😡';
+    // 가입 후 유효 세션이 하나도 없으면(=이 기간 전체가 가입 전) 행을 숨김
+    if(!anyValid && joinKey) return '';
+    // 요약 카드용: 출석 가능한 멤버(휴식 아님 + 유효 세션 있음)만 상위권 후보
+    if(anyValid && denom>0 && !isRest){
+      memberStats.push({name, rate, oCnt, denom});
+    }
     return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))} <span class="att-emoji" title="출석률 ${rate}%">${rateEmoji}</span></td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
-  }).join('');
+  }).filter(Boolean).join('');
 
   const addBtn=isExec?`<button class="cal-addbtn" onclick="addAttendSession()">+ 출석일 추가</button>`:'';
+
+  // ===== 상단 요약 카드 (이번 달 일정 / 팀 출석률 / 출석 상위 5명) =====
+  const sessionCount=sessions.length;
+  // 팀 출석률: 전체 멤버 출석합/분모합
+  let teamO=0, teamD=0;
+  memberStats.forEach(ms=>{ teamO+=ms.oCnt; teamD+=ms.denom; });
+  const teamRate=teamD?Math.round(teamO/teamD*100):0;
+  // 출석 상위 5명 (출석률 내림차순, 동률이면 출석 횟수 많은 순)
+  const top5=memberStats.slice().sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,5);
+  const medal=['🥇','🥈','🥉','4.','5.'];
+  const top5Html = top5.length
+    ? top5.map((t,i)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.7;"><span>${medal[i]} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`).join('')
+    : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
+  const summaryCards=`
+    <div class="att-summary">
+      <div class="att-card">
+        <div class="att-card-t">이번 달 일정</div>
+        <div class="att-card-v" style="color:#2f6fed;">${sessionCount}회</div>
+      </div>
+      <div class="att-card">
+        <div class="att-card-t">팀 출석률</div>
+        <div class="att-card-v" style="color:#e69500;">${teamRate}%</div>
+      </div>
+      <div class="att-card att-card-top">
+        <div class="att-card-t">🏆 출석 상위 5명</div>
+        <div class="att-top5">${top5Html}</div>
+      </div>
+    </div>`;
 
   // 보기 전환 + 월/기간 선택 UI
   const monthOpts=monthSet.map(k=>`<option value="${k}" ${k===curMonth?'selected':''}>${attMonthLabel(k)}</option>`).join('');
@@ -3533,13 +3587,14 @@ function pageAttend(){
     : ((attFrom||'처음')+' ~ '+(attTo||'끝'));
 
   return `<div class="page-h" style="font-size:24px;">✅ 출석 현황</div>
+    ${summaryCards}
     ${controls}
     <div style="font-size:16px;font-weight:700;color:#2e8b3d;margin:4px 0;">${periodLabel}</div>
     ${addBtn}
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th style="font-size:16px;">이름</th>${dateHeads||'<th>해당 기간 기록 없음</th>'}<th style="font-size:16px;">출석률</th></tr>
     ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → <span style="color:#d40000;">무단</span>(무단결석) → <span style="color:#7b3fb5;">체험</span>(체험) → 휴식중 순으로 바뀝니다. 체험은 출석률에 포함, 무단결석은 결석으로 계산됩니다.</div>':''}`;
+    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → <span style="color:#d40000;">무단</span> → <span style="color:#7b3fb5;">체험</span> → 휴식중 → <span style="color:#e67e22;">🤕부상</span> → <span style="color:#2980b9;">🫡사정</span> 순으로 바뀝니다. 체험은 출석으로 인정, 무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다.</div>':''}`;
 }
 function setAttView(mode){ attViewMode=mode; renderPage('attend'); }
 function attDateKey(d){
@@ -3576,13 +3631,15 @@ function cycleAttend(si,name){
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   const cur=arr[si].present[name];
-  // 순환: O(true) → X('X',결석) → A('A',무단결석) → E('E',체험) → R('R',휴식) → O
+  // 순환: O(출석) → X(결석) → A(무단) → E(체험) → R(휴식) → I(부상) → P(개인사정) → O
   let next;
   if(cur===true) next='X';
   else if(cur==='X'||cur===false) next='A';
   else if(cur==='A') next='E';
   else if(cur==='E') next='R';
-  else if(cur==='R') next=true;
+  else if(cur==='R') next='I';
+  else if(cur==='I') next='P';
+  else if(cur==='P') next=true;
   else next=true; // 미설정 → O
   arr[si].present[name]=next;
   ROOT.child('attendance').set(arr);
@@ -4562,6 +4619,14 @@ function editMemberTitle(i){
   a[i].title=v.trim();
   ROOT.child('roster').set(a);
 }
+function editMemberJoin(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const v=prompt(`${a[i].name} 가입날짜를 입력하세요 (예: 2026-06-01)\n가입일 이전 달에는 출석현황에 이름이 표시되지 않아요.\n(없애려면 비우고 확인)`,a[i].join||'');
+  if(v===null)return;
+  a[i].join=v.trim();
+  ROOT.child('roster').set(a);
+}
 function delRosterMember(i){if(!confirm('이 멤버를 삭제할까요?'))return;const a=DATA.roster.slice();a.splice(i,1);ROOT.child('roster').set(a);}
 // 멤버 상태 변경 (active/honor/rest)
 function setMemberStatus(i,status){
@@ -4611,6 +4676,7 @@ function renderRosterAdmin(){
       <span style="font-size:9px;">
         <a href="#" onclick="editMemberNumber(${i});return false;" style="color:#2e8b3d;">[등번호수정]</a>
         <a href="#" onclick="editMemberTitle(${i});return false;" style="color:#b07a1a;">[직책수정]</a>
+        <a href="#" onclick="editMemberJoin(${i});return false;" style="color:#2980b9;">[가입일수정]</a>
         ${roleBtn} ${stBtns}
         <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a>
       </span>
