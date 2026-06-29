@@ -504,6 +504,7 @@
   /* 출석표 */
   .att-table th,.att-table td{padding:8px 10px;white-space:nowrap;}
   .att-table td{font-size:15px;}
+  .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
   .locked-msg{text-align:center;padding:40px 16px;font-size:12px;color:#8aa;line-height:2;}
   .locked-msg .ic{font-size:36px;}
 
@@ -3064,7 +3065,14 @@ function addNoticeBoard(){
   const a=DATA.notices.slice();
   a.unshift({title:title||document.getElementById('ntText').textContent.trim().slice(0,20),text:text,pinned:pin,ts:Date.now()});
   noticeWriting=false;
+  noticeEditing=null;
+  // 새 글은 배열 맨 앞(_i=0). 고정글이 있어 대표글로 안 올라오면 펼침 상태로.
+  const hasPinnedAbove = a.some((n,i)=> i>0 && n.pinned) && !pin;
+  noticeOpen = hasPinnedAbove ? 0 : null;
+  DATA.notices=a;                 // 즉시 반영(낙관적 갱신)
   ROOT.child('notices').set(a);
+  renderPage('notice');           // 등록 직후 바로 새 글 화면으로 갱신
+  window.scrollTo({top:0, behavior:'smooth'}); // 방금 등록한 글로 이동
 }
 function editNotice(i){           // 인라인 편집 모드 진입
   if(!canManage()) return;
@@ -3493,7 +3501,15 @@ function pageAttend(){
       if(st==='O'||st==='E') oCnt++; // 체험은 출석으로 인정 (무단결석은 X와 함께 결석 처리)
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
-    return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))}</td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
+    // 출석률 이모티콘 (이름 오른쪽). 0% 구간은 휴식중 여부로 분기.
+    let rateEmoji;
+    if(denom===0) rateEmoji=isRest?'😴':'😉'; // 평가할 출석 기록이 아예 없음
+    else if(rate>=100) rateEmoji='😍';
+    else if(rate>=75) rateEmoji='😄';
+    else if(rate>=50) rateEmoji='🥲';
+    else if(rate>=25) rateEmoji='🥶';
+    else rateEmoji=isRest?'😴':'😡';
+    return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))} <span class="att-emoji" title="출석률 ${rate}%">${rateEmoji}</span></td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
   }).join('');
 
   const addBtn=isExec?`<button class="cal-addbtn" onclick="addAttendSession()">+ 출석일 추가</button>`:'';
