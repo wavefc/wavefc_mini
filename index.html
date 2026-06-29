@@ -3565,28 +3565,32 @@ function pageAttend(){
       }
       return `<td ${isExec?`style="cursor:pointer;" onclick="openAttPick(${idxMap[si]},'${nameJs}',false)"`:''}>${markHtml(state)}</td>`;
     }).join('');
-    let oCnt=0, denom=0, hasInjury=false, hasPersonal=false, anyValid=false;
+    let oCnt=0, denom=0, hasInjury=false, hasPersonal=false, hasRest=false, anyValid=false;
     sessions.forEach(s=>{
       const st=stateOf(s);
       if(st==='PRE') return;      // 가입 전 미입력 제외
       anyValid=true;
       if(st==='I') hasInjury=true;
       if(st==='P') hasPersonal=true;
-      if(st==='R') return;        // 휴식은 분모 제외
+      if(st==='R'){ hasRest=true; return; } // 휴식은 분모 제외
       denom++;                    // 부상·개인사정은 분모 포함(0% 계산)
       if(st==='O'||st==='E') oCnt++; // 출석 인정(가입 전 체험 포함)
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
     // 월별 이모티콘: 그 달에 부상/개인사정이 있으면 우선 표시
     let rateEmoji;
-    if(hasInjury) rateEmoji='🤕';
-    else if(hasPersonal) rateEmoji='🫡';
-    else if(!anyValid || denom===0) rateEmoji=isRest?'😴':'😉'; // 평가할 기록 없음(가입 전 포함)
+    if(hasInjury) rateEmoji='🤕';            // 부상 한 번이라도
+    else if(hasRest) rateEmoji='😴';          // 휴식중 한 번이라도
+    else if(hasPersonal) rateEmoji='🫡';      // 개인사정 한 번이라도
+    else if(!anyValid || denom===0) rateEmoji='😉'; // 평가할 기록 없음(가입 전 포함)
     else if(rate>=100) rateEmoji='😍';
-    else if(rate>=75) rateEmoji='😄';
-    else if(rate>=50) rateEmoji='🥲';
-    else if(rate>=25) rateEmoji='🥶';
-    else rateEmoji=isRest?'😴':'😡';
+    else if(rate>=80) rateEmoji='😄';
+    else if(rate>=60) rateEmoji='😊';
+    else if(rate>=51) rateEmoji='🙂';
+    else if(rate>=40) rateEmoji='🥲';
+    else if(rate>=25) rateEmoji='😨';
+    else if(rate>=1) rateEmoji='🥶';
+    else rateEmoji='😡';                       // X만으로 구성된 0%
     // 가입 후 유효 세션이 하나도 없으면(=이 기간 전체가 가입 전) 행을 숨김
     if(!anyValid && joinKey) return '';
     return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))} <span class="att-emoji" title="출석률 ${rate}%">${rateEmoji}</span></td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
@@ -3603,7 +3607,7 @@ function pageAttend(){
     members.forEach(m=>{
       const isRest=memStatus(m)==='rest';
       const joinKey=m.join?attDateKey(m.join):0;
-      let oCnt=0, denom=0, anyValid=false;
+      let oCnt=0, denom=0, anyValid=false, pureO=0, pureD=0;
       sessionList.forEach(s=>{
         const raw=(s.present&&s.present[m.name]);
         const preJoin = joinKey && attDateKey(s.date)<joinKey;
@@ -3621,13 +3625,16 @@ function pageAttend(){
         else if(raw===false||raw==='X') st='X';
         else st=isRest?'R':'X';
         anyValid=true;
+        // 순수 출석률(옐로카드용): 휴식·부상·개인사정 모두 분모 제외
+        if(st!=='R' && st!=='I' && st!=='P'){ pureD++; if(st==='O'||st==='E') pureO++; }
         if(st==='R') return;        // 휴식 분모 제외
         denom++;                    // 부상·개인사정 포함(0%)
         if(st==='O'||st==='E') oCnt++;
       });
       if(anyValid && denom>0 && !isRest){
         const rate=Math.round(oCnt/denom*100);
-        stats.push({name:m.name, rate, oCnt, denom});
+        const pureRate=pureD?Math.round(pureO/pureD*100):null; // 평가할 순수 출석 없으면 null
+        stats.push({name:m.name, rate, oCnt, denom, pureRate, pureD});
         tO+=oCnt; tD+=denom;
       }
     });
@@ -3653,10 +3660,10 @@ function pageAttend(){
     ? `<div class="att-top-grid"><div>${leftCol}</div><div>${rightCol}</div></div>`
     : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
 
-  // 옐로카드 명단: 출석률 25~49%(🥶 구간) 멤버 (전체 기록 기준)
-  const yellowList=allStats.filter(t=> t.rate>=25 && t.rate<50).sort((a,b)=> a.rate-b.rate);
+  // 삐용삐용 명단: 순수 출석률(부상·개인사정·휴식 제외) 0~49% 멤버
+  const yellowList=allStats.filter(t=> t.pureRate!=null && t.pureRate<50).sort((a,b)=> a.pureRate-b.pureRate);
   const yellowHtml = yellowList.length
-    ? yellowList.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>🥶 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.rate}%</b></div>`).join('')
+    ? yellowList.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>🚨 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.pureRate}%</b></div>`).join('')
     : `<div style="font-size:12px;color:#9aa6ae;">해당 멤버가 없어요 👍</div>`;
 
   const summaryCards=`
@@ -3674,7 +3681,7 @@ function pageAttend(){
         <div class="att-top5">${top6Html}</div>
       </div>
       <div class="att-card att-card-yellow">
-        <div class="att-card-t">삐용삐용🚨 옐로카드🟨</div>
+        <div class="att-card-t">삐용삐용🚨</div>
         <div class="att-top5">${yellowHtml}</div>
       </div>
     </div>`;
