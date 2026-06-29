@@ -3430,11 +3430,7 @@ function pageAttend(){
     return '＊'+n.slice(1,len-1)+'＊';
   }
   const roster=DATA.roster.filter(m=>memStatus(m)!=='honor');
-  const members=roster.slice().sort((a,b)=>{
-    const ra=memStatus(a)==='rest'?1:0, rb=memStatus(b)==='rest'?1:0;
-    if(ra!==rb) return ra-rb;
-    return String(a.name).localeCompare(String(b.name),'ko');
-  });
+  let members=roster.slice().sort((a,b)=> String(a.name).localeCompare(String(b.name),'ko'));
 
   const allSessions=sortAttendance(DATA.attendance);
   if(allSessions.length===0 && !isExec){
@@ -3452,10 +3448,15 @@ function pageAttend(){
     const pa=a.split('-').map(Number), pb=b.split('-').map(Number);
     return (pb[0]*100+pb[1])-(pa[0]*100+pa[1]);
   });
-  // 기본 선택월: 미설정이면 현재 달
+  // 기록이 있는 가장 최신 달 (요약 카드·기본 선택월에 사용)
+  const recordedMonths=[];
+  allSessions.forEach(s=>{ const k=attMonthKey(s.date); if(!recordedMonths.includes(k)) recordedMonths.push(k); });
+  recordedMonths.sort((a,b)=>{ const pa=a.split('-').map(Number), pb=b.split('-').map(Number); return (pb[0]*100+pb[1])-(pa[0]*100+pa[1]); });
+  const latestMonth = recordedMonths[0] || nowKey;
+  // 기본 선택월: 미설정이면 기록이 있는 가장 최신 달
   let curMonth=attMonth;
   if(attViewMode==='month' && (!curMonth || !monthSet.includes(curMonth))){
-    curMonth=nowKey;
+    curMonth=latestMonth;
   }
 
   // 필터링된 세션
@@ -3470,6 +3471,37 @@ function pageAttend(){
   // 세션 원본 인덱스 매핑 (cycle/del에 원본 인덱스 필요)
   const idxMap=sessions.map(s=>allSessions.indexOf(s));
 
+  // 선택한 달/기간에서 '휴식중'인 멤버는 아래쪽으로 정렬
+  // (그 기간에 출석/체험이 한 번도 없고, 휴식 또는 rest 상태인 경우)
+  function isRestingInPeriod(m){
+    const isRest=memStatus(m)==='rest';
+    const joinKey=m.join?attDateKey(m.join):0;
+    let hasActive=false, hasRest=false, anyValid=false;
+    sessions.forEach(s=>{
+      if(joinKey && attDateKey(s.date)<joinKey) return;
+      const raw=(s.present&&s.present[m.name]);
+      let st;
+      if(raw===true) st='O';
+      else if(raw==='E') st='E';
+      else if(raw==='A') st='A';
+      else if(raw==='R') st='R';
+      else if(raw==='I') st='I';
+      else if(raw==='P') st='P';
+      else if(raw===false||raw==='X') st='X';
+      else st=isRest?'R':'X';
+      anyValid=true;
+      if(st==='O'||st==='E') hasActive=true;
+      if(st==='R') hasRest=true;
+    });
+    if(!anyValid) return false;
+    return !hasActive && (hasRest || isRest); // 출석 한 번도 없고 휴식 위주면 아래로
+  }
+  members=members.slice().sort((a,b)=>{
+    const ra=isRestingInPeriod(a)?1:0, rb=isRestingInPeriod(b)?1:0;
+    if(ra!==rb) return ra-rb;
+    return String(a.name).localeCompare(String(b.name),'ko');
+  });
+
   const dateHeads=sessions.map((s,si)=>`<th style="font-size:15px;">${esc(s.date)}${isExec?`<br><span class="del" style="color:#c0392b;cursor:pointer;font-size:10px;" onclick="delAttendSession(${idxMap[si]})">삭제</span>`:''}</th>`).join('');
 
   function markHtml(state){
@@ -3477,11 +3509,10 @@ function pageAttend(){
     if(state==='E') return '<span style="color:#7b3fb5;font-weight:700;font-size:13px;">체험</span>';
     if(state==='A') return '<span style="color:#d40000;font-weight:700;font-size:13px;">무단</span>';
     if(state==='R') return '<span style="color:#9aa6ae;font-size:13px;">휴식중</span>';
-    if(state==='I') return '<span style="color:#e67e22;font-weight:700;font-size:13px;">🤕부상</span>';
-    if(state==='P') return '<span style="color:#2980b9;font-weight:700;font-size:13px;">🫡사정</span>';
+    if(state==='I') return '<span style="color:#e67e22;font-weight:700;font-size:13px;">부상</span>';
+    if(state==='P') return '<span style="color:#2980b9;font-weight:700;font-size:13px;">개인사정</span>';
     return '<span style="color:#c0392b;font-weight:600;font-size:20px;">×</span>';
   }
-  const memberStats=[]; // 요약 카드용 멤버별 출석률 수집
   const rows=members.map(m=>{
     const name=m.name;
     const isRest=memStatus(m)==='rest';
@@ -3531,23 +3562,55 @@ function pageAttend(){
     else rateEmoji=isRest?'😴':'😡';
     // 가입 후 유효 세션이 하나도 없으면(=이 기간 전체가 가입 전) 행을 숨김
     if(!anyValid && joinKey) return '';
-    // 요약 카드용: 출석 가능한 멤버(휴식 아님 + 유효 세션 있음)만 상위권 후보
-    if(anyValid && denom>0 && !isRest){
-      memberStats.push({name, rate, oCnt, denom});
-    }
     return `<tr><td style="color:var(--frame-dark);white-space:nowrap;font-size:17px;font-weight:600;">${esc(maskAttName(name))} <span class="att-emoji" title="출석률 ${rate}%">${rateEmoji}</span></td>${cells}<td style="font-size:18px;font-weight:700;color:var(--frame-dark);">${rate}%</td></tr>`;
   }).filter(Boolean).join('');
 
   const addBtn=isExec?`<button class="cal-addbtn" onclick="addAttendSession()">+ 출석일 추가</button>`:'';
 
-  // ===== 상단 요약 카드 (이번 달 일정 / 팀 출석률 / 출석 상위 5명) =====
+  // ===== 상단 요약 카드 =====
   const sessionCount=sessions.length;
-  // 팀 출석률: 전체 멤버 출석합/분모합
-  let teamO=0, teamD=0;
-  memberStats.forEach(ms=>{ teamO+=ms.oCnt; teamD+=ms.denom; });
-  const teamRate=teamD?Math.round(teamO/teamD*100):0;
-  // 출석 상위 5명 (출석률 내림차순, 동률이면 출석 횟수 많은 순)
-  const top5=memberStats.slice().sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,5);
+
+  // 멤버별 특정 세션 묶음에 대한 출석 통계 계산 (표와 동일 규칙)
+  function calcStats(sessionList){
+    const stats=[]; let tO=0, tD=0;
+    members.forEach(m=>{
+      const isRest=memStatus(m)==='rest';
+      const joinKey=m.join?attDateKey(m.join):0;
+      let oCnt=0, denom=0, anyValid=false;
+      sessionList.forEach(s=>{
+        if(joinKey && attDateKey(s.date)<joinKey) return; // 가입 전 제외
+        const raw=(s.present&&s.present[m.name]);
+        let st;
+        if(raw===true) st='O';
+        else if(raw==='E') st='E';
+        else if(raw==='A') st='A';
+        else if(raw==='R') st='R';
+        else if(raw==='I') st='I';
+        else if(raw==='P') st='P';
+        else if(raw===false||raw==='X') st='X';
+        else st=isRest?'R':'X';
+        anyValid=true;
+        if(st==='R') return;        // 휴식 분모 제외
+        denom++;                    // 부상·개인사정 포함(0%)
+        if(st==='O'||st==='E') oCnt++;
+      });
+      if(anyValid && denom>0 && !isRest){
+        const rate=Math.round(oCnt/denom*100);
+        stats.push({name:m.name, rate, oCnt, denom});
+        tO+=oCnt; tD+=denom;
+      }
+    });
+    return {stats, teamRate: tD?Math.round(tO/tD*100):0};
+  }
+
+  // 팀 출석률: 가장 최신 달 기준
+  const latestSessions=allSessions.filter(s=>attMonthKey(s.date)===latestMonth);
+  const latestMonthNum=latestMonth.split('-')[1];
+  const teamRate=calcStats(latestSessions).teamRate;
+
+  // 출석 상위 5명: 전체 출석 기록 누적 기준
+  const allStats=calcStats(allSessions).stats;
+  const top5=allStats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,5);
   const medal=['🥇','🥈','🥉','4.','5.'];
   const top5Html = top5.length
     ? top5.map((t,i)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.7;"><span>${medal[i]} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`).join('')
@@ -3559,11 +3622,11 @@ function pageAttend(){
         <div class="att-card-v" style="color:#2f6fed;">${sessionCount}회</div>
       </div>
       <div class="att-card">
-        <div class="att-card-t">팀 출석률</div>
+        <div class="att-card-t">${latestMonthNum}월 팀 출석률</div>
         <div class="att-card-v" style="color:#e69500;">${teamRate}%</div>
       </div>
       <div class="att-card att-card-top">
-        <div class="att-card-t">🏆 출석 상위 5명</div>
+        <div class="att-card-t">🏆 출석 상위 5명 (전체 기록)</div>
         <div class="att-top5">${top5Html}</div>
       </div>
     </div>`;
