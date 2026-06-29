@@ -124,6 +124,7 @@
   .lv-card.flip.flipped .lc-back{display:flex;}
   .lv-card.flip.me .lc-front,.lv-card.flip.me .lc-back{border-color:#3aa0d8;background:#f5fbff;}
   .lv-card.flip .lv-fliphint{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:11px;color:#5aa9e6;margin-top:8px;}
+  .lv-card.flip .lv-fliphint.lv-rank{color:#5a7585;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;}
   /* 메시지(뒷면) */
   .lc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;cursor:pointer;width:100%;}
   .lc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:13px;font-weight:800;color:var(--frame-dark);}
@@ -1274,14 +1275,10 @@ function milestoneLevel(level){
 function milestoneFace(level, size){
   return levelFace(milestoneLevel(level), size);
 }
+const LEVEL_NAMES=['새싹','루키','꿈나무','수련생','유망주','기대주','풋살요정','주전','에이스','해결사','베테랑','실력자','볼마스터','패스왕','드리블러','고수','초고수','무림고수','지배자','마스터','수비왕','움직임왕','비밀병기','골잡이','클러치','득점왕','MVP','레전드','풋살신','GOAT'];
 function levelName(level){
   const lv=Math.max(1,Math.min(MAX_LEVEL,level));
-  if(lv<=3) return 'Lv.'+lv+' '+['새내기','루키','꿈나무'][lv-1];
-  // Lv4~30 : 9색 × 3단계
-  const colors=['빨강','주황','노랑','초록','파랑','남색','보라','분홍','무지개'];
-  const stages=['','+',' ★']; // 무표정 / 웃음(+) / 현재레벨(★)
-  const gi=Math.floor((lv-4)/3), si=(lv-4)%3;
-  return 'Lv.'+lv+' '+(colors[gi]||'무지개')+stages[si];
+  return 'Lv.'+lv+' '+(LEVEL_NAMES[lv-1]||'');
 }
 
 // ===== 레벨 마일스톤 축하 (10·20·30레벨) =====
@@ -3675,7 +3672,7 @@ function activityCardBackHtml(idx){
   const shownName=(fullNames||isMe)?m.name:_lvMaskName(m.name);
   const canEdit = isMe || (adminLevel()===1); // 본인 또는 관리자1
   const msg=getActivityMsg(m.key);
-  const head=`<div class="lc-back-head" onclick="flipLvCard(${idx})">
+  const head=`<div class="lc-back-head">
       <span class="lc-back-name">${esc(shownName)}<span class="lc-back-lv">${levelName(lv)}</span></span>
     </div>`;
   // 편집 모드
@@ -3974,7 +3971,9 @@ function pageActivity(){
     const crown = rank===0 && m.score>0 ? '<span class="lv-crown">👑</span>' : '';
     const shownName = (fullNames || isMe) ? m.name : maskName(m.name);
     const canEdit = isMe || (adminLevel()===1);
-    const hint = canEdit ? '🔹 메시지 작성 🔹' : '🔹 메시지 보기 🔹';
+    // 앞면 하단: 회원 등급 표시 (임원/멤버/응원단/새내기/방문객)
+    const memRank = rankOf(m.key);
+    const rankLabel = `${rankImg(memRank,14)} ${RANK_NAME[memRank]||''}`;
     return `<div class="lv-card flip${isMe?' me':''}" id="lcard_${rank}">
       <div class="lc-inner">
         <div class="lc-front" onclick="flipLvCard(${rank})">
@@ -3984,9 +3983,9 @@ function pageActivity(){
           <div class="lv-badge">${levelName(lv)}</div>
           <div class="lv-bar"><div class="lv-bar-in" style="width:${info.next?Math.round((1-info.need/LEVEL_STEP)*100):100}%;"></div></div>
           <div class="lv-score">${(+m.score.toFixed(1))}점${info.next?` · 다음 레벨까지 ${(+info.need.toFixed(1))}점`:' · 최고 레벨!'}</div>
-          <div class="lv-fliphint">${hint}</div>
+          <div class="lv-fliphint lv-rank">${rankLabel}</div>
         </div>
-        <div class="lc-back">${activityCardBackHtml(rank)}</div>
+        <div class="lc-back" onclick="flipLvCard(${rank})">${activityCardBackHtml(rank)}</div>
       </div>
     </div>`;
   }).join('');
