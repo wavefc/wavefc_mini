@@ -451,6 +451,7 @@
   .diary-head:hover{background:#f0f8ff;}
   .diary-arrow{color:var(--frame);font-size:12px;}
   .diary-title{flex:1;font-size:15px;color:var(--frame-dark);font-weight:600;}
+  .diary-cmt{font-size:12px;color:#e0699a;font-weight:700;margin-left:2px;}
   .diary-d{font-size:12px;color:#8aa;white-space:nowrap;}
   .diary-body{padding:0 14px 14px;font-size:14px;color:#3a5566;border-top:1px dashed var(--line);}
   .diary-date{font-size:12px;color:#8aa;margin:8px 0;}
@@ -2357,6 +2358,7 @@ function go(page,btn){
   currentPage=page;
   noticeEditing=null;
   diaryEditing=null;
+  if(page==='diary') diaryOpen=null; // 훈련일지 진입 시 모두 접힌 상태로 시작
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
   if(page==='member'){ _flippedCards={}; _peekedThisVisit={}; _praisedThisVisit=false; } // 멤버현황 진입 시 초기화
@@ -2760,7 +2762,9 @@ function saveGuide(){
   if(guideEditIdx>=0){ arr[guideEditIdx]={title:t,html:html,ts:arr[guideEditIdx].ts||Date.now()}; guideIdx=guideEditIdx; }
   else { arr.push({title:t,html:html,ts:Date.now()}); guideIdx=arr.length-1; }
   guideEditIdx=null;
+  DATA.guidePosts=arr;          // 즉시 반영
   ROOT.child('guidePosts').set(arr);
+  renderPage('rule');           // 저장 직후 화면 즉시 갱신
 }
 function delGuide(i){
   if(adminLevel()!==1)return;
@@ -2790,7 +2794,9 @@ function saveManner(){
   if(adminLevel()!==1)return;
   const v=rteGetHtml('mannerEditBox');
   mannerEditing=false;
+  DATA.mannerHtml=v;            // 즉시 반영
   ROOT.child('mannerHtml').set(v);
+  renderPage('rule');           // 저장 직후 화면 즉시 갱신
 }
 function cancelManner(){ mannerEditing=false; renderPage('rule'); }
 function onTacticFile(ev){
@@ -3179,11 +3185,12 @@ function pageDiary(){
           <button class="qna-send sm" style="background:#c0392b;" onclick="delDiary(${l._i})">삭제</button>
         </div>`:''}
       </div>` : '';
+    const cmtCnt=(l.comments&&l.comments.length)?l.comments.length:0;
     return `
       <div class="diary-item">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
-          <span class="diary-title">${imgs.length?'📷 ':''}${esc(title)}</span>
+          <span class="diary-title">${esc(title)}${imgs.length?' 📷':''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
           ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
         </div>
         ${body}
@@ -3243,7 +3250,11 @@ function addDiary(){
   a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,imgs:_diaryFiles.slice(),ts:Date.now()});
   _diaryFiles=[];
   diaryWriting=false;
+  diaryEditing=null;
+  DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
+  renderPage('diary');         // 저장 직후 화면 즉시 갱신
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 function editDiary(i){ if(!canManage())return; diaryEditing=i; _diaryFiles=[]; renderPage('diary'); }
 function cancelDiary(){ diaryEditing=null; _diaryFiles=[]; renderPage('diary'); }
@@ -3259,7 +3270,9 @@ function saveDiary(i){
   imgs=imgs.concat(_diaryFiles).slice(0,4);
   a[i].imgs=imgs; delete a[i].img;
   diaryEditing=null; _diaryFiles=[];
+  DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
+  renderPage('diary');         // 저장 직후 화면 즉시 갱신(편집폼 닫고 결과 표시)
 }
 function removeDiaryImgAt(i,k){
   if(!canManage()) return;
@@ -4449,7 +4462,9 @@ function saveQnaQuestion(origIdx){
   if(!(adminLevel()===1 || (isMine && !answered))) return;
   arr[origIdx].q=v;
   qnaEditing=null;
+  DATA.qna_threads=arr;
   ROOT.child('qna_threads').set(arr);
+  const c=document.getElementById('centerArea'); if(c){c.innerHTML=pageQna();} // 즉시 갱신
 }
 function editQnaAnswer(origIdx){
   if(adminLevel()!==1)return;
@@ -4464,7 +4479,9 @@ function saveQnaAnswer(origIdx){
   arr[origIdx].answer=v;
   if(v && !arr[origIdx].source) arr[origIdx].source='admin';
   qnaAnsEditing=null;
+  DATA.qna_threads=arr;
   ROOT.child('qna_threads').set(arr);
+  const c=document.getElementById('centerArea'); if(c){c.innerHTML=pageQna();} // 즉시 갱신
 }
 function cancelQnaEdit(){ qnaEditing=null; qnaAnsEditing=null; const c=document.getElementById('centerArea'); if(c){c.innerHTML=pageQna();} }
 
