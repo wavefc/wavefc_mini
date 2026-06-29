@@ -236,6 +236,9 @@
   .fd-h{font-family:'Pretendard',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .fd-body{font-family:'Pretendard',sans-serif;font-size:13px;line-height:1.7;color:#3a5566;white-space:pre-wrap;word-break:break-word;}
   .fd-goto{margin-top:10px;width:100%;background:var(--frame);color:#fff;border:none;border-radius:6px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard','Malgun Gothic',sans-serif;}
+  .home-qna{margin-top:14px;}
+  .home-qna-box{background:#f2fafe;border:1px solid #bfe0f5;border-radius:10px;padding:12px;}
+  .home-qna-q{font-size:13px;color:#2c3e50;font-weight:600;line-height:1.5;margin-bottom:4px;}
   .fd-goto:hover{background:var(--frame-dark);}
   .comments{display:flex;flex-direction:column;gap:6px;}
   /* 미니룸 아래 일촌평 댓글 섹션 */
@@ -429,6 +432,19 @@
   .board-react-wrap{margin-top:14px;padding-top:10px;border-top:2px solid var(--line);}
   .board-react-h{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;}
   .yt-embed{position:relative;width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;border-radius:8px;overflow:hidden;background:#000;}
+  .dv-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
+  .dv-embed{position:relative;display:inline-block;border-radius:8px;overflow:hidden;background:#000;vertical-align:top;}
+  .dv-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .dv-wide{width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;}
+  .dv-shorts{width:220px;aspect-ratio:9/16;margin:10px 0;}
+  .dv-row .dv-embed{margin:0;}
+  .dv-row .dv-wide{flex:1 1 280px;max-width:none;}
+  .dv-row .dv-shorts{flex:0 0 auto;}
+  @media(max-width:760px){
+    .dv-shorts{width:100%;max-width:280px;}
+    .dv-row{flex-direction:column;align-items:center;}
+    .dv-row .dv-wide{width:100%;}
+  }
   .yt-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   .rc-input{display:flex;gap:4px;margin-top:4px;}
   .rc-input input{flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:13px;}
@@ -508,18 +524,20 @@
   .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
   .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;align-items:stretch;}
   .att-card{flex:0 0 auto;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-  .att-card-stat{width:170px;}
+  .att-card-stat{width:170px;text-align:center;}
   .att-card-t{font-size:12px;color:#9aa6ae;font-weight:600;margin-bottom:6px;}
-  .att-card-v{font-size:26px;font-weight:800;line-height:1;}
-  .att-card-top{flex:1 1 auto;min-width:300px;}
+  .att-card-v{font-size:26px;font-weight:800;line-height:1;text-align:center;}
+  .att-card-top{flex:1 1 auto;min-width:260px;border-color:#bfe0f5;background:#f2fafe;}
   .att-card-yellow{flex:0 0 auto;width:200px;border-color:#ffe08a;background:#fffdf5;}
   .att-top5{margin-top:2px;}
+  .att-list-row{display:flex;justify-content:space-between;font-size:15px;line-height:2;}
   .att-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
   @media(max-width:600px){
     .att-card-stat{width:calc(50% - 6px);}
     .att-card-top{flex:1 1 100%;min-width:100%;}
     .att-card-yellow{flex:1 1 100%;width:100%;}
     .att-card-v{font-size:22px;}
+    .att-list-row{font-size:13px;line-height:1.8;}
     .att-top-grid{grid-template-columns:1fr;}
   }
   .locked-msg{text-align:center;padding:40px 16px;font-size:12px;color:#8aa;line-height:2;}
@@ -2552,6 +2570,19 @@ function pageHome(){
     ? `<div class="mr-bubble"><div class="mr-bubble-in">${esc(DATA.bubble)}</div><div class="mr-bubble-tail"></div></div>`
     : '';
 
+  // 홈에 보여줄 공개 QnA 1개 (비공개 아닌 것 중 최신)
+  const pubQna=(DATA.qna_threads||[]).filter(t=>t && !t.secret && t.q);
+  pubQna.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const qnaItem=pubQna[0];
+  const qnaHomeHtml = qnaItem ? `
+    <div class="home-qna">
+      <div class="mr-news-h">💬 이런 질문도 있어요</div>
+      <div class="home-qna-box">
+        <div class="home-qna-q">Q. ${esc(String(qnaItem.q).slice(0,60))}${String(qnaItem.q).length>60?'…':''}</div>
+        <button class="fd-goto" onclick="gotoQna()">답변 보러 가기 →</button>
+      </div>
+    </div>` : '';
+
   return `
     <div class="minisection">
       <div class="mr-left">
@@ -2568,6 +2599,7 @@ function pageHome(){
         <div class="mr-news-h">📌 새 소식</div>
         <div class="feed-list">${previews}</div>
         ${detail}
+        ${qnaHomeHtml}
       </div>
     </div>
     <div class="guest-h">📝 일촌평 (${DATA.comments.length})</div>
@@ -2578,6 +2610,7 @@ function pageHome(){
 function goCmtPage(p){ cmtPage=p; cmtPageLocked=true; renderPage('home'); bindCommentForm();
   const gl=document.querySelector('.guest-h'); if(gl) gl.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function gotoQna(){ const t=document.querySelector('[data-page="qna"]'); go('qna',t); }
 function pickFace(f,el){selFace=f;document.querySelectorAll('#facePick span').forEach(s=>s.classList.remove('sel'));if(el)el.classList.add('sel');}
 // 사용자가 직접 입력한 이모지를 선택지로 추가 + 즉시 선택
 function onCustomFaceInput(inp){
@@ -2981,6 +3014,7 @@ function reactBox(node,idx,opts){
 function pageNotice(){
   const isExec=canManage();
   const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
+    .filter(n=> !n.secret || isExec)   // 비공개 글은 관리자(임원·관리자1)만
     .sort((a,b)=>{
       const ap=a.pinned?1:0,bp=b.pinned?1:0;
       if(ap!==bp)return bp-ap;
@@ -2998,6 +3032,7 @@ function pageNotice(){
       <input id="ntTitle" class="qna-input" style="margin-bottom:6px;" placeholder="공지 제목">
       ${rteBox('ntText','','공지 내용')}
       <label style="display:block;font-size:12px;margin:8px 0;"><input type="checkbox" id="ntPin"> 상단 고정</label>
+      <label style="display:block;font-size:12px;margin:8px 0;color:#c0392b;"><input type="checkbox" id="ntSecret"> 🔒 비공개 (관리자만 볼 수 있어요)</label>
       <button class="qna-send" onclick="addNoticeBoard()">공지 등록</button>
     </div>` : '';
 
@@ -3018,6 +3053,7 @@ function pageNotice(){
       <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
         <button class="qna-send sm" onclick="editNotice(${n._i})">수정</button>
         <button class="qna-send sm" style="background:${n.pinned?'#9aa6ae':'#2e8b3d'};" onclick="togglePin(${n._i})">${n.pinned?'고정해제':'상단고정'}</button>
+        <button class="qna-send sm" style="background:${n.secret?'#2980b9':'#c0392b'};" onclick="toggleNoticeSecret(${n._i})">${n.secret?'🔓 공개로':'🔒 비공개로'}</button>
         <button class="qna-send sm" style="background:#c0392b;" onclick="delNoticeBoard(${n._i})">삭제</button>
       </div>` : '';
   }
@@ -3034,7 +3070,7 @@ function pageNotice(){
     }else{
       featuredHtml=`
       <div class="qna-thread" style="margin-bottom:14px;">
-        <div class="qna-q">${featured.pinned?'📌 ':'📢 '}${esc(featured.title||'')}<span class="qna-src" style="float:right;">${dstr(featured)}</span></div>
+        <div class="qna-q">${featured.secret?'🔒 ':''}${featured.pinned?'📌 ':'📢 '}${esc(featured.title||'')}<span class="qna-src" style="float:right;">${dstr(featured)}</span></div>
         <div class="qna-a">${bodyRender(featured.text||'')}</div>
         ${reactBox('notices',featured._i)}
         ${adminBtns(featured)}
@@ -3051,7 +3087,7 @@ function pageNotice(){
       <div class="qna-thread" style="margin-bottom:8px;">
         <div class="qna-q" style="cursor:pointer;font-weight:600;" onclick="toggleNoticeOpen(${n._i})">
           <span style="color:var(--frame);font-size:12px;">${opened?'▼':'▶'}</span>
-          ${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}
+          ${n.secret?'🔒 ':''}${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}
           <span class="qna-src" style="float:right;">${dstr(n)}</span>
         </div>
         ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
@@ -3083,9 +3119,10 @@ function addNoticeBoard(){
   const title=document.getElementById('ntTitle').value.trim();
   const text=rteGetHtml('ntText');
   const pin=document.getElementById('ntPin').checked;
+  const secret=document.getElementById('ntSecret')?document.getElementById('ntSecret').checked:false;
   if(!title&&rteIsEmpty('ntText')) return alert('제목이나 내용을 입력하세요.');
   const a=DATA.notices.slice();
-  a.unshift({title:title||document.getElementById('ntText').textContent.trim().slice(0,20),text:text,pinned:pin,ts:Date.now()});
+  a.unshift({title:title||document.getElementById('ntText').textContent.trim().slice(0,20),text:text,pinned:pin,secret:secret,ts:Date.now()});
   noticeWriting=false;
   noticeEditing=null;
   // 새 글은 배열 맨 앞(_i=0). 고정글이 있어 대표글로 안 올라오면 펼침 상태로.
@@ -3134,6 +3171,7 @@ function diaryImgs(l){
 function pageDiary(){
   const isExec=canManage();
   const list=DATA.logs.map((l,i)=>Object.assign({},l,{_i:i}))
+    .filter(l=> !l.secret || isExec)   // 비공개 일지는 관리자만
     .sort((a,b)=>(b.ts||0)-(a.ts||0));
   // 글쓰기 버튼 + (펼쳐졌을 때) 작성 폼 — 공지사항과 동일 방식
   const writeToggle = isExec
@@ -3150,6 +3188,7 @@ function pageDiary(){
       <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 사진 첨부 (최대 4장)</div>
       <input type="file" id="lgFile" accept="image/*" multiple onchange="onDiaryFile(event)" style="font-size:11px;">
       <div id="lgPreview" class="lg-preview" style="margin-top:6px;"></div>
+      <label style="display:block;font-size:12px;margin:8px 0;color:#c0392b;"><input type="checkbox" id="lgSecret"> 🔒 비공개 (관리자만 볼 수 있어요)</label>
       <button class="qna-send" onclick="addDiary()">일지 등록</button>
     </div>` : '';
   const items=list.map(l=>{
@@ -3184,6 +3223,7 @@ function pageDiary(){
         ${reactBox('logs',l._i)}
         ${isExec?`<div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
           <button class="qna-send sm" onclick="editDiary(${l._i})">수정</button>
+          <button class="qna-send sm" style="background:${l.secret?'#2980b9':'#c0392b'};" onclick="toggleDiarySecret(${l._i})">${l.secret?'🔓 공개로':'🔒 비공개로'}</button>
           <button class="qna-send sm" style="background:#c0392b;" onclick="delDiary(${l._i})">삭제</button>
         </div>`:''}
       </div>` : '';
@@ -3192,7 +3232,7 @@ function pageDiary(){
       <div class="diary-item">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
-          <span class="diary-title">${esc(title)}${imgs.length?' 📷':''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
+          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
           ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
         </div>
         ${body}
@@ -3205,6 +3245,7 @@ function pageDiary(){
 }
 function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderPage('diary'); }
 function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('diary'); }
+function toggleDiarySecret(i){ if(!canManage())return; const a=JSON.parse(JSON.stringify(DATA.logs)); a[i].secret=!a[i].secret; DATA.logs=a; ROOT.child('logs').set(a); renderPage('diary'); }
 function onDiaryFile(ev){
   const files=Array.from(ev.target.files||[]);
   if(!files.length)return;
@@ -3249,7 +3290,8 @@ function addDiary(){
   const tx=rteGetHtml('lgText');
   if(!t&&rteIsEmpty('lgText')) return alert('제목이나 내용을 입력하세요.');
   const a=DATA.logs.slice();
-  a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,imgs:_diaryFiles.slice(),ts:Date.now()});
+  const secret=document.getElementById('lgSecret')?document.getElementById('lgSecret').checked:false;
+  a.unshift({title:t||('훈련일지'+(d?' '+d:'')),date:d,text:tx,imgs:_diaryFiles.slice(),secret:secret,ts:Date.now()});
   _diaryFiles=[];
   diaryWriting=false;
   diaryEditing=null;
@@ -3646,24 +3688,28 @@ function pageAttend(){
   const latestMonthNum=latestMonth.split('-')[1];
   const teamRate=calcStats(latestSessions).teamRate;
 
-  // 출석 상위 6명: 전체 출석 기록 누적 기준
-  const allStats=calcStats(allSessions).stats;
-  const top6=allStats.sort((a,b)=> b.rate-a.rate).slice(0,6);
-  // 같은 출석률은 공동 순위. 1~3위는 메달, 그 외는 'N.' 표기
+  // 공동 순위 메달 부여 + TOP6 카드 HTML 생성 헬퍼
   const medalByRank=(r)=> r===1?'🥇':r===2?'🥈':r===3?'🥉':(r+'.');
-  let _prevRate=null, _rank=0;
-  top6.forEach((t,i)=>{ if(t.rate!==_prevRate){ _rank=i+1; _prevRate=t.rate; } t._rank=_rank; });
-  const rowHtml=(t)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>${medalByRank(t._rank)} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
-  const leftCol=top6.slice(0,3).map(t=>rowHtml(t)).join('');
-  const rightCol=top6.slice(3,6).map(t=>rowHtml(t)).join('');
-  const top6Html = top6.length
-    ? `<div class="att-top-grid"><div>${leftCol}</div><div>${rightCol}</div></div>`
-    : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
+  function makeTop6Html(stats){
+    const top6=stats.slice().sort((a,b)=> b.rate-a.rate).slice(0,6);
+    let pv=null, rk=0;
+    top6.forEach((t,i)=>{ if(t.rate!==pv){ rk=i+1; pv=t.rate; } t._rank=rk; });
+    const row=(t)=>`<div class="att-list-row"><span>${medalByRank(t._rank)} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
+    const L=top6.slice(0,3).map(row).join(''), R=top6.slice(3,6).map(row).join('');
+    return top6.length
+      ? `<div class="att-top-grid"><div>${L}</div><div>${R}</div></div>`
+      : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
+  }
+  // 전체 출석 TOP6 / 이번 달 출석 TOP6
+  const allStats=calcStats(allSessions).stats;
+  const latestStats=calcStats(latestSessions).stats;
+  const top6AllHtml=makeTop6Html(allStats);
+  const top6MonthHtml=makeTop6Html(latestStats);
 
-  // 삐용삐용 명단: 순수 출석률(부상·개인사정·휴식 제외) 0~49% 멤버
-  const yellowList=allStats.filter(t=> t.pureRate!=null && t.pureRate<50).sort((a,b)=> a.pureRate-b.pureRate);
+  // 삐용삐용 명단: 가장 최신 달의 순수 출석률(부상·개인사정·휴식 제외) 0~49% 멤버
+  const yellowList=latestStats.filter(t=> t.pureRate!=null && t.pureRate<50).sort((a,b)=> a.pureRate-b.pureRate);
   const yellowHtml = yellowList.length
-    ? yellowList.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>🚨 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.pureRate}%</b></div>`).join('')
+    ? yellowList.map(t=>`<div class="att-list-row"><span>🚨 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.pureRate}%</b></div>`).join('')
     : `<div style="font-size:12px;color:#9aa6ae;">해당 멤버가 없어요 👍</div>`;
 
   const summaryCards=`
@@ -3677,11 +3723,15 @@ function pageAttend(){
         <div class="att-card-v" style="color:#e69500;">${teamRate}%</div>
       </div>
       <div class="att-card att-card-top">
-        <div class="att-card-t">🏆 출석 상위 6명 (전체 출석)</div>
-        <div class="att-top5">${top6Html}</div>
+        <div class="att-card-t">🏆 전체 출석 TOP6</div>
+        <div class="att-top5">${top6AllHtml}</div>
+      </div>
+      <div class="att-card att-card-top">
+        <div class="att-card-t">📅 ${latestMonthNum}월 출석 TOP6</div>
+        <div class="att-top5">${top6MonthHtml}</div>
       </div>
       <div class="att-card att-card-yellow">
-        <div class="att-card-t">삐용삐용🚨</div>
+        <div class="att-card-t">삐용삐용🚨 (${latestMonthNum}월)</div>
         <div class="att-top5">${yellowHtml}</div>
       </div>
     </div>`;
@@ -4687,7 +4737,8 @@ function addNotice(){
   document.getElementById('newNoticePin').checked=false;
 }
 function delNotice(i){const a=DATA.notices.slice();a.splice(i,1);ROOT.child('notices').set(a);}
-function togglePin(i){const a=JSON.parse(JSON.stringify(DATA.notices));a[i].pinned=!a[i].pinned;ROOT.child('notices').set(a);}
+function togglePin(i){const a=JSON.parse(JSON.stringify(DATA.notices));a[i].pinned=!a[i].pinned;DATA.notices=a;ROOT.child('notices').set(a);renderPage('notice');}
+function toggleNoticeSecret(i){const a=JSON.parse(JSON.stringify(DATA.notices));a[i].secret=!a[i].secret;DATA.notices=a;ROOT.child('notices').set(a);renderPage('notice');}
 function renderNoticeAdmin(){
   const el=document.getElementById('noticeListAdmin');
   if(!el)return;
@@ -5237,14 +5288,21 @@ function extractYouTubeIds(text){
   while((m=re.exec(text))!==null){ if(ids.indexOf(m[1])<0) ids.push(m[1]); }
   return ids;
 }
-// 훈련일지 본문: 일반 렌더 + 유튜브 주소가 있으면 플레이어로 임베드
+// 훈련일지 본문: 유튜브 주소를 그 자리에서 바로 플레이어로 치환 (숏츠는 9:16, 일반은 16:9)
 function diaryBodyRender(s){
   s=s||'';
-  const ids=extractYouTubeIds(s);
-  const base=bodyRender(s);
-  if(!ids.length) return base;
-  const players=ids.map(id=>`<div class="yt-embed"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`).join('');
-  return base+players;
+  let base=bodyRender(s); // sanitize된 HTML 문자열
+  // <a href="...youtube...">...</a> → 평문 URL로 풀어 인라인 임베드가 자리에서 동작하도록
+  base=base.replace(/<a\b[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>[\s\S]*?<\/a>/gi, (m,href)=>href);
+  // 유튜브 링크(평문 URL)를 자리에서 임베드로 치환 (숏츠는 9:16, 일반은 16:9)
+  const re=/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^\s"'<&]*&)*v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[^\s"'<]*)/g;
+  let replaced=base.replace(re,(url,id)=>{
+    const isShorts=/shorts\//.test(url);
+    return `<span class="dv-embed ${isShorts?'dv-shorts':'dv-wide'}"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>`;
+  });
+  // 연속된 임베드들을 한 줄(3개씩)로 묶기
+  replaced=replaced.replace(/(<span class="dv-embed[\s\S]*?<\/span>)(\s*<span class="dv-embed[\s\S]*?<\/span>)+/g, m=>`<span class="dv-row">${m}</span>`);
+  return replaced;
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
