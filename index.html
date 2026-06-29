@@ -3534,7 +3534,7 @@ function memSortKey(m){
   return [5,999,m.name];
 }
 // ===== 멤버 능력치(스탯) 카드 =====
-const STAT_KEYS=['속력','밸런스','패스','수비','적극성','피지컬','결정력','슛파워'];
+const STAT_KEYS=['속력','패스','수비','드리블','밸런스','피지컬','결정력','슛파워'];
 const STAT_MAX=5;
 // 스탯 저장 키 (Firebase 경로 안전화)
 function statKey(name){ return String(name||'').replace(/[.#$\[\]\/]/g,'_'); }
