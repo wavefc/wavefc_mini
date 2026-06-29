@@ -505,13 +505,20 @@
   .att-table th,.att-table td{padding:8px 10px;white-space:nowrap;}
   .att-table td{font-size:15px;}
   .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
-  .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;}
-  .att-card{flex:1;min-width:150px;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;align-items:stretch;}
+  .att-card{flex:0 0 auto;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .att-card-stat{width:170px;}
   .att-card-t{font-size:12px;color:#9aa6ae;font-weight:600;margin-bottom:6px;}
   .att-card-v{font-size:26px;font-weight:800;line-height:1;}
-  .att-card-top{min-width:200px;}
+  .att-card-top{flex:1 1 auto;min-width:300px;}
   .att-top5{margin-top:2px;}
-  @media(max-width:600px){.att-card{min-width:calc(50% - 6px);}.att-card-top{min-width:100%;}.att-card-v{font-size:22px;}}
+  .att-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
+  @media(max-width:600px){
+    .att-card-stat{width:calc(50% - 6px);}
+    .att-card-top{flex:1 1 100%;min-width:100%;}
+    .att-card-v{font-size:22px;}
+    .att-top-grid{grid-template-columns:1fr;}
+  }
   .locked-msg{text-align:center;padding:40px 16px;font-size:12px;color:#8aa;line-height:2;}
   .locked-msg .ic{font-size:36px;}
 
@@ -3517,10 +3524,14 @@ function pageAttend(){
     const name=m.name;
     const isRest=memStatus(m)==='rest';
     const joinKey = m.join ? attDateKey(m.join) : 0; // 가입일(없으면 0=처음부터)
-    // 멤버별 세션 상태 계산 함수 (가입 전이면 null)
+    // 멤버별 세션 상태 계산 함수. 가입 전이면 'PRE'(미입력) 또는 'E'(체험 입력됨)
     const stateOf=(s)=>{
-      if(joinKey && attDateKey(s.date) < joinKey) return null; // 가입 전 → 해당없음
       const raw=(s.present&&s.present[name]);
+      const preJoin = joinKey && attDateKey(s.date) < joinKey;
+      if(preJoin){
+        // 가입 전: 체험(E)만 의미 있음(출석 인정). 그 외 입력/미입력은 'PRE'(해당없음)
+        return (raw==='E') ? 'E' : 'PRE';
+      }
       if(raw===true) return 'O';
       if(raw==='E') return 'E';
       if(raw==='A') return 'A';
@@ -3532,22 +3543,23 @@ function pageAttend(){
     };
     const cells=sessions.map((s,si)=>{
       const state=stateOf(s);
-      if(state===null){
-        // 가입 전: 빈 칸(클릭 불가, 옅은 표시)
-        return `<td style="color:#d6dde2;">·</td>`;
+      const nameJs=name.replace(/'/g,"\\'");
+      if(state==='PRE'){
+        // 가입 전: 클릭 시 '체험'만 추가 가능 (출석으로 인정)
+        return `<td ${isExec?`style="cursor:pointer;color:#cdd5db;" onclick="openAttPick(${idxMap[si]},'${nameJs}',true)" title="가입 전 — 체험만 입력 가능"`:'style="color:#d6dde2;"'}>·</td>`;
       }
-      return `<td ${isExec?`style="cursor:pointer;" onclick="cycleAttend(${idxMap[si]},'${name.replace(/'/g,"\\'")}')"`:''}>${markHtml(state)}</td>`;
+      return `<td ${isExec?`style="cursor:pointer;" onclick="openAttPick(${idxMap[si]},'${nameJs}',false)"`:''}>${markHtml(state)}</td>`;
     }).join('');
     let oCnt=0, denom=0, hasInjury=false, hasPersonal=false, anyValid=false;
     sessions.forEach(s=>{
       const st=stateOf(s);
-      if(st===null) return;       // 가입 전 제외
+      if(st==='PRE') return;      // 가입 전 미입력 제외
       anyValid=true;
       if(st==='I') hasInjury=true;
       if(st==='P') hasPersonal=true;
       if(st==='R') return;        // 휴식은 분모 제외
       denom++;                    // 부상·개인사정은 분모 포함(0% 계산)
-      if(st==='O'||st==='E') oCnt++; // 출석 인정
+      if(st==='O'||st==='E') oCnt++; // 출석 인정(가입 전 체험 포함)
     });
     const rate=denom?Math.round(oCnt/denom*100):0;
     // 월별 이모티콘: 그 달에 부상/개인사정이 있으면 우선 표시
@@ -3578,10 +3590,14 @@ function pageAttend(){
       const joinKey=m.join?attDateKey(m.join):0;
       let oCnt=0, denom=0, anyValid=false;
       sessionList.forEach(s=>{
-        if(joinKey && attDateKey(s.date)<joinKey) return; // 가입 전 제외
         const raw=(s.present&&s.present[m.name]);
+        const preJoin = joinKey && attDateKey(s.date)<joinKey;
         let st;
-        if(raw===true) st='O';
+        if(preJoin){
+          if(raw==='E') st='E';   // 가입 전 체험은 출석 인정
+          else return;            // 그 외 가입 전은 제외
+        }
+        else if(raw===true) st='O';
         else if(raw==='E') st='E';
         else if(raw==='A') st='A';
         else if(raw==='R') st='R';
@@ -3608,26 +3624,29 @@ function pageAttend(){
   const latestMonthNum=latestMonth.split('-')[1];
   const teamRate=calcStats(latestSessions).teamRate;
 
-  // 출석 상위 5명: 전체 출석 기록 누적 기준
+  // 출석 상위 6명: 전체 출석 기록 누적 기준
   const allStats=calcStats(allSessions).stats;
-  const top5=allStats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,5);
-  const medal=['🥇','🥈','🥉','4.','5.'];
-  const top5Html = top5.length
-    ? top5.map((t,i)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.7;"><span>${medal[i]} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`).join('')
+  const top6=allStats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt).slice(0,6);
+  const medal=['🥇','🥈','🥉','4.','5.','6.'];
+  const rowHtml=(t,i)=>`<div style="display:flex;justify-content:space-between;font-size:13px;line-height:1.8;"><span>${medal[i]} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
+  const leftCol=top6.slice(0,3).map((t,i)=>rowHtml(t,i)).join('');
+  const rightCol=top6.slice(3,6).map((t,i)=>rowHtml(t,i+3)).join('');
+  const top6Html = top6.length
+    ? `<div class="att-top-grid"><div>${leftCol}</div><div>${rightCol}</div></div>`
     : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
   const summaryCards=`
     <div class="att-summary">
-      <div class="att-card">
+      <div class="att-card att-card-stat">
         <div class="att-card-t">이번 달 일정</div>
         <div class="att-card-v" style="color:#2f6fed;">${sessionCount}회</div>
       </div>
-      <div class="att-card">
+      <div class="att-card att-card-stat">
         <div class="att-card-t">${latestMonthNum}월 팀 출석률</div>
         <div class="att-card-v" style="color:#e69500;">${teamRate}%</div>
       </div>
       <div class="att-card att-card-top">
-        <div class="att-card-t">🏆 출석 상위 5명 (전체 기록)</div>
-        <div class="att-top5">${top5Html}</div>
+        <div class="att-card-t">🏆 출석 상위 6명 (전체 출석)</div>
+        <div class="att-top5">${top6Html}</div>
       </div>
     </div>`;
 
@@ -3649,15 +3668,39 @@ function pageAttend(){
     ? attMonthLabel(curMonth)
     : ((attFrom||'처음')+' ~ '+(attTo||'끝'));
 
+  // 월 이동 화살표 (월별 보기에서만). monthSet은 최신순 → 과거=idx+1, 미래=idx-1
+  let monthNav='';
+  if(attViewMode==='month'){
+    const ci=monthSet.indexOf(curMonth);
+    const prevMonth = (ci>=0 && ci<monthSet.length-1) ? monthSet[ci+1] : null; // 더 과거
+    const nextMonth = (ci>0) ? monthSet[ci-1] : null;                          // 더 최신
+    const arrow=(m,sym,title)=> m
+      ? `<span onclick="attMonth='${m}';renderPage('attend');" title="${title}" style="cursor:pointer;font-size:22px;color:#2e8b3d;user-select:none;padding:0 6px;">${sym}</span>`
+      : `<span style="font-size:22px;color:#d6dde2;padding:0 6px;user-select:none;">${sym}</span>`;
+    monthNav=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:2px;">
+          ${arrow(prevMonth,'◀','이전 달')}
+          <span style="font-size:22px;font-weight:800;color:#2e8b3d;min-width:130px;text-align:center;">${attMonthLabel(curMonth)}</span>
+          ${arrow(nextMonth,'▶','다음 달')}
+        </div>
+        ${addBtn}
+      </div>`;
+  } else {
+    monthNav=`<div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:18px;font-weight:700;color:#2e8b3d;">${(attFrom||'처음')+' ~ '+(attTo||'끝')}</span>
+      ${addBtn}
+    </div>`;
+  }
+
   return `<div class="page-h" style="font-size:24px;">✅ 출석 현황</div>
     ${summaryCards}
     ${controls}
-    <div style="font-size:16px;font-weight:700;color:#2e8b3d;margin:4px 0;">${periodLabel}</div>
-    ${addBtn}
+    ${monthNav}
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th style="font-size:16px;">이름</th>${dateHeads||'<th>해당 기간 기록 없음</th>'}<th style="font-size:16px;">출석률</th></tr>
     ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">칸을 클릭하면 ○(출석) → ×(결석) → <span style="color:#d40000;">무단</span> → <span style="color:#7b3fb5;">체험</span> → 휴식중 → <span style="color:#e67e22;">🤕부상</span> → <span style="color:#2980b9;">🫡사정</span> 순으로 바뀝니다. 체험은 출석으로 인정, 무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다.</div>':''}`;
+    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">체험은 출석으로 인정, 무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다. 풋살은 팀 활동이므로 꾸준한 출석이 가장 중요합니다. 최소 2회 출석 부탁드립니다.</div>':''}`;
 }
 function setAttView(mode){ attViewMode=mode; renderPage('attend'); }
 function attDateKey(d){
@@ -3689,22 +3732,41 @@ function addAttendSession(){
   // 추가한 날짜가 속한 달로 화면 전환 (월별 보기 기준)
   try{ attViewMode='month'; attMonth=attMonthKey(date.trim()); }catch(e){}
 }
-function cycleAttend(si,name){
+// 칸 클릭 → 출석 상태 선택 팝업 띄우기
+function openAttPick(si, name, preJoin){
   if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
+  closeAttPick(); // 기존 팝업 닫기
+  const arr=sortAttendance(DATA.attendance);
+  const cur=(arr[si]&&arr[si].present)?arr[si].present[name]:undefined;
+  // 가입 전이면 체험/취소만, 아니면 전체 선택지
+  const opts = preJoin
+    ? [['E','🎯 체험 (출석 인정)','#7b3fb5'],['','지우기','#9aa6ae']]
+    : [['O','○ 출석','#2e8b3d'],['X','× 결석','#c0392b'],['A','무단','#d40000'],['E','체험','#7b3fb5'],['R','휴식중','#9aa6ae'],['I','부상','#e67e22'],['P','개인사정','#2980b9'],['','지우기','#9aa6ae']];
+  const curVal = (cur===true)?'O':(cur===false?'X':(cur||''));
+  const ov=document.createElement('div');
+  ov.id='attPickOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;';
+  const dateLabel=(arr[si]&&arr[si].date)?arr[si].date:'';
+  ov.innerHTML=`<div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;padding:16px;min-width:220px;max-width:86%;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+    <div style="font-size:14px;font-weight:800;color:#2e8b3d;text-align:center;margin-bottom:4px;">${esc(name)}</div>
+    <div style="font-size:12px;color:#8aa;text-align:center;margin-bottom:10px;">${esc(dateLabel)} 출석 상태 선택${preJoin?'<br><span style="color:#e67e22;">가입 전이라 체험만 가능해요</span>':''}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${opts.map(o=>`<button type="button" onclick="setAttPick(${si},'${name.replace(/'/g,"\\'")}','${o[0]}')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid ${o[0]===curVal?o[2]:'#e6ebf0'};border-radius:10px;background:${o[0]===curVal?o[2]+'18':'#fff'};color:${o[2]};font-size:15px;font-weight:700;cursor:pointer;text-align:left;">${o[1]}${o[0]===curVal?' ✓':''}</button>`).join('')}
+    </div>
+    <button type="button" onclick="closeAttPick()" style="width:100%;margin-top:10px;padding:8px;border:none;background:#eef2f5;border-radius:10px;color:#5a6a72;font-size:13px;cursor:pointer;">닫기</button>
+  </div>`;
+  ov.addEventListener('click',()=>closeAttPick());
+  document.body.appendChild(ov);
+}
+function closeAttPick(){ const ov=document.getElementById('attPickOverlay'); if(ov) ov.remove(); }
+function setAttPick(si, name, val){
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
-  const cur=arr[si].present[name];
-  // 순환: O(출석) → X(결석) → A(무단) → E(체험) → R(휴식) → I(부상) → P(개인사정) → O
-  let next;
-  if(cur===true) next='X';
-  else if(cur==='X'||cur===false) next='A';
-  else if(cur==='A') next='E';
-  else if(cur==='E') next='R';
-  else if(cur==='R') next='I';
-  else if(cur==='I') next='P';
-  else if(cur==='P') next=true;
-  else next=true; // 미설정 → O
-  arr[si].present[name]=next;
+  if(val===''){ delete arr[si].present[name]; }      // 지우기(미입력)
+  else if(val==='O'){ arr[si].present[name]=true; }
+  else { arr[si].present[name]=val; }
+  closeAttPick();
   ROOT.child('attendance').set(arr);
 }
 function delAttendSession(si){
