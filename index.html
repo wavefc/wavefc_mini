@@ -554,7 +554,7 @@
 
   .right{width:100px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;}
   .tab-btn{background:var(--tab);color:#fff;border:1px solid var(--tab-active);font-size:15px;padding:12px 4px;cursor:pointer;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.15);position:relative;}
-  .tab-n{position:absolute;top:2px;right:4px;background:transparent;color:#ffd400;font-size:14px;font-weight:900;line-height:1;-webkit-text-stroke:0.6px #fff;text-shadow:0 0 2px #fff,0 0 2px #fff;}
+  .tab-n{position:absolute;top:5px;right:8px;background:transparent;color:#e6c200;font-size:9px;font-weight:900;line-height:1;}
   .tab-btn:hover{background:#5fc0f0;}
   .tab-btn.active{background:var(--tab-active);box-shadow:inset 2px 2px 0 rgba(0,0,0,.2);}
   .tab-btn .lock{position:absolute;top:2px;right:3px;font-size:9px;}
@@ -1655,11 +1655,16 @@ function pageQuiz(){
       const resultCell = canEdit
         ? `<span onclick="toggleQuizResult(${r._i})" style="cursor:pointer;border-radius:6px;padding:2px 6px;${r.correct?'color:#2e8b3d;background:#eafbef;':'color:#c0392b;background:#fdeaea;'}font-weight:700;" title="클릭하면 정답↔오답이 바뀌어요">${r.correct?'⭕ 정답':'❌ 오답'} ✏️</span>`
         : (r.correct?'<span style="color:#2e8b3d;font-weight:700;">⭕ 정답</span>':'<span style="color:#c0392b;font-weight:700;">❌ 오답</span>');
-      // 오답일 때 정답 코멘트 (구구단 선생님처럼)
+      // 오답일 때 정답 코멘트 (구구단 선생님처럼). 객관식은 관리자1이 직접 수정 가능.
       let comment='';
       if(!r.correct && r.answer!=null){
         const ansTxt=toText(r.answer);
-        comment=`<div style="font-size:11px;color:#c0392b;margin-top:3px;">🧑‍🏫 아쉬워요! 정답은 <b>${esc(String(ansTxt))}</b> 였어요. 다음엔 맞힐 수 있어요!</div>`;
+        const autoTxt=`🧑‍🏫 아쉬워요! 정답은 ${ansTxt} 였어요. 다음엔 맞힐 수 있어요!`;
+        const shownTxt = (r.comment && r.comment.trim()) ? r.comment : autoTxt;
+        const editBtn = (canEdit && r.type!=='ox')
+          ? ` <span onclick="editQuizComment(${r._i})" style="cursor:pointer;color:#a06a00;" title="코멘트 직접 작성/수정">✏️</span>`
+          : '';
+        comment=`<div style="font-size:11px;color:#c0392b;margin-top:3px;">${esc(shownTxt)}${editBtn}</div>`;
       }
       return `<tr>
         <td style="font-size:12px;color:#888;white-space:nowrap;">${esc(r.date||'')}</td>
@@ -1746,6 +1751,19 @@ function emergencyRecover(){
 }
 
 // 관리자1: 특정 퀴즈 기록의 정답↔오답을 토글하고 점수도 반영
+// 객관식 오답 코멘트를 관리자1이 직접 작성/수정
+function editQuizComment(i){
+  if(adminLevel()!==1) return alert('관리자1만 작성할 수 있어요.');
+  const recs=(DATA.quiz_records||[]).slice();
+  const r=recs[i]; if(!r) return;
+  const ansTxt = (typeof r.answer==='number' && Array.isArray(r.options) && r.options[r.answer]!=null)
+    ? (r.answer+1)+'. '+r.options[r.answer] : String(r.answer);
+  const def = (r.comment && r.comment.trim()) ? r.comment : `🧑‍🏫 아쉬워요! 정답은 ${ansTxt} 였어요. 다음엔 맞힐 수 있어요!`;
+  const v=prompt(`이 문제의 오답 코멘트를 작성하세요.\n(비우면 자동 코멘트로 돌아갑니다)\n\n문제: ${(r.q||'').slice(0,50)}`, def);
+  if(v===null) return;
+  recs[i]=Object.assign({},r,{comment:v.trim()});
+  ROOT.child('quiz_records').set(recs);
+}
 function toggleQuizResult(i){
   if(adminLevel()!==1) return alert('관리자1만 정정할 수 있어요.');
   const recs=(DATA.quiz_records||[]).slice();
@@ -2586,12 +2604,12 @@ function pageHome(){
   const cur=top[feedSel]||top[0];
   let gotoBtn='';
   if(cur && cur._t==='notice') gotoBtn=`<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🤍</button>`;
-  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">더 상세한 일지 보고 좋아요/댓글 남기러 가기🤍</button>`;
+  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">더 자세히 보고 좋아요/댓글 남기러 가기🤍</button>`;
   // 본문: 공지는 그대로, 훈련일지는 앞 50자 미리보기, 일정은 텍스트
   let fdBody;
   if(!cur) fdBody='';
   else if(cur._t==='notice') fdBody=bodyRender(cur.text);
-  else if(cur._t==='diary'){ const pt=plainText(cur.text); fdBody=esc(pt.slice(0,50))+(pt.length>50?'…':''); }
+  else if(cur._t==='diary'){ const pt=plainText(cur.text); fdBody=esc(pt.slice(0,100))+(pt.length>100?'…':''); }
   else fdBody=esc(cur.text)||'(내용 없음)';
   const detail = cur
     ? `<div class="feed-detail">
@@ -5408,28 +5426,67 @@ function extractYouTubeIds(text){
   while((m=re.exec(text))!==null){ if(ids.indexOf(m[1])<0) ids.push(m[1]); }
   return ids;
 }
-// 훈련일지 본문: 유튜브 주소를 그 자리에서 바로 플레이어로 치환 (숏츠는 9:16, 일반은 16:9)
+// 훈련일지 본문: 유튜브 주소를 그 자리에서 플레이어로 (숏츠 9:16 / 일반 16:9). 글 텍스트는 100% 보존.
 function diaryBodyRender(s){
   s=s||'';
-  let base=bodyRender(s); // sanitize된 HTML 문자열
-  // <a href="...youtube...">...</a> → 평문 URL로 풀기
-  base=base.replace(/<a\b[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>[\s\S]*?<\/a>/gi, (m,href)=>href);
-  // 유튜브 링크(평문 URL)를 자리에서 임베드로 치환 (숏츠 9:16 / 일반 16:9)
-  const re=/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^\s"'<&]*&)*v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[^\s"'<]*)/g;
-  let replaced=base.replace(re,(url,id)=>{
-    const isShorts=/shorts\//.test(url);
-    return `<span class="dv-embed ${isShorts?'dv-shorts':'dv-wide'}"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>`;
+  // 1) 안전 렌더된 HTML을 DOM으로 파싱
+  const root=document.createElement('div');
+  root.innerHTML=bodyRender(s);
+  const YT=/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^\s&]*&)*v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})[^\s]*/;
+  const makeEmbed=(id,isShorts)=>{
+    const span=document.createElement('span');
+    span.className='dv-embed '+(isShorts?'dv-shorts':'dv-wide');
+    span.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    return span;
+  };
+  // 2) <a href=유튜브> 링크를 임베드로 교체
+  root.querySelectorAll('a').forEach(a=>{
+    const href=a.getAttribute('href')||a.textContent||'';
+    const m=href.match(YT);
+    if(m){ a.replaceWith(makeEmbed(m[1], /shorts\//.test(href))); }
   });
-  // 임베드 사이에 '오직 <br>/공백만' 있을 때(=텍스트 없음)만 가로로 묶음. 텍스트는 절대 버리지 않음.
-  replaced=replaced.replace(
-    /<span class="dv-embed[\s\S]*?<\/span>(?:(?:\s|<br\s*\/?>)*<span class="dv-embed[\s\S]*?<\/span>)+/g,
-    block=>{
-      // 이 블록은 임베드 + (br/공백)만으로 구성됨이 보장됨
-      const embeds=block.match(/<span class="dv-embed[\s\S]*?<\/span>/g)||[];
-      return `<span class="dv-row">${embeds.join('')}</span>`;
+  // 3) 텍스트 노드 안의 평문 유튜브 URL을 임베드로 교체 (텍스트는 그대로 유지)
+  const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const textNodes=[]; let tn;
+  while((tn=walker.nextNode())) textNodes.push(tn);
+  const reG=new RegExp(YT.source,'g');
+  textNodes.forEach(node=>{
+    const txt=node.nodeValue;
+    if(!reG.test(txt)) return;
+    reG.lastIndex=0;
+    const frag=document.createDocumentFragment();
+    let last=0, m;
+    while((m=reG.exec(txt))!==null){
+      if(m.index>last) frag.appendChild(document.createTextNode(txt.slice(last,m.index)));
+      frag.appendChild(makeEmbed(m[1], /shorts\//.test(m[0])));
+      last=m.index+m[0].length;
     }
-  );
-  return replaced;
+    if(last<txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+    node.replaceWith(frag);
+  });
+  // 4) 연속된 임베드(사이에 <br>·공백만)를 가로 한 줄로 묶기
+  const embeds=[...root.querySelectorAll('.dv-embed')];
+  embeds.forEach(em=>{
+    if(em.dataset.grouped) return;
+    // em부터 시작해 연속 임베드 수집
+    const group=[em]; let cur=em;
+    while(true){
+      let nx=cur.nextSibling;
+      // 사이의 <br>·공백 텍스트는 건너뜀(수집 대기)
+      const skipped=[];
+      while(nx && ((nx.nodeType===3 && !nx.nodeValue.trim()) || (nx.nodeType===1 && nx.tagName==='BR'))){ skipped.push(nx); nx=nx.nextSibling; }
+      if(nx && nx.nodeType===1 && nx.classList && nx.classList.contains('dv-embed')){
+        skipped.forEach(n=>n.parentNode&&n.remove()); // 사이 br/공백 제거
+        group.push(nx); cur=nx;
+      } else break;
+    }
+    if(group.length>1){
+      const row=document.createElement('span'); row.className='dv-row';
+      em.parentNode.insertBefore(row, em);
+      group.forEach(g=>{ g.dataset.grouped='1'; row.appendChild(g); });
+    }
+  });
+  return root.innerHTML;
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
