@@ -497,6 +497,8 @@
   .rte-color-wrap{position:relative;display:inline-flex;align-items:center;}
   .rte-color-wrap input[type=color]{width:28px;height:28px;padding:0;border:1px solid #c9d6df;border-radius:3px;background:#fff;cursor:pointer;}
   .rte-color-lbl{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:9px;color:#8aa;margin:0 2px 0 4px;}
+  .rte-color-apply{margin-left:2px;border:1px solid #cdd6dd;background:#fff;color:#2e8b3d;font-size:11px;font-weight:800;border-radius:4px;padding:1px 5px;cursor:pointer;line-height:1.2;}
+  .rte-color-apply:hover{background:#eafbef;}
   .rte-sep{width:1px;height:20px;background:#d4e2ec;margin:0 2px;}
   .rte-area{min-height:120px;padding:10px 12px;font-family:'Pretendard',sans-serif;font-size:14px;line-height:1.7;color:#3a5566;outline:none;overflow-wrap:anywhere;}
   .rte-area:empty:before{content:attr(data-ph);color:#aab8c2;}
@@ -5271,11 +5273,11 @@ function rteToolbar(id){
   // 줄간격 세분화
   const lineHeights=[['좁게','1.2'],['보통','1.5'],['넓게','1.8'],['아주넓게','2.1'],['최대','2.5']];
   return `<div class="rte-toolbar">
-    <select title="글자크기" onchange="rteCmd('${id}','fontSizePx',this.value);this.selectedIndex=0;">
+    <select title="글자크기" onmousedown="rteSaveSel('${id}')" onchange="rteCmd('${id}','fontSizePx',this.value);this.selectedIndex=0;">
       <option value="">글자크기</option>
       ${sizes.map(s=>`<option value="${s}">${s}px</option>`).join('')}
     </select>
-    <select title="줄간격" onchange="rteCmd('${id}','lineHeight',this.value);this.selectedIndex=0;">
+    <select title="줄간격" onmousedown="rteSaveSel('${id}')" onchange="rteCmd('${id}','lineHeight',this.value);this.selectedIndex=0;">
       <option value="">줄간격</option>
       ${lineHeights.map(s=>`<option value="${s[1]}">${s[0]}</option>`).join('')}
     </select>
@@ -5285,8 +5287,8 @@ function rteToolbar(id){
     <button type="button" class="rte-u" title="밑줄" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','underline')">U</button>
     <button type="button" class="rte-s" title="취소선" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','strikeThrough')">S</button>
     <span class="rte-sep"></span>
-    <span class="rte-color-wrap"><span class="rte-color-lbl">글자</span><input type="color" value="#333333" title="글씨색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','foreColor',this.value)"></span>
-    <span class="rte-color-wrap"><span class="rte-color-lbl">배경</span><input type="color" value="#fff2a8" title="글씨 배경색" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','hiliteColor',this.value)"></span>
+    <span class="rte-color-wrap"><span class="rte-color-lbl">글자</span><input type="color" id="rtefg_${id}" value="#333333" title="글씨색 선택" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','foreColor',this.value)"><button type="button" class="rte-color-apply" title="선택한 글씨색 다시 적용" onmousedown="rteSaveSel('${id}')" onclick="rteApplyColor('${id}','foreColor','rtefg_${id}')">✓</button></span>
+    <span class="rte-color-wrap"><span class="rte-color-lbl">배경</span><input type="color" id="rtebg_${id}" value="#fff2a8" title="글씨 배경색 선택" onmousedown="rteSaveSel('${id}')" oninput="rteCmd('${id}','hiliteColor',this.value)"><button type="button" class="rte-color-apply" title="선택한 배경색 다시 적용" onmousedown="rteSaveSel('${id}')" onclick="rteApplyColor('${id}','hiliteColor','rtebg_${id}')">✓</button></span>
     <span class="rte-sep"></span>
     <button type="button" title="가운데 점 추가" onmousedown="rteSaveSel('${id}')" onclick="rteInsertBullet('${id}')">•</button>
     <button type="button" title="서식 지우기" onmousedown="event.preventDefault()" onclick="rteCmd('${id}','removeFormat')">⌫</button>
@@ -5346,6 +5348,12 @@ function rteSetFontSizePx(id, px){
     sel.removeAllRanges();
     const nr=document.createRange(); nr.selectNodeContents(span); sel.addRange(nr);
   }catch(e){}
+}
+// 색상 input의 현재 값을 선택 영역에 다시 적용 (✓ 버튼)
+function rteApplyColor(id, cmd, inputId){
+  const inp=document.getElementById(inputId);
+  if(!inp) return;
+  rteCmd(id, cmd, inp.value);
 }
 // 줄간격 조정: 선택된 문단(블록)들의 line-height 설정. 선택 없으면 편집영역 전체.
 function rteSetLineHeight(id, lh){
