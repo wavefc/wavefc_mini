@@ -182,6 +182,7 @@
   .video-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   .shorts-list{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
   .video-card{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;}
+  .video-card.pinned{border:2px solid #e0a93b;box-shadow:0 0 0 2px #fdf3dd;}
   .video-frame{position:relative;width:100%;padding-top:56.25%;background:#000;}
   .video-frame.short{padding-top:177.78%;}
   .video-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
@@ -1806,7 +1807,7 @@ function ytId(url){
 }
 function ytIsShort(url){ return /youtube\.com\/shorts\//.test(String(url||'')); }
 function pageVideo(){
-  const isExec=rankOf(me)==='exec';
+  const isExec=(rankOf(me)==='exec'||adminLevel()===1); // 임원 또는 관리자1
   const cats=DATA.videoCats||DEFAULT.videoCats;
   const allVids=(DATA.videos||[]).map((v,i)=>Object.assign({},v,{_i:i}));
 
@@ -1852,7 +1853,11 @@ function pageVideo(){
     const kwOk = !kw || String(v.title||'').toLowerCase().includes(kw) || String(v.cat||'').toLowerCase().includes(kw);
     return catOk && kwOk;
   }
-  const filtered=allVids.filter(match).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const filtered=allVids.filter(match).sort((a,b)=>{
+    const ap=a.pin?1:0, bp=b.pin?1:0;
+    if(ap!==bp) return bp-ap;       // 우선순위(pin) 영상이 맨 앞
+    return (b.ts||0)-(a.ts||0);     // 그다음 최신순
+  });
   const shorts=filtered.filter(v=>ytIsShort(v.url));
   const normals=filtered.filter(v=>!ytIsShort(v.url));
 
@@ -1861,6 +1866,7 @@ function pageVideo(){
     const id=ytId(v.url);
     if(!id){
       return `<div class="video-card"><div style="padding:14px;color:#c0392b;font-size:13px;">⚠ 주소 인식 실패: ${esc(v.url||'')}
+        ${isExec?`<span class="quiz-del" style="color:#2176a8;" onclick="editVideo(${v._i})">수정</span>`:''}
         ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}</div></div>`;
     }
     const catBadge=`<span class="video-cat-badge">${esc(v.cat||'기본')}</span>`;
@@ -1868,19 +1874,24 @@ function pageVideo(){
         <option value="">이동▾</option>${cats.map(c=>`<option value="${esc(c)}" ${(v.cat||'기본')===c?'disabled':''}>${esc(c)}</option>`).join('')}
       </select>`:'';
     const plays=v.plays||0;
-    return `<div class="video-card${shortStyle?' short':''}">
+    const pinBtn = isExec
+      ? `<span class="quiz-del" style="color:${v.pin?'#e0a93b':'#9aa6ae'};" onclick="toggleVideoPin(${v._i})" title="우선순위(꼭 봐야 할 영상)">${v.pin?'⭐ 우선':'☆ 우선'}</span>`
+      : '';
+    return `<div class="video-card${shortStyle?' short':''}${v.pin?' pinned':''}">
       <div class="video-frame${shortStyle?' short':''}">
         <iframe class="yt-player" data-vi="${v._i}" data-vid="${id}"
-          src="https://www.youtube.com/embed/${id}?enablejsapi=1"
+          src="https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1"
           title="${esc(v.title||'참고영상')}" frameborder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
       </div>
       <div class="video-meta">
-        <span class="video-title">${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
+        <span class="video-title">${v.pin?'⭐ ':''}${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
         <div class="video-actions">
           <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, false)">▶ 유튜브에서 보기</a>
           <span class="video-plays" id="vp_${v._i}">▶ ${plays.toLocaleString()}회</span>
+          ${pinBtn}
           ${moveSel}
+          ${isExec?`<span class="quiz-del" style="color:#2176a8;" onclick="editVideo(${v._i})">수정</span>`:''}
           ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}
         </div>
       </div>
@@ -1945,15 +1956,27 @@ function toggleVideoWrite(){ videoWriting=!videoWriting; rerenderVideo(); }
 function goVideoPage(p){ videoPage=p; rerenderVideo(); }
 function goShortsPage(p){ shortsPage=p; rerenderVideo(); }
 function moveVideoCat(i,newCat){
-  if(rankOf(me)!=='exec') return;
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
   if(!newCat) return;
   const arr=(DATA.videos||[]).slice();
   if(!arr[i]) return;
   arr[i]=Object.assign({},arr[i],{cat:newCat});
+  DATA.videos=arr;
   ROOT.child('videos').set(arr);
+  renderPage('video');
+}
+// 우선순위(꼭 봐야 할 영상) 토글 — 개수 제한 없음
+function toggleVideoPin(i){
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
+  const arr=(DATA.videos||[]).slice();
+  if(!arr[i]) return;
+  arr[i]=Object.assign({},arr[i],{pin:!arr[i].pin});
+  DATA.videos=arr;
+  ROOT.child('videos').set(arr);
+  renderPage('video');
 }
 function addVideo(){
-  if(rankOf(me)!=='exec') return alert('임원만 영상을 등록할 수 있어요.');
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return alert('임원 또는 관리자1만 영상을 등록할 수 있어요.');
   const url=document.getElementById('vdUrl').value.trim();
   const title=document.getElementById('vdTitle').value.trim();
   let cat=document.getElementById('vdCat').value;
@@ -1969,14 +1992,40 @@ function addVideo(){
   const arr=(DATA.videos||[]).slice();
   arr.push({url, title, cat:cat||'기본', ts:Date.now()});
   videoWriting=false;
+  DATA.videos=arr;
   ROOT.child('videos').set(arr);
+  renderPage('video');
 }
 function delVideo(i){
-  if(rankOf(me)!=='exec') return;
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
   if(!confirm('이 영상을 삭제할까요?')) return;
   const arr=(DATA.videos||[]).slice();
   arr.splice(i,1);
+  DATA.videos=arr;
   ROOT.child('videos').set(arr);
+  renderPage('video');
+}
+// 참고영상 제목·카테고리·주소 수정 (임원 또는 관리자1)
+function editVideo(i){
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return alert('임원 또는 관리자1만 수정할 수 있어요.');
+  const arr=(DATA.videos||[]).slice();
+  const v=arr[i]; if(!v) return;
+  const newTitle=prompt('영상 제목을 수정하세요:', v.title||'');
+  if(newTitle===null) return;
+  const cats=(DATA.videoCats||DEFAULT.videoCats);
+  const newCat=prompt('카테고리를 수정하세요.\n('+cats.join(' / ')+')', v.cat||'기본');
+  if(newCat===null) return;
+  const newUrl=prompt('유튜브 주소를 수정하세요.\n(그대로 두려면 확인을 누르세요)', v.url||'');
+  if(newUrl===null) return;
+  if(newUrl.trim() && !ytId(newUrl.trim())) return alert('유튜브 주소를 인식하지 못했어요. 수정을 취소합니다.');
+  const catTrim=newCat.trim()||'기본';
+  // 새 카테고리면 목록에 추가
+  const catsArr=(DATA.videoCats||DEFAULT.videoCats).slice();
+  if(!catsArr.includes(catTrim)){ catsArr.push(catTrim); ROOT.child('videoCats').set(catsArr); }
+  arr[i]=Object.assign({}, v, {title:newTitle.trim()||'(제목없음)', cat:catTrim, url:newUrl.trim()||v.url});
+  DATA.videos=arr;
+  ROOT.child('videos').set(arr);
+  renderPage('video');
 }
 // 영상 크게 보기 모달
 function openVideoModal(id, isShorts){
@@ -1987,7 +2036,7 @@ function openVideoModal(id, isShorts){
   const w = isShorts ? 'min(92vw,420px)' : 'min(94vw,900px)';
   const ratio = isShorts ? '9/16' : '16/9';
   ov.innerHTML=`<div onclick="event.stopPropagation()" style="position:relative;width:${w};aspect-ratio:${ratio};max-height:90vh;background:#000;border-radius:10px;overflow:hidden;">
-      <iframe src="https://www.youtube.com/embed/${id}?autoplay=1" title="YouTube" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
+      <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="YouTube" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
     </div>
     <button onclick="closeVideoModal()" style="position:absolute;top:16px;right:20px;background:#fff;border:none;border-radius:20px;width:40px;height:40px;font-size:20px;cursor:pointer;font-weight:800;">✕</button>`;
   ov.addEventListener('click',closeVideoModal);
@@ -1995,9 +2044,10 @@ function openVideoModal(id, isShorts){
 }
 function closeVideoModal(){ const ov=document.getElementById('videoModalOverlay'); if(ov) ov.remove(); }
 // 훈련일지 영상을 참고영상에 추가 (관리자1)
-function addVideoFromId(id){
+function addVideoFromId(id, isShorts){
   if(adminLevel()!==1) return alert('관리자1만 추가할 수 있어요.');
-  const url='https://www.youtube.com/watch?v='+id;
+  // 숏츠는 shorts URL로, 일반은 watch URL로 저장 (분류 정확히)
+  const url = isShorts ? ('https://www.youtube.com/shorts/'+id) : ('https://www.youtube.com/watch?v='+id);
   // 이미 있는지 확인
   const exists=(DATA.videos||[]).some(v=>ytId(v.url)===id);
   if(exists) return alert('이미 참고영상에 등록된 영상이에요.');
@@ -2011,6 +2061,7 @@ function addVideoFromId(id){
   if(!catsArr.includes(catTrim)){ catsArr.push(catTrim); ROOT.child('videoCats').set(catsArr); }
   const arr=(DATA.videos||[]).slice();
   arr.push({url, title:title.trim()||'(제목없음)', cat:catTrim, ts:Date.now()});
+  DATA.videos=arr;
   ROOT.child('videos').set(arr);
   alert('참고영상에 추가했어요! 👍');
 }
@@ -2811,7 +2862,11 @@ function canDelOwn(by){ return isApproved() && ((by&&by===me) || adminLevel()===
 function delComment(i){
   const c=DATA.comments[i]; if(!c) return;
   if(!canDelOwn(c.by)) return;
-  const arr=DATA.comments.slice();arr.splice(i,1);ROOT.child('comments').set(arr);}
+  const arr=DATA.comments.slice();arr.splice(i,1);
+  DATA.comments=arr;
+  ROOT.child('comments').set(arr);
+  renderPage(currentPage);
+}
 // ===== 일촌평 답글(대댓글) =====
 function toggleReply(pid){
   const f=document.getElementById('rf_'+pid);
@@ -2839,7 +2894,10 @@ function delReply(pid, ts){
   const idx=arr.findIndex(r=>r&&String(r.pid)===String(pid)&&r.ts===ts);
   if(idx<0) return;
   if(!canDelOwn(arr[idx].by)) return;
-  arr.splice(idx,1);ROOT.child('replies').set(arr);
+  arr.splice(idx,1);
+  DATA.replies=arr;
+  ROOT.child('replies').set(arr);
+  renderPage(currentPage);
 }
 
 var _tacticSrc='';
@@ -3041,8 +3099,14 @@ function _reactArr(node){
 function _boardReactTs(node){ return node==='calendar'?100001:(node==='rule'?100002:100099); }
 // calendar/rule 저장은 board_react/{node} 경로에
 function _reactSave(node, arr){
-  if(node==='logs'||node==='notices'){ ROOT.child(node).set(arr); return; }
-  ROOT.child('board_react/'+node).set(arr[0]||{});
+  // 낙관적 반영(즉시 화면 갱신용)
+  if(node==='logs'||node==='notices'){ DATA[node]=arr; }
+  else { DATA.board_react=DATA.board_react||{}; DATA.board_react[node]=arr[0]||{}; }
+  // DB 저장
+  if(node==='logs'||node==='notices'){ ROOT.child(node).set(arr); }
+  else { ROOT.child('board_react/'+node).set(arr[0]||{}); }
+  // 화면 즉시 갱신
+  try{ renderPage(currentPage); }catch(e){}
 }
 function _likedKey(node,ts){ return 'wavefc_like_'+node+'_'+ts; }
 function hasLiked(node,ts){ try{ return localStorage.getItem(_likedKey(node,ts))==='1'; }catch(e){ return false; } }
@@ -3065,11 +3129,8 @@ function toggleLike(node,idx){
     if(me && item.likedBy.indexOf(me)<0) item.likedBy.push(me);
     logActivity('like');
   }
-  // 낙관적 반영 후 즉시 화면 갱신
-  if(node==='logs'||node==='notices'){ DATA[node]=arr; }
-  else { DATA.board_react=DATA.board_react||{}; DATA.board_react[node]=arr[0]||{}; }
+  // 저장 + 즉시 화면 갱신 (_reactSave가 낙관적 반영·렌더 처리)
   _reactSave(node,arr);
-  renderPage(currentPage);
 }
 // 사용자 키 → 표시 이름 (없으면 키 그대로)
 function userLabel(key){ if(!key) return ''; const u=DATA.users&&DATA.users[key]; return u&&u.name?u.name:key; }
@@ -3186,11 +3247,7 @@ function pageNotice(){
   const isExec=canManage();
   const list=DATA.notices.map((n,i)=>Object.assign({},n,{_i:i}))
     .filter(n=> !n.secret || isExec)   // 비공개 글은 관리자(임원·관리자1)만
-    .sort((a,b)=>{
-      const ap=a.pinned?1:0,bp=b.pinned?1:0;
-      if(ap!==bp)return bp-ap;
-      return (b.ts||0)-(a.ts||0);
-    });
+    .sort((a,b)=> (b.ts||0)-(a.ts||0)); // 게시판은 순수 시간순: 최신 위, 오래된 글 아래
 
   // 글쓰기 버튼 + (펼쳐졌을 때) 작성 폼
   const writeToggle = isExec
@@ -4736,6 +4793,7 @@ function answerQna(origIdx){
   if(!arr[origIdx]) return;
   arr[origIdx].answer=val;
   arr[origIdx].source='admin';
+  DATA.qna_threads=arr;
   ROOT.child('qna_threads').set(arr);
   // 지식베이스에도 추가 (단, 비밀글은 공유 KB에 넣지 않음)
   if(!arr[origIdx].secret){
@@ -4743,6 +4801,7 @@ function answerQna(origIdx){
     kb.push({q:arr[origIdx].q, a:val, ts:Date.now()});
     ROOT.child('qna_kb').set(kb);
   }
+  const c=document.getElementById('centerArea'); if(c){c.innerHTML=pageQna();} // 즉시 갱신
 }
 
 function editQnaQuestion(origIdx){
@@ -4792,7 +4851,9 @@ function delQnaThread(origIdx){
   if(!(adminLevel()===1 || (isMine && !answered))) return alert('삭제 권한이 없어요.');
   if(!confirm('이 질문을 삭제할까요?')) return;
   arr.splice(origIdx,1);
+  DATA.qna_threads=arr;
   ROOT.child('qna_threads').set(arr);
+  const c=document.getElementById('centerArea'); if(c){c.innerHTML=pageQna();} // 즉시 갱신
 }
 
 /* 관리 */
@@ -5566,11 +5627,11 @@ function diaryBodyRender(s){
     const span=document.createElement('span');
     span.className='dv-embed '+(isShorts?'dv-shorts':'dv-wide');
     const a1 = (typeof adminLevel==='function' && adminLevel()===1);
-    span.innerHTML=`<span class="dv-frame"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>
+    span.innerHTML=`<span class="dv-frame"><iframe src="https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>
       <span class="dv-tools">
         <button type="button" class="dv-btn" title="크게 보기" onclick="openVideoModal('${id}',${isShorts?'true':'false'})">⛶ 크게보기</button>
         <button type="button" class="dv-btn" title="유튜브에서 보기" onclick="window.open('https://www.youtube.com/watch?v=${id}','_blank')">▶ 유튜브</button>
-        ${a1?`<button type="button" class="dv-btn dv-btn-add" title="참고영상에 추가" onclick="addVideoFromId('${id}')">＋ 참고영상</button>`:''}
+        ${a1?`<button type="button" class="dv-btn dv-btn-add" title="참고영상에 추가" onclick="addVideoFromId('${id}',${isShorts?'true':'false'})">＋ 참고영상</button>`:''}
       </span>`;
     return span;
   };
