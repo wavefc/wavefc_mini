@@ -2586,7 +2586,7 @@ function pageHome(){
   const cur=top[feedSel]||top[0];
   let gotoBtn='';
   if(cur && cur._t==='notice') gotoBtn=`<button class="fd-goto" onclick="gotoNoticePost(${cur._i})">좋아요/댓글 남기러 가기🤍</button>`;
-  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">더 자세히 보고 좋아요/댓글 남기러 가기🤍</button>`;
+  else if(cur && cur._t==='diary') gotoBtn=`<button class="fd-goto" onclick="gotoDiaryPost(${cur._i})">더 상세한 일지 보고 좋아요/댓글 남기러 가기🤍</button>`;
   // 본문: 공지는 그대로, 훈련일지는 앞 50자 미리보기, 일정은 텍스트
   let fdBody;
   if(!cur) fdBody='';
