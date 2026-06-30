@@ -576,6 +576,8 @@
   .minicards .mc-sub{font-size:9px;font-weight:normal;opacity:.92;}
   .minicards .c1{background:#d63384;}.minicards .c2{background:#e02b2b;}
   .minicards .c-admin{background:#5a9bd4;}
+  .minicards.admin-box{margin-top:6px;}
+  .minicards.admin-box .c{margin-bottom:0;}
   .at-tab{flex:1;min-width:120px;border:1px solid #cdd6dd;background:#f4f7fa;color:#5a6a72;border-radius:8px 8px 0 0;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;}
   .at-tab.on{background:#fff;color:#2176a8;border-bottom-color:#fff;}
 
@@ -718,7 +720,9 @@
         <div class="mc-title">WAVE 더 구경하기</div>
         <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener" onclick="clickExtLink()">📷 인스타</a>
         <a class="c c2" href="https://www.youtube.com/@WAVE_FC" target="_blank" rel="noopener" onclick="clickExtLink()">▶ 유튜브</a>
-        <a class="c c-admin" id="adminPanelBtn" href="#" onclick="openAdminTools();return false;" style="display:none;">🍋 관리자 전용</a>
+      </div>
+      <div class="minicards admin-box" id="adminPanelBox" style="display:none;">
+        <a class="c c-admin" href="#" onclick="openAdminTools();return false;">🍋 관리자 전용</a>
       </div>
     </div>
   </div>
@@ -1168,6 +1172,33 @@ function awardTop6Bonus(monthKey){
   alert(attMonthLabel(monthKey)+' 출석 TOP6 보너스를 지급했어요! 🎉\n\n'+top6.map(t=>`${t._rank}위 ${t.name} (+${TOP6_BONUS[t._rank-1]}점)`).join('\n')+`\n\n※ 멤버 축하 알림은 ${showFromLabel.getFullYear()}년 ${showFromLabel.getMonth()+1}월 1일부터 첫 접속 시 표시됩니다.`);
   renderPage(currentPage);
 }
+// [일회성] 6월 6위 동률인데 누락된 4명에게 각 2점 + 6위 메시지 지급 (2026-7-1부터 표시)
+function fixJune6thPlace(){
+  if(adminLevel()!==1) return alert('관리자1만 실행할 수 있어요.');
+  if(DATA._june6thFixed){ alert('이미 처리했어요. 한 번만 실행됩니다.'); return; }
+  const names=['김나연','장예나','장윤희','조안나'];
+  if(!confirm('6월 6위 동률 누락 4명(김나연·장예나·장윤희·조안나)에게\n각 2점과 6위 축하 메시지를 지급할까요?\n(메시지는 2026년 7월 1일부터 첫 접속 시 표시)')) return;
+  const log=(DATA.activity_log||[]).slice();
+  const pending=JSON.parse(JSON.stringify(DATA.top6_bonus_pending||{}));
+  const showFrom=new Date(2026, 6, 1, 0, 0, 0, 0).getTime(); // 2026-07-01 00:00
+  const monthKey='2026-6';
+  const doneList=[];
+  names.forEach(nm=>{
+    const m=(DATA.roster||[]).find(x=>x.name===nm);
+    const userKey=(m&&m.key)?m.key:nm;
+    // 점수 2점 적립
+    log.push({user:userKey, type:'top6bonus', ts:Date.now(), pts:2, note:'2026-6 출석6위 보너스(동률보정)', backfill:true});
+    // 7/1부터 표시될 6위 축하 예약
+    pending[userKey]=pending[userKey]||[];
+    pending[userKey].push({month:monthKey, rank:6, pts:2, ts:Date.now(), showFrom:showFrom});
+    doneList.push(nm);
+  });
+  ROOT.child('activity_log').set(log);
+  ROOT.child('top6_bonus_pending').set(pending);
+  ROOT.child('_june6thFixed').set(true);
+  alert('처리 완료! 🎉\n\n'+doneList.map(n=>`6위 ${n} (+2점)`).join('\n')+'\n\n※ 축하 메시지는 2026년 7월 1일부터 첫 접속 시 표시됩니다.');
+  renderPage(currentPage);
+}
 // 내게 안 본 TOP6 축하가 있으면 모달 표시 (접속 시 호출)
 function checkTop6BonusModal(){
   if(!me) return;
@@ -1287,6 +1318,10 @@ function adminToolsBonusHtml(){
       <div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${[1,2,3,4,5,6].map(r=>`<button class="qna-send sm" style="margin:0;background:#7b9cc4;" onclick="previewBonusModal(${r})">${r}위</button>`).join('')}
       </div>
+    </div>
+    <div style="margin-top:12px;padding:8px;background:#fff7e6;border:1px dashed #d9b34b;border-radius:8px;">
+      <div style="font-size:11px;color:#a06a00;line-height:1.5;">⚠️ [일회성] 6월 6위 동률 누락 4명(김나연·장예나·장윤희·조안나) 각 2점 + 6위 메시지 지급. 7/1부터 표시. 한 번만 실행됨.</div>
+      <button class="qna-send sm" style="margin:6px 0 0;background:#d9a441;" onclick="fixJune6thPlace()">6월 6위 4명 보정 지급</button>
     </div>
   `;
 }
@@ -2517,6 +2552,7 @@ ROOT.on('value',snap=>{
     roomTips:(Array.isArray(v.roomTips)&&v.roomTips.length?v.roomTips:DEFAULT.roomTips),
     _backfilled:(v._backfilled===true),
     _attYearMigrated:(v._attYearMigrated===true),
+    _june6thFixed:(v._june6thFixed===true),
     _manualAdj1:(v._manualAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
@@ -4056,7 +4092,8 @@ function attMonthLabel(key){
 function monthTop6(monthKey){
   const sessions=(DATA.attendance||[]).filter(s=>attMonthKey(s.date)===monthKey);
   if(!sessions.length) return [];
-  const roster=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor');
+  const roster=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor')
+    .slice().sort((a,b)=> String(a.name).localeCompare(String(b.name),'ko')); // 출석현황과 동일: 가나다순
   const stats=[];
   roster.forEach(m=>{
     const isRest=memStatus(m)==='rest';
@@ -4084,8 +4121,14 @@ function monthTop6(monthKey){
       stats.push({name:m.name, rate:Math.round(oCnt/denom*100), oCnt});
     }
   });
-  stats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt);
-  const top6=stats.slice(0,6);
+  // 출석현황 TOP6와 동일한 기준: 출석률(rate)만으로 정렬(동률은 가나다순 유지)
+  stats.sort((a,b)=> b.rate-a.rate);
+  // 상위 6명 컷하되, 6위와 동률인 사람은 모두 포함 (동률은 다 같이 시상)
+  let top6=stats.slice(0,6);
+  if(stats.length>6){
+    const cutRate=top6[top6.length-1].rate;
+    top6=stats.filter((t,i)=> i<6 || t.rate===cutRate);
+  }
   // 공동 순위 부여
   let pv=null, rk=0;
   top6.forEach((t,i)=>{ if(t.rate!==pv){ rk=i+1; pv=t.rate; } t._rank=rk; });
@@ -4317,11 +4360,19 @@ function pageAttend(){
   // 공동 순위 메달 부여 + TOP6 카드 HTML 생성 헬퍼
   const medalByRank=(r)=> r===1?'🥇':r===2?'🥈':r===3?'🥉':(r+'.');
   function makeTop6Html(stats){
-    const top6=stats.slice().sort((a,b)=> b.rate-a.rate).slice(0,6);
+    const sorted=stats.slice().sort((a,b)=> b.rate-a.rate);
+    // 상위 6명 컷하되 6위와 동률은 모두 포함
+    let top6=sorted.slice(0,6);
+    if(sorted.length>6){
+      const cutRate=top6[top6.length-1].rate;
+      top6=sorted.filter((t,i)=> i<6 || t.rate===cutRate);
+    }
     let pv=null, rk=0;
     top6.forEach((t,i)=>{ if(t.rate!==pv){ rk=i+1; pv=t.rate; } t._rank=rk; });
     const row=(t)=>`<div class="att-list-row"><span>${medalByRank(t._rank)} ${esc(maskAttName(t.name))}</span><b style="color:#2e8b3d;">${t.rate}%</b></div>`;
-    const L=top6.slice(0,3).map(row).join(''), R=top6.slice(3,6).map(row).join('');
+    // 인원수에 맞춰 좌우 균등 분할
+    const half=Math.ceil(top6.length/2);
+    const L=top6.slice(0,half).map(row).join(''), R=top6.slice(half).map(row).join('');
     return top6.length
       ? `<div class="att-top-grid"><div>${L}</div><div>${R}</div></div>`
       : `<div style="font-size:12px;color:#9aa6ae;">기록 없음</div>`;
@@ -5270,8 +5321,8 @@ function applyAdminLevel(){
   onlyA1.forEach(el=>{ el.style.display = (lv===1)?'':'none'; });
   const lbl=document.getElementById('adminLevelLabel');
   if(lbl) lbl.textContent = lv===1?'관리자1 (대표·전체권한)':(lv===2?'관리자2 (회원·출석 관리)':'');
-  const apBtn=document.getElementById('adminPanelBtn');
-  if(apBtn) apBtn.style.display = (lv===1)?'block':'none'; // 🍋 관리자 전용 버튼
+  const apBox=document.getElementById('adminPanelBox');
+  if(apBox) apBox.style.display = (lv===1)?'':'none'; // 🍋 관리자 전용 별도 박스
 }
 function renderPending(){
   // 승인 대기
