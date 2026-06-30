@@ -440,18 +440,26 @@
   .board-react-h{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;}
   .yt-embed{position:relative;width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;border-radius:8px;overflow:hidden;background:#000;}
   .dv-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
-  .dv-embed{position:relative;display:block;border-radius:8px;overflow:hidden;background:#000;}
+  .dv-embed{display:block;margin:10px 0;}
   .dv-row .dv-embed{display:inline-block;vertical-align:top;}
-  .dv-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-  .dv-wide{width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;}
-  .dv-shorts{width:220px;aspect-ratio:9/16;margin:10px 0;}
+  .dv-frame{position:relative;display:block;border-radius:8px;overflow:hidden;background:#000;}
+  .dv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .dv-wide .dv-frame{width:100%;max-width:560px;aspect-ratio:16/9;}
+  .dv-shorts .dv-frame{width:220px;aspect-ratio:9/16;}
+  .dv-wide{width:100%;max-width:560px;}
+  .dv-shorts{width:220px;}
+  .dv-tools{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;}
+  .dv-btn{font-size:11px;font-weight:700;color:#3a5566;background:#eef3f7;border:1px solid #cdd6dd;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.3;}
+  .dv-btn:hover{background:#dfe9f0;}
+  .dv-btn-add{color:#1f7a33;background:#eafbef;border-color:#bfe3c8;}
   .dv-row .dv-embed{margin:0;}
   .dv-row .dv-wide{flex:1 1 280px;max-width:none;}
+  .dv-row .dv-wide .dv-frame{max-width:none;}
   .dv-row .dv-shorts{flex:0 0 auto;}
   @media(max-width:760px){
-    .dv-shorts{width:100%;max-width:280px;}
+    .dv-shorts,.dv-shorts .dv-frame{width:100%;max-width:280px;}
     .dv-row{flex-direction:column;align-items:center;}
-    .dv-row .dv-wide{width:100%;}
+    .dv-row .dv-wide,.dv-row .dv-wide .dv-frame{width:100%;}
   }
   .yt-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   .rc-input{display:flex;gap:4px;margin-top:4px;}
@@ -1969,6 +1977,42 @@ function delVideo(i){
   const arr=(DATA.videos||[]).slice();
   arr.splice(i,1);
   ROOT.child('videos').set(arr);
+}
+// 영상 크게 보기 모달
+function openVideoModal(id, isShorts){
+  closeVideoModal();
+  const ov=document.createElement('div');
+  ov.id='videoModalOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+  const w = isShorts ? 'min(92vw,420px)' : 'min(94vw,900px)';
+  const ratio = isShorts ? '9/16' : '16/9';
+  ov.innerHTML=`<div onclick="event.stopPropagation()" style="position:relative;width:${w};aspect-ratio:${ratio};max-height:90vh;background:#000;border-radius:10px;overflow:hidden;">
+      <iframe src="https://www.youtube.com/embed/${id}?autoplay=1" title="YouTube" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
+    </div>
+    <button onclick="closeVideoModal()" style="position:absolute;top:16px;right:20px;background:#fff;border:none;border-radius:20px;width:40px;height:40px;font-size:20px;cursor:pointer;font-weight:800;">✕</button>`;
+  ov.addEventListener('click',closeVideoModal);
+  document.body.appendChild(ov);
+}
+function closeVideoModal(){ const ov=document.getElementById('videoModalOverlay'); if(ov) ov.remove(); }
+// 훈련일지 영상을 참고영상에 추가 (관리자1)
+function addVideoFromId(id){
+  if(adminLevel()!==1) return alert('관리자1만 추가할 수 있어요.');
+  const url='https://www.youtube.com/watch?v='+id;
+  // 이미 있는지 확인
+  const exists=(DATA.videos||[]).some(v=>ytId(v.url)===id);
+  if(exists) return alert('이미 참고영상에 등록된 영상이에요.');
+  const title=prompt('참고영상에 추가합니다.\n영상 제목을 입력하세요:', '');
+  if(title===null) return;
+  const cats=(DATA.videoCats||DEFAULT.videoCats);
+  const cat=prompt('카테고리를 입력하세요.\n('+cats.join(' / ')+')', cats[0]||'기본');
+  if(cat===null) return;
+  const catTrim=cat.trim()||'기본';
+  const catsArr=(DATA.videoCats||DEFAULT.videoCats).slice();
+  if(!catsArr.includes(catTrim)){ catsArr.push(catTrim); ROOT.child('videoCats').set(catsArr); }
+  const arr=(DATA.videos||[]).slice();
+  arr.push({url, title:title.trim()||'(제목없음)', cat:catTrim, ts:Date.now()});
+  ROOT.child('videos').set(arr);
+  alert('참고영상에 추가했어요! 👍');
 }
 const TEAM_CHARS=[
   { img:CARD_CHAR_BROWN, name:'초코', color:'#e0a93b',
@@ -5444,7 +5488,13 @@ function diaryBodyRender(s){
   const makeEmbed=(id,isShorts)=>{
     const span=document.createElement('span');
     span.className='dv-embed '+(isShorts?'dv-shorts':'dv-wide');
-    span.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    const a1 = (typeof adminLevel==='function' && adminLevel()===1);
+    span.innerHTML=`<span class="dv-frame"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></span>
+      <span class="dv-tools">
+        <button type="button" class="dv-btn" title="크게 보기" onclick="openVideoModal('${id}',${isShorts?'true':'false'})">⛶ 크게보기</button>
+        <button type="button" class="dv-btn" title="유튜브에서 보기" onclick="window.open('https://www.youtube.com/watch?v=${id}','_blank')">▶ 유튜브</button>
+        ${a1?`<button type="button" class="dv-btn dv-btn-add" title="참고영상에 추가" onclick="addVideoFromId('${id}')">＋ 참고영상</button>`:''}
+      </span>`;
     return span;
   };
   // 2) <a href=유튜브> 링크를 임베드로 교체
