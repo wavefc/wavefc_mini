@@ -575,6 +575,9 @@
   .minicards .c:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 2px 0 rgba(0,0,0,.15);}
   .minicards .mc-sub{font-size:9px;font-weight:normal;opacity:.92;}
   .minicards .c1{background:#d63384;}.minicards .c2{background:#e02b2b;}
+  .minicards .c-admin{background:#5a9bd4;}
+  .at-tab{flex:1;min-width:120px;border:1px solid #cdd6dd;background:#f4f7fa;color:#5a6a72;border-radius:8px 8px 0 0;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;}
+  .at-tab.on{background:#fff;color:#2176a8;border-bottom-color:#fff;}
 
   .taskbar{background:linear-gradient(#3f5a6e,#2a3b47);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:10px;padding:4px 8px;display:flex;align-items:center;gap:8px;}
   .taskbar .start{background:#2e8b3d;padding:2px 10px;border:1px solid #fff;}
@@ -715,6 +718,7 @@
         <div class="mc-title">WAVE 더 구경하기</div>
         <a class="c c1" href="https://www.instagram.com/wavefc.2023?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" target="_blank" rel="noopener" onclick="clickExtLink()">📷 인스타</a>
         <a class="c c2" href="https://www.youtube.com/@WAVE_FC" target="_blank" rel="noopener" onclick="clickExtLink()">▶ 유튜브</a>
+        <a class="c c-admin" id="adminPanelBtn" href="#" onclick="openAdminTools();return false;" style="display:none;">🍋 관리자 전용</a>
       </div>
     </div>
   </div>
@@ -1139,6 +1143,234 @@ function runMigrations(){
     ROOT.child('_backfilled').set(true);
   }catch(e){}
 }
+// ===== 출석 TOP6 월간 보너스 =====
+const TOP6_BONUS=[10,7,5,4,3,2]; // 1~6위 보너스 점수
+const TOP6_BONUS_DEFAULT_MSG={
+  1:'🏆 축하합니다! 지난달 출석 1위에 빛나는 주인공이에요!\n꾸준함이 최고의 실력입니다. 보너스 10점을 드려요! 💚',
+  2:'🥈 축하해요! 지난달 출석 2위! 거의 매번 함께해줘서 고마워요.\n보너스 7점을 드립니다! 💙',
+  3:'🥉 축하해요! 지난달 출석 3위! 성실함이 빛났어요.\n보너스 5점을 드려요! 💛',
+  4:'👏 지난달 출석 TOP6, 4위예요! 꾸준한 참여 정말 멋져요.\n보너스 4점을 드립니다!',
+  5:'👏 지난달 출석 TOP6, 5위예요! 함께해줘서 고마워요.\n보너스 3점을 드립니다!',
+  6:'👏 지난달 출석 TOP6, 6위예요! 앞으로도 무브무브!\n보너스 2점을 드립니다!'
+};
+// 보너스 메시지 가져오기 (관리자가 수정한 게 있으면 그것, 없으면 기본)
+function top6BonusMsg(rank){
+  const custom=((DATA.top6_bonus_msg||{})[rank]);
+  return (custom && String(custom).trim()) ? custom : TOP6_BONUS_DEFAULT_MSG[rank];
+}
+// 직전 달 monthKey 계산 (오늘 기준)
+function prevMonthKey(){
+  const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1; // 이번달
+  m-=1; if(m<1){ m=12; y-=1; }
+  return y+'-'+m;
+}
+// 특정 월의 TOP6 보너스 지급 (관리자1 실행). 중복 지급 방지.
+function awardTop6Bonus(monthKey){
+  if(adminLevel()!==1) return alert('관리자1만 실행할 수 있어요.');
+  const done=DATA.top6_bonus||{};
+  if(done[monthKey] && done[monthKey].processed){
+    if(!confirm(attMonthLabel(monthKey)+' 보너스는 이미 지급했어요.\n다시 지급하면 중복될 수 있어요. 그래도 진행할까요?')) return;
+  }
+  const top6=monthTop6(monthKey);
+  if(!top6.length) return alert(attMonthLabel(monthKey)+' 출석 기록이 없어요.');
+  const log=(DATA.activity_log||[]).slice();
+  const awarded={}; const pending=DATA.top6_bonus_pending||{};
+  top6.forEach(t=>{
+    const rank=t._rank;
+    const pts=TOP6_BONUS[rank-1]||0;
+    if(pts<=0) return;
+    // 멤버명 → 사용자키 매칭 (roster의 key 사용)
+    const m=(DATA.roster||[]).find(x=>x.name===t.name);
+    const userKey=(m&&m.key)?m.key:t.name;
+    log.push({user:userKey, type:'top6bonus', ts:Date.now(), pts:pts, note:monthKey+' 출석'+rank+'위 보너스', backfill:true});
+    awarded[t.name]=rank;
+    // 축하 모달 예약 (사용자키 기준)
+    pending[userKey]=pending[userKey]||[];
+    pending[userKey].push({month:monthKey, rank:rank, pts:pts, ts:Date.now()});
+  });
+  ROOT.child('activity_log').set(log);
+  ROOT.child('top6_bonus_pending').set(pending);
+  const rec=Object.assign({},done);
+  rec[monthKey]={processed:true, ts:Date.now(), awarded:awarded};
+  ROOT.child('top6_bonus').set(rec);
+  alert(attMonthLabel(monthKey)+' 출석 TOP6 보너스를 지급했어요! 🎉\n\n'+top6.map(t=>`${t._rank}위 ${t.name} (+${TOP6_BONUS[t._rank-1]}점)`).join('\n'));
+  renderPage(currentPage);
+}
+// 내게 안 본 TOP6 축하가 있으면 모달 표시 (접속 시 호출)
+function checkTop6BonusModal(){
+  if(!me) return;
+  const pending=(DATA.top6_bonus_pending||{})[me];
+  if(!pending || !pending.length) return;
+  // 가장 최근 1건 표시
+  const item=pending[pending.length-1];
+  showTop6BonusModal(item);
+}
+function showTop6BonusModal(item){
+  const rankEmoji={1:'🥇',2:'🥈',3:'🥉',4:'🏅',5:'🏅',6:'🏅'}[item.rank]||'🏅';
+  const ov=document.createElement('div');
+  ov.id='top6BonusOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div onclick="event.stopPropagation()" style="background:#fff;border-radius:18px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 16px 50px rgba(0,0,0,.3);">
+      <div style="font-size:46px;margin-bottom:6px;">${rankEmoji}</div>
+      <div style="font-size:15px;color:#2c3e50;font-weight:700;margin-bottom:4px;">${attMonthLabel(item.month)} 출석 TOP6</div>
+      <div style="font-size:14px;color:#3a5566;line-height:1.7;white-space:pre-wrap;margin:10px 0 4px;">${esc(top6BonusMsg(item.rank))}</div>
+      <div style="font-size:13px;color:#2e8b3d;font-weight:800;margin:8px 0 14px;">+${item.pts}점 적립 완료!</div>
+      <button onclick="dismissTop6BonusModal()" style="background:#5a9bd4;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">확인 🍋</button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+function dismissTop6BonusModal(){
+  const ov=document.getElementById('top6BonusOverlay'); if(ov) ov.remove();
+  // 내 pending에서 본 항목 제거 (가장 최근 1건)
+  if(!me) return;
+  const pending=JSON.parse(JSON.stringify(DATA.top6_bonus_pending||{}));
+  if(pending[me] && pending[me].length){
+    pending[me].pop();
+    if(!pending[me].length) delete pending[me];
+    ROOT.child('top6_bonus_pending').set(pending);
+  }
+}
+// ===== 🍋 관리자 전용 도구 모달 =====
+function openAdminTools(){
+  if(adminLevel()!==1) return alert('관리자1(대표) 모드에서만 사용할 수 있어요.');
+  closeAdminTools();
+  const ov=document.createElement('div');
+  ov.id='adminToolsOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;';
+  ov.innerHTML=`<div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;max-width:560px;width:100%;box-shadow:0 16px 50px rgba(0,0,0,.3);overflow:hidden;">
+      <div style="background:#5a9bd4;color:#fff;padding:14px 18px;font-size:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;">
+        <span>🍋 관리자 전용 도구</span>
+        <span onclick="closeAdminTools()" style="cursor:pointer;font-size:20px;">✕</span>
+      </div>
+      <div style="display:flex;gap:6px;padding:12px 14px 0;flex-wrap:wrap;">
+        <button class="at-tab" id="attab_bonus" onclick="adminToolsTab('bonus')">🔹 출석 TOP6 보너스</button>
+        <button class="at-tab" id="attab_kb" onclick="adminToolsTab('kb')">🔹 QnA 지식베이스</button>
+        <button class="at-tab" id="attab_quiz" onclick="adminToolsTab('quiz')">🔹 깜짝퀴즈 등록</button>
+      </div>
+      <div id="adminToolsBody" style="padding:14px 18px 20px;max-height:64vh;overflow-y:auto;"></div>
+    </div>`;
+  ov.addEventListener('click',closeAdminTools);
+  document.body.appendChild(ov);
+  adminToolsTab('bonus');
+}
+function closeAdminTools(){ const ov=document.getElementById('adminToolsOverlay'); if(ov) ov.remove(); }
+function adminToolsTab(tab){
+  const body=document.getElementById('adminToolsBody'); if(!body) return;
+  ['bonus','kb','quiz'].forEach(t=>{ const b=document.getElementById('attab_'+t); if(b) b.classList.toggle('on',t===tab); });
+  if(tab==='bonus') body.innerHTML=adminToolsBonusHtml();
+  else if(tab==='kb') body.innerHTML=adminToolsKbHtml();
+  else if(tab==='quiz') body.innerHTML=adminToolsQuizHtml();
+  if(tab==='kb') renderKbAdmin();
+  if(tab==='quiz') renderQuizAdmin();
+}
+// --- 출석 TOP6 보너스 탭 ---
+function adminToolsBonusHtml(){
+  const pm=prevMonthKey();
+  const done=DATA.top6_bonus||{};
+  // 지급 가능한 달 목록(기록 있는 달)
+  const months=[]; (DATA.attendance||[]).forEach(s=>{ const k=attMonthKey(s.date); if(!months.includes(k)) months.push(k); });
+  months.sort((a,b)=>{ const pa=a.split('-').map(Number),pb=b.split('-').map(Number); return (pb[0]*100+pb[1])-(pa[0]*100+pa[1]); });
+  const opts=months.map(m=>`<option value="${m}" ${m===pm?'selected':''}>${attMonthLabel(m)}${done[m]&&done[m].processed?' ✅지급완료':''}</option>`).join('');
+  const top6=monthTop6(pm);
+  const preview=top6.length
+    ? top6.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;"><span>${t._rank}위 · ${esc(t.name)} (${t.rate}%)</span><b style="color:#2e8b3d;">+${TOP6_BONUS[t._rank-1]}점</b></div>`).join('')
+    : '<div style="color:#9aa6ae;font-size:12px;">출석 기록이 없어요.</div>';
+  const msgRows=[1,2,3,4,5,6].map(r=>`
+    <div style="margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:700;color:#5a7585;margin-bottom:2px;">${r}위 메시지 (+${TOP6_BONUS[r-1]}점)</div>
+      <textarea id="bonusMsg${r}" rows="2" style="width:100%;font-size:12px;padding:6px;border:1px solid #cdd6dd;border-radius:6px;box-sizing:border-box;">${esc(top6BonusMsg(r))}</textarea>
+    </div>`).join('');
+  return `
+    <div style="font-size:13px;color:#3a5566;line-height:1.6;margin-bottom:10px;">
+      매달 출석 TOP6에게 순위별 보너스 점수(<b>1위 10 · 2위 7 · 3위 5 · 4위 4 · 5위 3 · 6위 2점</b>)를 줍니다.<br>
+      멤버는 다음 접속 시 축하 알림을 받아요. <b>같은 달은 한 번만</b> 지급하세요.
+    </div>
+    <div style="background:#f2fafe;border:1px solid #bfe0f5;border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+        <select id="bonusMonth" onchange="refreshBonusPreview()" style="font-size:13px;padding:5px;border:1px solid #cdd6dd;border-radius:6px;">${opts}</select>
+        <button class="qna-send sm" style="margin:0;" onclick="awardTop6Bonus(document.getElementById('bonusMonth').value)">이 달 보너스 지급</button>
+      </div>
+      <div id="bonusPreview">${preview}</div>
+    </div>
+    <div style="font-size:13px;font-weight:800;color:#2c3e50;margin-bottom:6px;">📝 순위별 축하 메시지 (수정 가능)</div>
+    ${msgRows}
+    <button class="qna-send sm" onclick="saveBonusMsgs()">메시지 저장</button>
+  `;
+}
+function refreshBonusPreview(){
+  const sel=document.getElementById('bonusMonth'); if(!sel) return;
+  const top6=monthTop6(sel.value);
+  const el=document.getElementById('bonusPreview'); if(!el) return;
+  el.innerHTML=top6.length
+    ? top6.map(t=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;"><span>${t._rank}위 · ${esc(t.name)} (${t.rate}%)</span><b style="color:#2e8b3d;">+${TOP6_BONUS[t._rank-1]}점</b></div>`).join('')
+    : '<div style="color:#9aa6ae;font-size:12px;">출석 기록이 없어요.</div>';
+}
+function saveBonusMsgs(){
+  if(adminLevel()!==1) return;
+  const msg={};
+  [1,2,3,4,5,6].forEach(r=>{ const t=document.getElementById('bonusMsg'+r); if(t) msg[r]=t.value; });
+  ROOT.child('top6_bonus_msg').set(msg);
+  alert('축하 메시지를 저장했어요! 💚');
+}
+// --- QnA 지식베이스 탭 ---
+function adminToolsKbHtml(){
+  return `
+    <div style="font-size:13px;color:#3a5566;line-height:1.6;margin-bottom:10px;">QnA 챗봇이 참고하는 지식(질문/답변)을 관리합니다.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+      <input id="kbQ" class="qna-input" style="margin:0;" placeholder="질문 (예: 회비는 얼마인가요?)">
+      <textarea id="kbA" rows="2" class="qna-input" style="margin:0;" placeholder="답변"></textarea>
+      <button class="qna-send sm" style="margin:0;" onclick="mAddKbItem()">지식 추가</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#5a7585;margin-bottom:4px;">등록된 지식</div>
+    <div id="mKbListAdmin" style="font-size:12px;max-height:300px;overflow-y:auto;"></div>
+  `;
+}
+// --- 깜짝퀴즈 등록 탭 ---
+function adminToolsQuizHtml(){
+  return `
+    <div style="font-size:13px;color:#3a5566;line-height:1.6;margin-bottom:10px;">
+      깜짝퀴즈를 등록합니다. 한 줄에 한 문제씩 입력하세요.<br>
+      <b>O/X)</b> OX | 문장 | O (또는 X)<br>
+      <b>객관식)</b> MC | 질문 | 보기1 | 보기2 | 보기3 | 보기4 | 정답번호<br>
+      <span style="color:#a06a00;">예) MC | 풋살 한 팀 인원은? | 4명 | 5명 | 6명 | 7명 | 2</span>
+    </div>
+    <textarea id="mBulkQuiz" rows="5" placeholder="OX | 풋살은 한 팀 5명이다 | O&#10;MC | 풋살 경기 시간은? | 전후반 10분 | 전후반 15분 | 전후반 20분 | 3" style="width:100%;box-sizing:border-box;font-size:12px;padding:6px;border:1px solid #cdd6dd;border-radius:6px;"></textarea>
+    <div style="display:flex;gap:6px;margin:8px 0;">
+      <button class="qna-send sm" style="margin:0;flex:1;" onclick="mBulkAddQuiz()">미리보기 후 등록</button>
+      <button class="qna-send sm" style="margin:0;background:#9aa6ae;" onclick="document.getElementById('mBulkQuiz').value='';">비우기</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#5a7585;margin:8px 0 4px;">등록된 퀴즈</div>
+    <div id="mQuizListAdmin" style="font-size:12px;max-height:280px;overflow-y:auto;"></div>
+  `;
+}
+// 모달용 퀴즈 대량 등록 (기존 parseBulkQuiz 재사용)
+function mBulkAddQuiz(){
+  if(adminLevel()!==1) return alert('관리자1만 등록할 수 있어요.');
+  const raw=(document.getElementById('mBulkQuiz')||{}).value||'';
+  const parsed=parseBulkQuiz(raw);
+  if(!parsed.length) return alert('등록할 퀴즈를 인식하지 못했어요. 형식을 확인해주세요.');
+  if(!confirm(parsed.length+'개의 퀴즈를 등록할까요?')) return;
+  const arr=(DATA.quizzes||[]).slice();
+  parsed.forEach(q=>arr.push(q));
+  ROOT.child('quizzes').set(arr);
+  document.getElementById('mBulkQuiz').value='';
+  alert(parsed.length+'개 퀴즈를 등록했어요! 🎯');
+  renderQuizAdmin();
+}
+// 모달용 QnA 지식 추가 (kbQ/kbA 읽기)
+function mAddKbItem(){
+  if(adminLevel()!==1) return alert('관리자1만 추가할 수 있어요.');
+  const q=(document.getElementById('kbQ')||{}).value||'';
+  const a=(document.getElementById('kbA')||{}).value||'';
+  if(!q.trim()||!a.trim()) return alert('질문과 답변을 모두 입력하세요.');
+  const kb=(DATA.qna_kb||[]).slice();
+  kb.push({q:q.trim(),a:a.trim(),ts:Date.now()});
+  ROOT.child('qna_kb').set(kb);
+  document.getElementById('kbQ').value='';
+  document.getElementById('kbA').value='';
+  renderKbAdmin();
+}
+
 // 활동 기록. 로그인 사용자만 기록됨. pts 필드에 가중치 저장.
 function logActivity(type){
   if(!me) return; // 비로그인은 점수 없음
@@ -1398,6 +1630,8 @@ let shortsPage=0;          // 숏츠 페이지(6개씩)
 let videoWriting=false;    // 참고영상 추가 폼 펼침
 let cmtPage=-1;            // 일촌평 페이지(9개씩). -1=진입 시 마지막(최신) 페이지
 let cmtPageLocked=false;   // 사용자가 직접 페이지를 넘겼는지(true면 그 페이지 유지)
+let quizPage=-1;           // 깜짝퀴즈 전체기록 페이지. -1=진입 시 마지막(최신) 페이지
+let quizPageLocked=false;  // 사용자가 직접 넘겼는지
 let qnaPage=0;             // QnA 페이지(2개씩)
 function todayQuizIndex(){
   const qs=DATA.quizzes||[];
@@ -1652,7 +1886,31 @@ function pageQuiz(){
     const ok=list.filter(r=>r.correct).length;
     const rate=total?Math.round(ok/total*100):0;
     const canEdit = showUser && isAdmin1; // 관리자1 전체기록에서만 정정
-    const rows=list.map(r=>{
+
+    // 전체기록(showUser): 날짜순 페이지네이션 (과거=1페이지, 최신=마지막. 기본은 최신)
+    const PER=20;
+    let pageList=list, pagerHtml='', curPage=0, pageCount=1;
+    if(showUser && total>PER){
+      pageCount=Math.ceil(total/PER);
+      // list는 최신순. 과거가 1페이지가 되도록, 페이지 번호는 과거→최신으로 매김.
+      // 최신 PER개 = 마지막 페이지(pageCount). 가장 과거 PER개 = 1페이지.
+      if(quizPage<0 || !quizPageLocked) quizPage=pageCount; // 기본: 최신 페이지
+      curPage=Math.max(1,Math.min(pageCount,quizPage));
+      // 페이지 i(1~pageCount): 최신순 list에서 끝(과거)부터 잘라냄
+      // 1페이지=가장 과거 → list의 끝부분, pageCount페이지=최신 → list의 앞부분
+      const fromEndStart=(curPage-1)*PER;             // 과거쪽부터의 시작
+      const sliceStart=Math.max(0,total-fromEndStart-PER);
+      const sliceEnd=total-fromEndStart;
+      pageList=list.slice(sliceStart,sliceEnd);        // 이 페이지 분량(여전히 최신순)
+      // 페이지 버튼: 왼쪽=1(과거) ... 오른쪽=pageCount(최신)
+      let btns='';
+      for(let p=1;p<=pageCount;p++){
+        btns+=`<button onclick="quizPage=${p};quizPageLocked=true;renderPage('quiz')" style="border:1px solid ${p===curPage?'#2e8b3d':'#cdd6dd'};background:${p===curPage?'#2e8b3d':'#fff'};color:${p===curPage?'#fff':'#5a6a72'};border-radius:6px;padding:3px 9px;margin:0 2px;cursor:pointer;font-size:12px;font-weight:700;">${p}</button>`;
+      }
+      pagerHtml=`<div style="text-align:center;margin:6px 0 16px;">${btns}<div style="font-size:10px;color:#9aa6ae;margin-top:3px;">◀ 과거 · 최신 ▶ (기본은 최신 페이지)</div></div>`;
+    }
+
+    const rows=pageList.map(r=>{
       // 보기 텍스트 변환 헬퍼
       const toText=(v)=>{
         if(r.type==='ox') return v;
@@ -1690,10 +1948,11 @@ function pageQuiz(){
         <b>${title}</b> · 참여 ${total}회 · 정답 ${ok}회 · 정답률 <span style="color:#2e8b3d;font-weight:700;">${rate}%</span>
       </div>
       ${canEdit?'<div style="font-size:11px;color:#a06a00;margin-bottom:4px;">✏️ 결과를 클릭하면 정답↔오답을 바꿀 수 있어요 (점수도 자동 반영).</div>':''}
-      <table class="lst" style="margin-bottom:18px;">
+      <table class="lst" style="margin-bottom:8px;">
         <tr><th>날짜</th>${showUser?'<th>이름</th>':''}<th>문제</th><th>나의 답</th><th>결과</th></tr>
         ${rows}
-      </table>`;
+      </table>
+      ${pagerHtml}`;
   }
 
   // 내 기록
@@ -1722,7 +1981,7 @@ function pageQuiz(){
 }
 
 // ===== 긴급 복구: 퀴즈 내역 + 전체 점수 재생성 (관리자1 전용, 1회) =====
-const RECOVERY_QUIZ_RECORDS = [{"user": "엄다정", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000000}, {"user": "엄다정", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000001}, {"user": "엄다정", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000002}, {"user": "조훈지", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000003}, {"user": "조훈지", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782290000004}, {"user": "조훈지", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000005}, {"user": "안시하", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782290000006}, {"user": "안시하", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000007}, {"user": "안시하", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000008}, {"user": "조은비", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000009}, {"user": "조은비", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000010}, {"user": "조은비", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000011}, {"user": "김소연", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782290000012}, {"user": "김소연", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000013}, {"user": "김소연", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000014}, {"user": "조안나", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000015}, {"user": "박지예", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782290000016}, {"user": "박지예", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000017}, {"user": "박지예", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000018}, {"user": "조안나", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000019}, {"user": "조안나", "qk": "qWAVE FC는 매주 무슨 요일에 모일까요?", "q": "WAVE FC는 매주 무슨 요일에 모일까요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.24", "ts": 1782290000020}, {"user": "장예나", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782290000021}, {"user": "김서영", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000022}, {"user": "김민지", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782290000023}];
+const RECOVERY_QUIZ_RECORDS = [{"user": "엄다정", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200000000}, {"user": "엄다정", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782200001000}, {"user": "엄다정", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200002000}, {"user": "조훈지", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782200003000}, {"user": "조훈지", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782200004000}, {"user": "조훈지", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200005000}, {"user": "안시하", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782200006000}, {"user": "안시하", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200007000}, {"user": "안시하", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200008000}, {"user": "조은비", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782200009000}, {"user": "조은비", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200010000}, {"user": "조은비", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200011000}, {"user": "김소연", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.24", "ts": 1782200012000}, {"user": "김소연", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200013000}, {"user": "김소연", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200014000}, {"user": "조안나", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200015000}, {"user": "박지예", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.24", "ts": 1782200016000}, {"user": "박지예", "qk": "q풋살에는 오프사이드가 있다", "q": "풋살에는 오프사이드가 있다", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200017000}, {"user": "박지예", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200018000}, {"user": "조안나", "qk": "q풋살은 한 팀이 11명으로 경기한다.", "q": "풋살은 한 팀이 11명으로 경기한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200019000}, {"user": "조안나", "qk": "qWAVE FC는 매주 무슨 요일에 모일까요?", "q": "WAVE FC는 매주 무슨 요일에 모일까요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.24", "ts": 1782200020000}, {"user": "장예나", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "O", "correct": false, "date": "2026.06.24", "ts": 1782200021000}, {"user": "김서영", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200022000}, {"user": "김민지", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200023000}, {"user": "김서영", "qk": "q풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "q": "풋살의 포지션에는 피보, 아라, 미드, 픽소, 골레이로가 있다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200024000}, {"user": "김서영", "qk": "q풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "q": "풋살에 백패스 규칙은 골레이로에게 패스를 절대 할 수 없다는 것이다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.24", "ts": 1782200025000}, {"user": "박지예", "qk": "q픽소의 역할로 가장 알맞은 것은 무엇인가요?", "q": "픽소의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200026000}, {"user": "박지예", "qk": "q골 클리어런스는 축구처럼 발로 차서 재개해야 한다.", "q": "골 클리어런스는 축구처럼 발로 차서 재개해야 한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.25", "ts": 1782200027000}, {"user": "박지예", "qk": "q골레이로가 자기 진영에서 한 번 공을 다룬 뒤에는 조건 없이 바로 다시 받을 수 있다.", "q": "골레이로가 자기 진영에서 한 번 공을 다룬 뒤에는 조건 없이 바로 다시 받을 수 있다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.25", "ts": 1782200028000}, {"user": "김서영", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200029000}, {"user": "김서영", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200030000}, {"user": "김서영", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200031000}, {"user": "장예나", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.25", "ts": 1782200032000}, {"user": "장예나", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200033000}, {"user": "장예나", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200034000}, {"user": "조은비", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200035000}, {"user": "조안나", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200036000}, {"user": "조은비", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200037000}, {"user": "조안나", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200038000}, {"user": "조안나", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200039000}, {"user": "조은비", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200040000}, {"user": "안시하", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200041000}, {"user": "안시하", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200042000}, {"user": "안시하", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200043000}, {"user": "엄다정", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200044000}, {"user": "엄다정", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200045000}, {"user": "엄다정", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200046000}, {"user": "조훈지", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.25", "ts": 1782200047000}, {"user": "조훈지", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200048000}, {"user": "조훈지", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200049000}, {"user": "풋살굿", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200050000}, {"user": "풋살굿", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200051000}, {"user": "풋살굿", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200052000}, {"user": "장윤ㅎ", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200053000}, {"user": "장윤ㅎ", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200054000}, {"user": "장윤ㅎ", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200055000}, {"user": "김민지", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.25", "ts": 1782200056000}, {"user": "김민지", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.25", "ts": 1782200057000}, {"user": "김민지", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.25", "ts": 1782200058000}, {"user": "박지예", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200059000}, {"user": "박지예", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.26", "ts": 1782200060000}, {"user": "박지예", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200061000}, {"user": "풋살굿", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200062000}, {"user": "풋살굿", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.26", "ts": 1782200063000}, {"user": "풋살굿", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200064000}, {"user": "김서영", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200065000}, {"user": "김서영", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.26", "ts": 1782200066000}, {"user": "김서영", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200067000}, {"user": "조안나", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200068000}, {"user": "조안나", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.26", "ts": 1782200069000}, {"user": "조안나", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200070000}, {"user": "조은비", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.26", "ts": 1782200071000}, {"user": "조은비", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.26", "ts": 1782200072000}, {"user": "조은비", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.26", "ts": 1782200073000}, {"user": "조안나", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.27", "ts": 1782200074000}, {"user": "조안나", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.27", "ts": 1782200075000}, {"user": "조안나", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200076000}, {"user": "김서영", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.27", "ts": 1782200077000}, {"user": "김서영", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.27", "ts": 1782200078000}, {"user": "김서영", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200079000}, {"user": "박지예", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200080000}, {"user": "박지예", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.27", "ts": 1782200081000}, {"user": "박지예", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200082000}, {"user": "조은비", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.27", "ts": 1782200083000}, {"user": "조은비", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.27", "ts": 1782200084000}, {"user": "조은비", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.27", "ts": 1782200085000}, {"user": "장윤ㅎ", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200086000}, {"user": "장윤ㅎ", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.27", "ts": 1782200087000}, {"user": "장윤ㅎ", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200088000}, {"user": "엄다정", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200089000}, {"user": "엄다정", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.27", "ts": 1782200090000}, {"user": "엄다정", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200091000}, {"user": "김시정", "qk": "q풋살에는 교체 횟수 제한이 없다.", "q": "풋살에는 교체 횟수 제한이 없다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200092000}, {"user": "김시정", "qk": "q피보의 역할로 가장 알맞은 것은 무엇인가요?", "q": "피보의 역할로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.27", "ts": 1782200093000}, {"user": "김시정", "qk": "q공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "q": "공이 천장이나 상단 그물에 맞으면 마지막으로 터치한 팀의 상대팀 킥인이 된다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.27", "ts": 1782200094000}, {"user": "김민지", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200095000}, {"user": "김민지", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.28", "ts": 1782200096000}, {"user": "김민지", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.28", "ts": 1782200097000}, {"user": "박지예", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 0, "correct": false, "date": "2026.06.28", "ts": 1782200098000}, {"user": "박지예", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200099000}, {"user": "박지예", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200100000}, {"user": "조안나", "qk": "q풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "q": "풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200101000}, {"user": "조안나", "qk": "q골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "q": "골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200102000}, {"user": "조안나", "qk": "qWAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "q": "WAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.28", "ts": 1782200103000}, {"user": "김서영", "qk": "q풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "q": "풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200104000}, {"user": "김서영", "qk": "qWAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "q": "WAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.28", "ts": 1782200105000}, {"user": "김서영", "qk": "q골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "q": "골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200106000}, {"user": "엄다정", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200107000}, {"user": "엄다정", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.28", "ts": 1782200108000}, {"user": "엄다정", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200109000}, {"user": "장윤ㅎ", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200110000}, {"user": "장윤ㅎ", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.28", "ts": 1782200111000}, {"user": "장윤ㅎ", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.28", "ts": 1782200112000}, {"user": "조은비", "qk": "q풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "q": "풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.28", "ts": 1782200113000}, {"user": "조은비", "qk": "qWAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "q": "WAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.28", "ts": 1782200114000}, {"user": "조은비", "qk": "q골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "q": "골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.28", "ts": 1782200115000}, {"user": "박지예", "qk": "qWAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "q": "WAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.29", "ts": 1782200116000}, {"user": "박지예", "qk": "q골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "q": "골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.29", "ts": 1782200117000}, {"user": "박지예", "qk": "q풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "q": "풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200118000}, {"user": "조안나", "qk": "q풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "q": "풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200119000}, {"user": "조안나", "qk": "q골 클리어런스는 어떻게 재개하나요?", "q": "골 클리어런스는 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.29", "ts": 1782200120000}, {"user": "조안나", "qk": "q풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "q": "풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200121000}, {"user": "김서영", "qk": "q풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "q": "풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200122000}, {"user": "김서영", "qk": "q골 클리어런스는 어떻게 재개하나요?", "q": "골 클리어런스는 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.29", "ts": 1782200123000}, {"user": "김서영", "qk": "q풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "q": "풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200124000}, {"user": "조은비", "qk": "q풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "q": "풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200125000}, {"user": "조은비", "qk": "q풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "q": "풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200126000}, {"user": "조은비", "qk": "q골 클리어런스는 어떻게 재개하나요?", "q": "골 클리어런스는 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.29", "ts": 1782200127000}, {"user": "김시정", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200128000}, {"user": "김시정", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.29", "ts": 1782200129000}, {"user": "김민지", "qk": "q교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "q": "교체할 때 들어가는 선수가 먼저 들어가도 상관없다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.29", "ts": 1782200130000}, {"user": "김민지", "qk": "q풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "q": "풋살에서 공이 터치라인 밖으로 나가면 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.29", "ts": 1782200131000}, {"user": "김민지", "qk": "q픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "q": "픽소는 뒤에서 경기를 보고 패스 방향과 수비 위치를 잡아주는 역할도 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200132000}, {"user": "조훈지", "qk": "q교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "q": "교체할 때는 나가는 선수가 완전히 나온 뒤 들어가는 선수가 들어가야 한다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200133000}, {"user": "조훈지", "qk": "q풋살에서 디아 움직임은 무엇에 가깝나요?", "q": "풋살에서 디아 움직임은 무엇에 가깝나요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.29", "ts": 1782200134000}, {"user": "조훈지", "qk": "q풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "q": "풋살 페널티킥은 골라인에서 6m 떨어진 페널티 마크에서 찬다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.29", "ts": 1782200135000}, {"user": "김서영", "qk": "q공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "q": "공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200136000}, {"user": "김서영", "qk": "q풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "q": "풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.30", "ts": 1782200137000}, {"user": "김서영", "qk": "q킥인에서 바로 골을 넣으면 득점으로 인정된다.", "q": "킥인에서 바로 골을 넣으면 득점으로 인정된다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200138000}, {"user": "박지예", "qk": "q골 클리어런스는 어떻게 재개하나요?", "q": "골 클리어런스는 어떻게 재개하나요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.30", "ts": 1782200139000}, {"user": "박지예", "qk": "q풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "q": "풋살에서는 공을 오래 끄는 것보다 빠른 패스와 움직임이 중요하다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.30", "ts": 1782200140000}, {"user": "박지예", "qk": "q풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "q": "풋살에서는 상대 골대 가까이에 있어도 오프사이드 반칙이 아니다.", "type": "ox", "picked": "O", "correct": true, "date": "2026.06.30", "ts": 1782200141000}, {"user": "조안나", "qk": "q풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "q": "풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.30", "ts": 1782200142000}, {"user": "조안나", "qk": "q킥인에서 바로 골을 넣으면 득점으로 인정된다.", "q": "킥인에서 바로 골을 넣으면 득점으로 인정된다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200143000}, {"user": "엄다정", "qk": "q풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "q": "풋살 교체는 자기 팀 교체 구역을 통해 해야 한다.", "type": "ox", "picked": "X", "correct": false, "date": "2026.06.30", "ts": 1782200144000}, {"user": "엄다정", "qk": "qWAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "q": "WAVE FC에서 매너게임의 핵심으로 가장 알맞은 것은 무엇인가요?", "type": "mc", "picked": 1, "correct": true, "date": "2026.06.30", "ts": 1782200145000}, {"user": "엄다정", "qk": "q골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "q": "골레이로가 공을 계속 들고 있어도 반칙이 아니다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200146000}, {"user": "조안나", "qk": "q공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "q": "공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200147000}, {"user": "조은비", "qk": "q공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "q": "공식 풋살은 공이 아웃되어도 시간이 계속 흐르는 러닝타임만 사용한다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200148000}, {"user": "조은비", "qk": "q풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "q": "풋살의 대표 포지션 조합으로 맞는 것은 무엇인가요?", "type": "mc", "picked": 0, "correct": true, "date": "2026.06.30", "ts": 1782200149000}, {"user": "조은비", "qk": "q킥인에서 바로 골을 넣으면 득점으로 인정된다.", "q": "킥인에서 바로 골을 넣으면 득점으로 인정된다.", "type": "ox", "picked": "X", "correct": true, "date": "2026.06.30", "ts": 1782200150000}];
 function emergencyRecover(){
   if(adminLevel()!==1) return alert('관리자1만 실행할 수 있어요.');
   if(!confirm('퀴즈 내역과 점수를 복구합니다.\n\n현재 퀴즈 기록과 점수가 복구본으로 교체됩니다. 진행할까요?')) return;
@@ -1749,6 +2008,10 @@ function emergencyRecover(){
   // 2-5) 수동 보정점수 (조안나·간장구·김서영) 재적용
   const ADJ={'조안나':4,'간장구':4.5,'김서영':3};
   Object.keys(ADJ).forEach(n=>{ log.push({user:n, type:'adjust', ts:0, pts:ADJ[n], backfill:true, note:'과거활동소급'}); });
+  // 2-6) 출석 TOP6 보너스 보존 (이미 지급한 보너스는 그대로 유지)
+  (DATA.activity_log||[]).forEach(l=>{
+    if(l && l.type==='top6bonus'){ log.push(Object.assign({}, l)); }
+  });
   ROOT.child('activity_log').set(log);
   // 재실행 방지용 플래그들도 모두 set (자동 마이그레이션이 다시 덮어쓰지 않도록)
   ROOT.child('_backfilled').set(true);
@@ -2164,6 +2427,9 @@ const DEFAULT={
   activity_log:[],
   levelRewards:{},
   diary_home_pick:[],
+  top6_bonus:{},
+  top6_bonus_pending:{},
+  top6_bonus_msg:{},
   videos:[],
   videoCats:["기초","기본","응용","경기"],
   roomTips:[
@@ -2260,7 +2526,10 @@ ROOT.on('value',snap=>{
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
     peek_praises:(Array.isArray(v.peek_praises)?v.peek_praises:null),
     notice_default_open:(typeof v.notice_default_open==='number'?v.notice_default_open:null),
-    diary_home_pick:(Array.isArray(v.diary_home_pick)?v.diary_home_pick:[])};
+    diary_home_pick:(Array.isArray(v.diary_home_pick)?v.diary_home_pick:[]),
+    top6_bonus:(v.top6_bonus||{}),
+    top6_bonus_pending:(v.top6_bonus_pending||{}),
+    top6_bonus_msg:(v.top6_bonus_msg||{})};
     _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
@@ -2268,6 +2537,7 @@ ROOT.on('value',snap=>{
   markLoginToday();  // 재방문 시에도 하루 1회 접속 점수
   try{ checkLevelReward(); }catch(e){} // 10·20·30레벨 달성 시 축하 모달
   try{ refreshTabBadges(); }catch(e){} // 새 글/반응 N 배지 갱신
+  try{ if(!document.getElementById('top6BonusOverlay')) checkTop6BonusModal(); }catch(e){} // 출석 TOP6 보너스 축하
 },()=>setStatus(false));
 
 function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
@@ -2571,6 +2841,7 @@ function go(page,btn){
   if(page==='member'){ _flippedCards={}; _peekedThisVisit={}; _praisedThisVisit=false; } // 멤버현황 진입 시 초기화
   if(page==='home') applyNoticeDefaultOpen(); // 홈 진입 시 기본 펼침 공지 선택
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
+  if(page==='quiz') quizPage=-1, quizPageLocked=false; // 깜짝퀴즈 진입 시 최신 페이지로
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -3763,6 +4034,46 @@ function attMonthKey(d){
 function attMonthLabel(key){
   const p=key.split('-'); return p[0]+'년 '+p[1]+'월';
 }
+// 특정 월(monthKey 'YYYY-M')의 출석 TOP6 계산 (보너스 지급용, 전역)
+// 반환: [{name, rate, oCnt, _rank}] (공동순위 적용, 상위 6명)
+function monthTop6(monthKey){
+  const sessions=(DATA.attendance||[]).filter(s=>attMonthKey(s.date)===monthKey);
+  if(!sessions.length) return [];
+  const roster=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor');
+  const stats=[];
+  roster.forEach(m=>{
+    const isRest=memStatus(m)==='rest';
+    const joinKey=m.join?attDateKey(m.join):0;
+    let oCnt=0, denom=0, anyValid=false;
+    sessions.forEach(s=>{
+      const raw=(s.present&&s.present[m.name]);
+      const preJoin = joinKey && attDateKey(s.date)<joinKey;
+      let st;
+      if(preJoin){ if(raw==='E') st='E'; else return; }
+      else if(raw===true) st='O';
+      else if(raw==='E') st='E';
+      else if(raw==='A') st='A';
+      else if(raw==='R') st='R';
+      else if(raw==='I') st='I';
+      else if(raw==='P') st='P';
+      else if(raw===false||raw==='X') st='X';
+      else st=isRest?'R':'X';
+      anyValid=true;
+      if(st==='R') return;
+      denom++;
+      if(st==='O'||st==='E') oCnt++;
+    });
+    if(anyValid && denom>0 && !isRest){
+      stats.push({name:m.name, rate:Math.round(oCnt/denom*100), oCnt});
+    }
+  });
+  stats.sort((a,b)=> b.rate-a.rate || b.oCnt-a.oCnt);
+  const top6=stats.slice(0,6);
+  // 공동 순위 부여
+  let pv=null, rk=0;
+  top6.forEach((t,i)=>{ if(t.rate!==pv){ rk=i+1; pv=t.rate; } t._rank=rk; });
+  return top6;
+}
 function pageAttend(){
   // 출석 입력·수정 권한: 임원 등급 또는 관리자1 모드만 (멤버·새내기는 보기 전용)
   const isExec=(rankOf(me)==='exec')||(adminLevel()===1);
@@ -4882,6 +5193,8 @@ function applyAdminLevel(){
   onlyA1.forEach(el=>{ el.style.display = (lv===1)?'':'none'; });
   const lbl=document.getElementById('adminLevelLabel');
   if(lbl) lbl.textContent = lv===1?'관리자1 (대표·전체권한)':(lv===2?'관리자2 (회원·출석 관리)':'');
+  const apBtn=document.getElementById('adminPanelBtn');
+  if(apBtn) apBtn.style.display = (lv===1)?'block':'none'; // 🍋 관리자 전용 버튼
 }
 function renderPending(){
   // 승인 대기
@@ -5239,6 +5552,7 @@ function delKbItem(i){
   const kb=(DATA.qna_kb||[]).slice();
   kb.splice(i,1);
   ROOT.child('qna_kb').set(kb);
+  renderKbAdmin();
 }
 // 파일 업로드 → 텍스트 영역에 채우기
 function onBulkKbFile(ev){
@@ -5301,11 +5615,11 @@ function bulkAddKb(skipConfirm){
   alert(`${items.length}개 항목이 추가되었어요! (총 ${kb.length}개)`);
 }
 function renderKbAdmin(){
-  const el=document.getElementById('kbListAdmin');
-  if(!el)return;
-  el.innerHTML=(DATA.qna_kb||[]).length
+  const html=(DATA.qna_kb||[]).length
     ? DATA.qna_kb.map((item,i)=>`<div style="margin-bottom:3px;"><b>Q.</b> ${esc(item.q)} <a href="#" onclick="delKbItem(${i});return false;" style="color:#c0392b;">[삭제]</a><br><span style="color:#5a7585;">A. ${esc(item.a)}</span></div>`).join('')
     : '등록된 지식 없음';
+  const el=document.getElementById('kbListAdmin'); if(el) el.innerHTML=html;
+  const mel=document.getElementById('mKbListAdmin'); if(mel) mel.innerHTML=html;
 }
 // ===== 퀴즈 대량 등록 =====
 function parseBulkQuiz(raw){
@@ -5368,15 +5682,15 @@ function bulkAddQuiz(){
   alert(`${items.length}개 문제가 등록되었어요! (총 ${arr.length}개)`);
 }
 function renderQuizAdmin(){
-  const el=document.getElementById('quizListAdmin');
-  if(!el) return;
   const qs=DATA.quizzes||[];
-  el.innerHTML=qs.length
+  const html=qs.length
     ? `<div style="font-weight:700;color:#a06a00;margin-bottom:3px;">등록된 퀴즈 ${qs.length}개</div>`+qs.map((q,i)=>{
         const ans=q.type==='ox'?q.answer:((q.answer+1)+'번');
         return `<div style="margin-bottom:2px;">${q.type==='ox'?'[O/X]':'[객관식]'} ${esc((q.q||'').slice(0,28))}${(q.q||'').length>28?'…':''} <b style="color:#2e8b3d;">(${esc(String(ans))})</b> <a href="#" onclick="delQuiz(${i});renderQuizAdmin();return false;" style="color:#c0392b;">[삭제]</a></div>`;
       }).join('')
     : '등록된 퀴즈 없음';
+  const el=document.getElementById('quizListAdmin'); if(el) el.innerHTML=html;
+  const mel=document.getElementById('mQuizListAdmin'); if(mel) mel.innerHTML=html;
 }
 function setBg(name){
   if(name && name.indexOf('custom:')===0){
