@@ -2801,8 +2801,10 @@ function addComment(){
   arr.unshift({face:selFace,text:t,by:me,ts:Date.now()});
   cmtPageLocked=false; // 새 댓글 → 다시 최신 페이지를 따라감
   logActivity('ilchon');
+  DATA.comments=arr;           // 즉시 반영
   ROOT.child('comments').set(arr);
   document.getElementById('cmtText').value='';
+  renderPage(currentPage);     // 일촌평 바로 화면에 표시
 }
 // 댓글/일촌평 삭제 권한: 작성자 본인 또는 관리자1 모드
 function canDelOwn(by){ return isApproved() && ((by&&by===me) || adminLevel()===1); }
@@ -2827,8 +2829,10 @@ function addReply(pid){
   const arr=(DATA.replies||[]).slice();
   arr.push({pid:String(pid), text:t, by:me, ts:Date.now()});
   logActivity('comment'); // 댓글 1점
+  DATA.replies=arr;            // 즉시 반영(낙관적 갱신)
   ROOT.child('replies').set(arr);
   inp.value='';
+  renderPage(currentPage);    // 답글 바로 화면에 표시
 }
 function delReply(pid, ts){
   const arr=(DATA.replies||[]).slice();
@@ -3333,6 +3337,10 @@ function pageDiary(){
       <input id="lgTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 6월 2일 정기훈련)">
       ${rteBox('lgText','','훈련 내용/결과')}
       <div style="margin:4px 0;font-size:11px;color:#5a7585;">▶ 유튜브 주소를 본문에 붙여넣으면 영상이 글에서 바로 재생돼요.</div>
+      <div style="margin:8px 0 4px;">
+        <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="toggleAttendHelper()">📋 참석 명단 넣기 (선택)</button>
+      </div>
+      <div id="attendHelper" style="display:none;"></div>
       <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 사진 첨부 (최대 4장)</div>
       <input type="file" id="lgFile" accept="image/*" multiple onchange="onDiaryFile(event)" style="font-size:11px;">
       <div id="lgPreview" class="lg-preview" style="margin-top:6px;"></div>
@@ -3350,6 +3358,10 @@ function pageDiary(){
         <input id="lgEditDate" class="qna-input" style="margin-bottom:6px;" value="${esc(l.date||'')}" placeholder="날짜">
         <input id="lgEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(l.title||'')}" placeholder="제목">
         ${rteBox('lgEditText',(/<[a-z][\s\S]*>/i.test(l.text||'')?(l.text||''):esc(l.text||'').replace(/\n/g,'<br>')),'훈련 내용/결과')}
+        <div style="margin:8px 0 4px;">
+          <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="toggleAttendHelperEdit()">📋 참석 명단 넣기 (선택)</button>
+        </div>
+        <div id="attendHelper" style="display:none;"></div>
         <div style="margin:6px 0;font-size:11px;color:#5a7585;">📎 현재 사진 ${imgs.length}장 (최대 4장)</div>
         <div class="lg-preview">${existing}</div>
         <div style="margin:6px 0;font-size:11px;color:#5a7585;">사진 추가:</div>
@@ -3381,7 +3393,7 @@ function pageDiary(){
       <div class="diary-item">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
-          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''}${likeCnt?` <span class="diary-like">🤍${likeCnt}</span>`:''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
+          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''}${likeCnt?` <span class="diary-like">❤️${likeCnt}</span>`:''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
           ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
         </div>
         ${body}
@@ -3432,6 +3444,71 @@ function renderDiaryPreview(){
     + (_diaryFiles.length?`<div style="font-size:10px;color:#2e8b3d;width:100%;">✓ ${_diaryFiles.length}장 첨부됨</div>`:'');
 }
 function dropNewDiaryFile(k){ _diaryFiles.splice(k,1); renderDiaryPreview(); }
+// ===== 참석 명단 입력 도우미 (훈련일지 작성용) =====
+let _attHelper={}; // {멤버명: '참석'|'불참'|'보류'|''}
+function toggleAttendHelper(){
+  const box=document.getElementById('attendHelper');
+  if(!box) return;
+  if(box.style.display==='none'){ box.style.display='block'; renderAttendHelper('lgText'); }
+  else { box.style.display='none'; }
+}
+function toggleAttendHelperEdit(){
+  const box=document.getElementById('attendHelper');
+  if(!box) return;
+  if(box.style.display==='none'){ box.style.display='block'; renderAttendHelper('lgEditText'); }
+  else { box.style.display='none'; }
+}
+function renderAttendHelper(targetId){
+  const box=document.getElementById('attendHelper');
+  if(!box) return;
+  box._target = targetId || box._target || 'lgText'; // 작성=lgText, 편집=lgEditText
+  const roster=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor');
+  const rows=roster.map(m=>{
+    const nm=m.name; const cur=_attHelper[nm]||'';
+    const btn=(val,emoji,color)=>`<button type="button" onclick="setAttHelper('${nm.replace(/'/g,"\\'")}','${val}')" style="border:1px solid ${cur===val?color:'#cdd6dd'};background:${cur===val?color+'22':'#fff'};color:${cur===val?color:'#888'};border-radius:6px;padding:2px 7px;font-size:12px;font-weight:700;cursor:pointer;margin-right:3px;">${emoji}</button>`;
+    return `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px dotted #e6ebf0;">
+      <span style="flex:1;font-size:13px;font-weight:600;">${esc(nm)}</span>
+      ${btn('참석','🙂참석','#2e8b3d')}${btn('불참','😢불참','#c0392b')}${btn('보류','🫥보류','#e69500')}${btn('','✖','#9aa6ae')}
+    </div>`;
+  }).join('');
+  box.innerHTML=`
+    <div style="border:1px solid #bfe0f5;background:#f2fafe;border-radius:10px;padding:10px;margin-top:4px;">
+      <div style="font-size:12px;color:#2c3e50;font-weight:700;margin-bottom:6px;">멤버별로 참석/불참/보류를 선택하세요</div>
+      <div style="max-height:240px;overflow-y:auto;margin-bottom:8px;">${rows||'<div style="font-size:12px;color:#888;">등록된 멤버가 없어요.</div>'}</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+        <input id="attHelperPlace" class="qna-input" style="flex:1;min-width:120px;margin:0;" placeholder="📍 장소 (예: 내서스포츠)">
+        <input id="attHelperTime" class="qna-input" style="flex:1;min-width:120px;margin:0;" placeholder="⏱️ 시간 (예: 저녁 8시-10시)">
+      </div>
+      <button type="button" class="qna-send sm" onclick="insertAttendBlock()">본문에 삽입</button>
+      <button type="button" class="qna-send sm" style="background:#9aa6ae;" onclick="clearAttHelper()">선택 초기화</button>
+    </div>`;
+}
+function setAttHelper(name,val){ _attHelper[name]=val; renderAttendHelper(); }
+function clearAttHelper(){ _attHelper={}; renderAttendHelper(); }
+function insertAttendBlock(){
+  const roster=(DATA.roster||[]).filter(m=>memStatus(m)!=='honor');
+  const pick=(want)=>roster.filter(m=>_attHelper[m.name]===want).map(m=>m.name);
+  const go=pick('참석'), no=pick('불참'), hold=pick('보류');
+  const place=(document.getElementById('attHelperPlace')||{}).value||'';
+  const time=(document.getElementById('attHelperTime')||{}).value||'';
+  let lines=[];
+  if(go.length)   lines.push(`🙂참석 (${go.length}명): ${go.join(', ')}`);
+  if(no.length)   lines.push(`😢불참 (${no.length}명): ${no.join(', ')}`);
+  if(hold.length) lines.push(`🫥보류 (${hold.length}명): ${hold.join(', ')}`);
+  if(place.trim()) lines.push(`📍장소: ${place.trim()}`);
+  if(time.trim())  lines.push(`⏱️시간: ${time.trim()}`);
+  if(!lines.length) return alert('참석 선택이나 장소·시간을 입력해주세요.');
+  const box=document.getElementById('attendHelper');
+  const targetId=(box&&box._target)||'lgText';
+  const el=document.getElementById(targetId);
+  if(!el) return;
+  // 본문 끝에 삽입 (각 줄을 <div>로)
+  const html=lines.map(l=>`<div>${esc(l)}</div>`).join('')+'<div><br></div>';
+  el.innerHTML = el.innerHTML + html;
+  // 삽입 후 도우미 닫기
+  if(box){ box.style.display='none'; }
+  alert('본문에 참석 명단을 넣었어요! 👍');
+}
 function addDiary(){
   if(!canManage()) return alert('임원 또는 관리자만 작성할 수 있어요.');
   const d=document.getElementById('lgDate').value.trim();
