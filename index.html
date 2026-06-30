@@ -1185,10 +1185,12 @@ function showTop6BonusModal(item){
   const rankEmoji={1:'🥇',2:'🥈',3:'🥉',4:'🏅',5:'🏅',6:'🏅'}[item.rank]||'🏅';
   const ov=document.createElement('div');
   ov.id='top6BonusOverlay';
+  if(item._preview) ov.dataset.preview='1'; // 미리보기: 닫을 때 데이터 안 건드림
   // 레벨 마일스톤 축하와 동일한 디자인 (노란 테두리·둥근 카드·그라데이션)
   ov.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(20,10,40,.55);backdrop-filter:blur(3px);animation:lvRewardFade .25s ease;';
   ov.innerHTML=
     '<div style="position:relative;max-width:340px;width:86%;background:linear-gradient(160deg,#fff,#fff7fb);border:3px solid #ffd24d;border-radius:22px;padding:26px 22px 22px;text-align:center;box-shadow:0 18px 50px rgba(120,40,90,.35);font-family:\'Pretendard\',\'Malgun Gothic\',sans-serif;animation:lvRewardPop .35s cubic-bezier(.2,1.3,.5,1);">'
+    + (item._preview?'<div style="font-size:11px;color:#a06a00;background:#fff3cf;border-radius:8px;padding:3px 8px;display:inline-block;margin-bottom:8px;">👀 미리보기 (나만 보임)</div>':'')
     + '<div style="font-size:54px;line-height:1;margin-bottom:6px;">'+rankEmoji+'</div>'
     + '<div style="font-size:20px;font-weight:900;color:#e0699a;margin-bottom:4px;">'+attMonthLabel(item.month)+' 출석 TOP6!</div>'
     + '<div style="font-size:14px;color:#3a5566;line-height:1.7;white-space:pre-wrap;margin:10px 0 6px;">'+esc(top6BonusMsg(item.rank))+'</div>'
@@ -1199,7 +1201,10 @@ function showTop6BonusModal(item){
   // 바깥 클릭으로는 닫히지 않음 — 확인 버튼으로만 닫힘 (자동으로 사라지지도 않음)
 }
 function dismissTop6BonusModal(){
-  const ov=document.getElementById('top6BonusOverlay'); if(ov) ov.remove();
+  const ov=document.getElementById('top6BonusOverlay');
+  const isPreview = ov && ov.dataset.preview==='1';
+  if(ov) ov.remove();
+  if(isPreview) return; // 미리보기는 데이터 변경 없음
   // 내 pending에서 '표시된 그 항목'을 제거 (showFrom 지난 가장 최근 1건)
   if(!me) return;
   const pending=JSON.parse(JSON.stringify(DATA.top6_bonus_pending||{}));
@@ -1277,7 +1282,18 @@ function adminToolsBonusHtml(){
     <div style="font-size:13px;font-weight:800;color:#2c3e50;margin-bottom:6px;">📝 순위별 축하 메시지 (수정 가능)</div>
     ${msgRows}
     <button class="qna-send sm" onclick="saveBonusMsgs()">메시지 저장</button>
+    <div style="margin-top:14px;padding-top:10px;border-top:1px dashed #cdd6dd;">
+      <div style="font-size:12px;font-weight:700;color:#5a7585;margin-bottom:6px;">👀 멤버에게 보일 축하창 미리보기 (나만 보임 · 점수 영향 없음)</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${[1,2,3,4,5,6].map(r=>`<button class="qna-send sm" style="margin:0;background:#7b9cc4;" onclick="previewBonusModal(${r})">${r}위</button>`).join('')}
+      </div>
+    </div>
   `;
+}
+// 축하창 미리보기 (실제 지급과 무관, 화면에만 표시)
+function previewBonusModal(rank){
+  const pm=prevMonthKey();
+  showTop6BonusModal({month:pm, rank:rank, pts:(TOP6_BONUS[rank-1]||0), ts:Date.now(), _preview:true});
 }
 function refreshBonusPreview(){
   const sel=document.getElementById('bonusMonth'); if(!sel) return;
@@ -2667,6 +2683,10 @@ function renderAll(){
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
+  } else if(currentPage==='diary' && document.querySelector('.dv-frame iframe')){
+    // 훈련일지에서 영상 재생 중: 다른 사람 접속/재생 등으로 데이터가 바뀌어도 재렌더하지 않아 영상이 끊기지 않게 함.
+    // 좋아요/댓글 수 같은 표시만 살짝 갱신.
+    refreshDiaryMeta();
   } else if(currentPage==='member' && document.querySelector('.member-grid')){
     // 멤버현황: 카드 수가 그대로면 스탯 막대만 갱신(출렁임 방지), 멤버 추가/삭제 시엔 전체 재렌더
     const shown=document.querySelectorAll('.member-card.flip').length;
@@ -2709,6 +2729,19 @@ function refreshVideoPlayCounts(){
   (DATA.videos||[]).forEach((v,i)=>{
     const sp=document.getElementById('vp_'+i);
     if(sp){ const p=(v&&v.plays)||0; sp.textContent='▶ '+p.toLocaleString()+'회'; }
+  });
+}
+// 훈련일지에서 영상 재생 중일 때: 영상(iframe)은 그대로 두고 좋아요/댓글 수 표시만 갱신.
+// 펼쳐진 글의 영상이 끊기지 않도록 전체 재렌더를 피한다.
+function refreshDiaryMeta(){
+  const logs=DATA.logs||[];
+  logs.forEach((l,i)=>{
+    const likeCnt=l.likes||0;
+    const cmtCnt=(l.comments&&l.comments.length)?l.comments.length:0;
+    const likeEl=document.getElementById('dlike_'+i);
+    const cmtEl=document.getElementById('dcmt_'+i);
+    if(likeEl){ likeEl.textContent='❤️'+likeCnt; likeEl.style.display=likeCnt?'':'none'; }
+    if(cmtEl){ cmtEl.textContent='💬'+cmtCnt; cmtEl.style.display=cmtCnt?'':'none'; }
   });
 }
 function editMood(){
@@ -3704,7 +3737,7 @@ function pageDiary(){
       <div class="diary-item">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
-          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''}${likeCnt?` <span class="diary-like">❤️${likeCnt}</span>`:''}${cmtCnt?` <span class="diary-cmt">💬${cmtCnt}</span>`:''}</span>
+          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''} <span class="diary-like" id="dlike_${l._i}" style="${likeCnt?'':'display:none;'}">❤️${likeCnt}</span> <span class="diary-cmt" id="dcmt_${l._i}" style="${cmtCnt?'':'display:none;'}">💬${cmtCnt}</span></span>
           ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
         </div>
         ${body}
