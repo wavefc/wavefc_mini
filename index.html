@@ -2939,7 +2939,7 @@ function renderPage(page){
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
   else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
-  else if(page==='feedback')c.innerHTML=pageFeedback();
+  else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#c0392b;">피드백 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } }
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
