@@ -362,6 +362,16 @@
   .fbp-pips{display:inline-flex;gap:2px;}
   .fbp-jersey{text-align:center;flex-shrink:0;}
   .fbp-jersey-num{font-size:11px;font-weight:700;color:#2176a8;margin-top:2px;}
+  .fbp-edit-area{width:100%;box-sizing:border-box;min-height:70px;font-size:12px;padding:6px;border:1px solid #bfe0f5;border-radius:6px;font-family:inherit;resize:vertical;}
+  .fb-likedby{font-size:12px;color:#c0563f;background:#fff3f0;border-radius:6px;padding:5px 9px;margin-bottom:8px;line-height:1.5;}
+  /* 웹에서만 프로필 제목·내용 폰트 키우기 (모바일은 그대로) */
+  @media(min-width:761px){
+    .fbp-title{font-size:19px;}
+    .fbp-body{font-size:15px;line-height:1.7;}
+    .fbp-edit-area{font-size:15px;}
+    .fbp-edit{font-size:12px;padding:4px 10px;}
+    .fbp-card{min-height:120px;}
+  }
   /* 미리보기 그리드: 웹 5열, 카드 1:1 정사각 고정 */
   .fb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
   .fb-gcard{border:2px solid #6ab8e8;border-radius:10px;background:#fff;padding:12px;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;aspect-ratio:1/1;overflow:hidden;box-sizing:border-box;}
@@ -951,6 +961,11 @@ function rankOf(userKey){
   if(r==='rookie') return 'rookie';
   if(r==='visitor') return 'visitor';
   return 'member';
+}
+// 등급 이모티콘 (👑임원 / 🌊회원 / 🌱새내기 / 🤍응원단 / 👤방문객)
+function rankEmoji(userKey){
+  const r=rankOf(userKey);
+  return {exec:'👑',member:'🌊',rookie:'🌱',cheer:'🤍',visitor:'👤'}[r]||'';
 }
 // 승인된 회원인지(로그인 + 승인). 방문객 포함 모든 등급.
 function isApproved(){ if(!me) return false; const u=DATA.users[me]; return !!(u && u.approved===true); }
@@ -2961,7 +2976,7 @@ function go(page,btn){
   if(page==='home') applyNoticeDefaultOpen(); // 홈 진입 시 기본 펼침 공지 선택
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   if(page==='quiz') quizPage=-1, quizPageLocked=false; // 깜짝퀴즈 진입 시 최신 페이지로
-  if(page==='feedback'){ fbWriting=false; fbOpen=null; fbEditing=null; fbPage=9999; } // 진입 시 최신 페이지(clamp)
+  if(page==='feedback'){ fbWriting=false; fbOpen=null; fbEditing=null; fbProfEditing=null; fbPage=9999; } // 진입 시 최신 페이지(clamp)
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -5082,12 +5097,23 @@ function pageFeedback(){
     strength:'내가 가장 자신있는 플레이나 무기를 적어보세요! (예: 빠른 스피드, 정확한 패스)',
     weakness:'더 키우고 싶은 부분을 스스로 적어보세요! (예: 수비 위치 선정, 체력)'
   };
-  const profCard=(label,key,val,color)=>`
-    <div class="fbp-card">
+  const profCard=(label,key,val,color)=>{
+    if(fbProfEditing===key && canEditProfile){
+      return `<div class="fbp-card">
+        <div class="fbp-title" style="color:${color};">${label}</div>
+        <textarea id="fbpEdit_${key}" class="fbp-edit-area" placeholder="${profPh[key]}">${esc(val||'')}</textarea>
+        <div style="display:flex;gap:4px;margin-top:4px;">
+          <button class="fbp-edit" style="background:#2176a8;color:#fff;border-color:#2176a8;" onclick="saveFbProfile('${key}')">저장</button>
+          <button class="fbp-edit" onclick="fbProfEditing=null;renderPage('feedback')">취소</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="fbp-card">
       <div class="fbp-title" style="color:${color};">${label}</div>
       <div class="fbp-body" id="fbp_${key}">${val?esc(val).replace(/\n/g,'<br>'):'<span style=\"color:#aab8c2;\">'+profPh[key]+'</span>'}</div>
-      ${canEditProfile?`<button class="fbp-edit" onclick="editFbProfile('${key}')">✏️ ${val?'수정':'직접 작성하기'}</button>`:''}
+      ${canEditProfile?`<button class="fbp-edit" onclick="fbProfEditing='${key}';renderPage('feedback')">✏️ ${val?'수정':'직접 작성하기'}</button>`:''}
     </div>`;
+  };
   const profilePanel=`
     <div class="fbp-grid">
       <div class="fbp-card fbp-stat-card">
@@ -5121,9 +5147,9 @@ function pageFeedback(){
       const cmts=Array.isArray(f.comments)?f.comments:[];
       const cmtHtml=cmts.map((c,ci)=>{
         const reps=Array.isArray(c.replies)?c.replies:[];
-        const repHtml=reps.map((r,ri)=>`<div class="fb-reply"><b>${esc(userLabel(r.by)||r.by||'')}</b> ${esc(r.text)} <span class="fb-date">${fbDate(r.ts)}</span>${fbCanDelComment(target,r.by)?` <span class="fb-del" onclick="delFbReply('${jsStr(target)}','${f.id}',${ci},${ri})">삭제</span>`:''}</div>`).join('');
+        const repHtml=reps.map((r,ri)=>`<div class="fb-reply"><b>${rankEmoji(r.by)}${esc(userLabel(r.by)||r.by||'')}</b> ${esc(r.text)} <span class="fb-date">${fbDate(r.ts)}</span>${fbCanDelComment(target,r.by)?` <span class="fb-del" onclick="delFbReply('${jsStr(target)}','${f.id}',${ci},${ri})">삭제</span>`:''}</div>`).join('');
         return `<div class="fb-cmt">
-          <div><b>${esc(userLabel(c.by)||c.by||'')}</b> ${esc(c.text)} <span class="fb-date">${fbDate(c.ts)}</span>${fbCanDelComment(target,c.by)?` <span class="fb-del" onclick="delFbComment('${jsStr(target)}','${f.id}',${ci})">삭제</span>`:''}</div>
+          <div><b>${rankEmoji(c.by)}${esc(userLabel(c.by)||c.by||'')}</b> ${esc(c.text)} <span class="fb-date">${fbDate(c.ts)}</span>${fbCanDelComment(target,c.by)?` <span class="fb-del" onclick="delFbComment('${jsStr(target)}','${f.id}',${ci})">삭제</span>`:''}</div>
           ${repHtml}
           ${fbCanComment(target)?`<div class="fb-reply-input"><input id="fbrep_${f.id}_${ci}" maxlength="300" placeholder="답글 달기…" onkeydown="if(event.key==='Enter')addFbReply('${jsStr(target)}','${f.id}',${ci})"><button onclick="addFbReply('${jsStr(target)}','${f.id}',${ci})">확인</button></div>`:''}
         </div>`;
@@ -5133,11 +5159,14 @@ function pageFeedback(){
         : '';
       const likes=Array.isArray(f.likedBy)?f.likedBy.length:0;
       const liked=Array.isArray(f.likedBy)&&f.likedBy.indexOf(me)>=0;
+      // 관리자1이면 좋아요 누른 사람 명단 표시
+      const likedByRow=(adminLevel()===1 && Array.isArray(f.likedBy) && f.likedBy.length)
+        ? `<div class="fb-likedby">❤️ ${f.likedBy.map(k=>rankEmoji(k)+esc(userLabel(k)||k)).join(', ')}</div>` : '';
       return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
         <div style="margin:8px 0;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="fbOpen=null;renderPage('feedback')">← 목록으로</button></div>
         <div class="fb-card fb-detail">
           <div class="fb-card-head">
-            <span class="fb-by">✍️ ${esc(userLabel(f.by)||f.by||'')}</span>
+            <span class="fb-by">✍️ ${rankEmoji(f.by)}${esc(userLabel(f.by)||f.by||'')}</span>
             <span class="fb-date">${fbDate(f.ts)} · 조회 ${f.views||0}</span>
             ${fbCanEdit(f)?`<span class="fb-del" style="color:#2176a8;" onclick="fbEditing='${f.id}';renderPage('feedback')">수정</span>`:''}
             ${canWrite?`<span class="fb-del" onclick="delFeedback('${jsStr(target)}','${f.id}')">삭제</span>`:''}
@@ -5145,6 +5174,7 @@ function pageFeedback(){
           ${f.title?`<div class="fb-title-txt">${esc(f.title)}</div>`:''}
           <div class="fb-body">${diaryBodyRender(f.text||'')}</div>
           <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmts.length}</span></div>
+          ${likedByRow}
           <div class="fb-cmt-list">${cmtHtml}</div>
           ${commentInput}
         </div>`;
@@ -5219,19 +5249,19 @@ function openFbPost(target,fid){
   fbOpen=fid; fbEditing=null;
   renderPage('feedback');
 }
-function editFbProfile(key){
+let fbProfEditing=null; // 인라인 편집 중인 프로필 칸 (goal/strength/weakness)
+function saveFbProfile(key){
   const target=feedbackTarget; if(!target) return;
   const isSelf=(target===myRealName());
   if(!isSelf && adminLevel()!==1) return alert('본인만 작성할 수 있어요.');
-  const labels={goal:'현재 목표',strength:'핵심 툴(Tool)',weakness:'보완점'};
-  const prof=((DATA.fb_profile||{})[target])||{};
-  const v=prompt(labels[key]+'을(를) 직접 작성해보세요. (풋살 플레이 관련)', prof[key]||'');
-  if(v===null) return;
+  const ta=document.getElementById('fbpEdit_'+key);
+  const v=ta?ta.value:'';
   const all=JSON.parse(JSON.stringify(DATA.fb_profile||{}));
   all[target]=all[target]||{};
   all[target][key]=v.trim();
   DATA.fb_profile=all;
   ROOT.child('fb_profile').set(all);
+  fbProfEditing=null;
   renderPage('feedback');
 }
 function toggleFbLike(target,fid){
