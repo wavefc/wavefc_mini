@@ -349,33 +349,41 @@
   .fbp-stat-card{grid-column:1;}
   .fbp-stat-wrap{display:flex;gap:12px;align-items:center;}
   .fbp-stats{flex:0 1 auto;}
-  .fbp-stat-row{display:flex;align-items:center;font-size:11px;color:#4a5f6d;padding:1px 0;gap:8px;}
-  .fbp-stat-row>span:first-child{width:36px;flex-shrink:0;}
+  /* 4칸 프로필 패널: 스탯 좁게, 목표/툴/보완점 넓게 균등 */
+  .fbp-grid{display:grid;grid-template-columns:0.85fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;align-items:stretch;}
+  .fbp-card{border:2px solid #bfe0f5;border-radius:10px;background:#f7fbfe;padding:10px;position:relative;min-height:90px;}
+  .fbp-title{font-size:13px;font-weight:800;margin-bottom:6px;}
+  .fbp-body{font-size:12px;color:#3a5566;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+  .fbp-edit{margin-top:6px;font-size:10px;color:#2176a8;background:#fff;border:1px solid #bfe0f5;border-radius:5px;padding:2px 6px;cursor:pointer;}
+  .fbp-stat-wrap{display:flex;gap:10px;align-items:center;justify-content:center;}
+  .fbp-stats{flex:0 0 auto;}
+  .fbp-stat-row{display:flex;align-items:center;font-size:11px;color:#4a5f6d;padding:1px 0;gap:6px;}
+  .fbp-stat-row>span:first-child{width:34px;flex-shrink:0;}
   .fbp-pips{display:inline-flex;gap:2px;}
   .fbp-jersey{text-align:center;flex-shrink:0;}
   .fbp-jersey-num{font-size:11px;font-weight:700;color:#2176a8;margin-top:2px;}
-  /* 미리보기 그리드 (웹 4열) */
-  .fb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;}
-  .fb-gcard{border:2px solid #6ab8e8;border-radius:10px;background:#fff;padding:12px;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;min-height:120px;}
+  /* 미리보기 그리드: 웹 5열, 카드 1:1 정사각 고정 */
+  .fb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
+  .fb-gcard{border:2px solid #6ab8e8;border-radius:10px;background:#fff;padding:12px;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;aspect-ratio:1/1;overflow:hidden;box-sizing:border-box;}
   .fb-gcard:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,155,212,.2);}
-  .fb-gcard-title{font-size:14px;font-weight:800;color:#2176a8;margin-bottom:6px;line-height:1.3;}
-  .fb-gcard-prev{font-size:12px;color:#5a7585;line-height:1.5;flex:1;overflow:hidden;}
-  .fb-gcard-foot{display:flex;gap:10px;font-size:11px;color:#8aa;margin-top:8px;}
-  .fb-gcard-by{font-size:10px;color:#9aa6ae;margin-top:4px;border-top:1px dashed #e0ebf2;padding-top:4px;}
+  .fb-gcard-title{font-size:14px;font-weight:800;color:#2176a8;margin-bottom:6px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .fb-gcard-prev{font-size:12px;color:#5a7585;line-height:1.5;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
+  .fb-gcard-foot{display:flex;gap:8px;font-size:11px;color:#8aa;margin-top:6px;}
+  .fb-gcard-by{font-size:10px;color:#9aa6ae;margin-top:4px;border-top:1px dashed #e0ebf2;padding-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
   .fb-title-txt{font-size:17px;font-weight:800;color:#2176a8;margin-bottom:8px;}
   .fb-react{display:flex;align-items:center;gap:10px;margin:10px 0;padding-top:8px;border-top:1px dashed #d5e6f2;}
   .fb-like{background:#fff;border:1px solid #f0b8c8;border-radius:16px;padding:4px 14px;font-size:13px;font-weight:700;color:#c0563f;cursor:pointer;}
   .fb-like.on{background:#ffeef2;}
   .fb-cc{font-size:13px;color:#e0699a;font-weight:700;}
   @media(max-width:760px){
-    /* 현재 스탯은 맨 위 단독(전체 너비), 나머지 3개는 1열 3행 */
+    /* 스탯은 맨 위 단독(전체 너비, 가운데 정렬), 목표/툴/보완점 1열 3행 균등 */
     .fbp-grid{grid-template-columns:1fr;}
-    .fbp-stat-card{grid-column:1;}
-    /* 피드백 카드 모바일 2열 균등 */
+    .fbp-stat-wrap{justify-content:center;}
+    /* 피드백 카드 2열 균등, 1:1 정사각 고정 */
     .fb-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
-    .fb-gcard{min-height:100px;padding:10px;}
+    .fb-gcard{padding:10px;aspect-ratio:1/1;}
     .fb-gcard-title{font-size:13px;}
-    .fb-gcard-prev{font-size:11px;max-height:80px;}
+    .fb-gcard-prev{font-size:11px;-webkit-line-clamp:3;}
   }
   .fb-card{border:2px solid #6ab8e8;border-radius:12px;background:#fff;padding:16px;box-shadow:0 2px 8px rgba(90,155,212,.12);}
   .fb-card-head{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #d5e6f2;padding-bottom:8px;margin-bottom:10px;}
@@ -2953,7 +2961,7 @@ function go(page,btn){
   if(page==='home') applyNoticeDefaultOpen(); // 홈 진입 시 기본 펼침 공지 선택
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   if(page==='quiz') quizPage=-1, quizPageLocked=false; // 깜짝퀴즈 진입 시 최신 페이지로
-  if(page==='feedback'){ fbWriting=false; fbOpen=null; fbEditing=null; } // 피드백 진입 시 목록부터
+  if(page==='feedback'){ fbWriting=false; fbOpen=null; fbEditing=null; fbPage=9999; } // 진입 시 최신 페이지(clamp)
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -5049,6 +5057,7 @@ function fbCanWrite(){ return (rankOf(me)==='exec')||(adminLevel()===1); } // �
 function fbCanComment(target){ return (target===myRealName())||(rankOf(me)==='exec'); } // 본인+모든 임원
 let fbOpen=null;      // 열린 피드백 글 id (null이면 그리드)
 let fbEditing=null;   // 편집 중인 글 id
+let fbPage=1;         // 피드백 그리드 페이지 (1페이지=최신 10개)
 function fbCanEdit(f){ return (adminLevel()===1) || (f&&f.by&&f.by===me); } // 작성자 본인 또는 관리자1
 function pageFeedback(){
   const target=feedbackTarget;
@@ -5158,20 +5167,38 @@ function pageFeedback(){
     ? `<div style="text-align:right;margin-bottom:10px;"><button class="qna-send sm" onclick="fbWriting=true;renderPage('feedback')">✏️ 피드백 작성</button></div>`
     : '';
 
-  // ===== 미리보기 그리드 (웹 4열 / 모바일 2열) =====
-  const cards = list.length ? list.map((f)=>{
+  // ===== 미리보기 그리드 (웹 1행5개·최대2행=10개/페이지, 모바일 2열) =====
+  const PER=10;
+  const total=list.length;
+  const pageCount=Math.max(1, Math.ceil(total/PER));
+  let curPage=Math.max(1, Math.min(pageCount, fbPage));
+  // list는 최신순. 과거가 1페이지, 최신이 마지막 페이지가 되도록 슬라이스.
+  const fromEnd=(curPage-1)*PER;
+  const sliceStart=Math.max(0, total-fromEnd-PER);
+  const sliceEnd=total-fromEnd;
+  const pageList=list.slice(sliceStart, sliceEnd); // 이 페이지 분량(최신순 유지)
+  const cardHtml = total ? pageList.map((f)=>{
     const cmts=Array.isArray(f.comments)?f.comments:[];
     const likes=Array.isArray(f.likedBy)?f.likedBy.length:0;
-    const preview=fbPlainText(f.text).slice(0,60);
+    const preview=fbPlainText(f.text).slice(0,30);
     return `<div class="fb-gcard" onclick="openFbPost('${jsStr(target)}','${f.id}')">
       <div class="fb-gcard-title">${f.title?esc(f.title):'<span style=\"color:#aab8c2;\">(제목 없음)</span>'}</div>
-      <div class="fb-gcard-prev">${esc(preview)}${preview.length>=60?'…':''}</div>
+      <div class="fb-gcard-prev">${esc(preview)}${preview.length>=30?'…':''}</div>
       <div class="fb-gcard-foot">
         <span>❤️ ${likes}</span><span>💬 ${cmts.length}</span><span>👀 ${f.views||0}</span>
       </div>
       <div class="fb-gcard-by">✍️ ${esc(userLabel(f.by)||f.by||'')} · ${fbDate(f.ts)}</div>
     </div>`;
   }).join('') : `<div style="padding:20px;color:#8aa;text-align:center;grid-column:1/-1;">아직 등록된 피드백이 없어요.${canWrite?' ✏️ 피드백 작성으로 첫 피드백을 남겨보세요!':''}</div>`;
+  // 페이지 버튼 (왼쪽=1=과거 … 오른쪽=최신)
+  let pager='';
+  if(pageCount>1){
+    let btns='';
+    for(let p=1;p<=pageCount;p++){
+      btns+=`<button onclick="fbPage=${p};renderPage('feedback')" style="border:1px solid ${p===curPage?'#2176a8':'#cdd6dd'};background:${p===curPage?'#2176a8':'#fff'};color:${p===curPage?'#fff':'#5a6a72'};border-radius:6px;padding:3px 9px;margin:0 2px;cursor:pointer;font-size:12px;font-weight:700;">${p}</button>`;
+    }
+    pager=`<div style="text-align:center;margin:12px 0 4px;">${btns}<div style="font-size:10px;color:#9aa6ae;margin-top:3px;">◀ 과거 · 최신 ▶</div></div>`;
+  }
 
   return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
     <div style="font-size:12px;color:#5a7585;margin:-4px 0 10px;">🔒 이 피드백은 본인과 임원·관리자만 볼 수 있어요.</div>
@@ -5179,7 +5206,8 @@ function pageFeedback(){
     ${profilePanel}
     ${writeToggle}
     ${writeBox}
-    <div class="fb-grid">${cards}</div>`;
+    <div class="fb-grid">${cardHtml}</div>
+    ${pager}`;
 }
 function jsStr(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function fbPlainText(html){ const t=document.createElement('div'); t.innerHTML=html||''; return (t.textContent||t.innerText||'').replace(/\s+/g,' ').trim(); }
@@ -5245,6 +5273,7 @@ function addFeedback(){
   fb[target]=fb[target]||[];
   fb[target].push({id:'f'+Date.now(), title:title.trim(), text:tx, ts:Date.now(), by:me, comments:[], likedBy:[], views:0});
   fbWriting=false;
+  fbPage=9999; // 새 글은 최신 페이지로
   DATA.feedbacks=fb;
   ROOT.child('feedbacks').set(fb);
   renderPage('feedback');
