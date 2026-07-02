@@ -5059,7 +5059,7 @@ function pageFeedback(){
     </div>`;
   }).join('') : `<div style="padding:20px;color:#8aa;text-align:center;">아직 등록된 피드백이 없어요.${canWrite?' ✏️ 피드백 작성으로 첫 피드백을 남겨보세요!':''}</div>`;
 
-  return `<div class="page-h">📋 ${esc(maskMemName(target))} 님의 1:1 피드백</div>
+  return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
     <div style="font-size:12px;color:#5a7585;margin:-4px 0 10px;">🔒 이 피드백은 본인과 임원·관리자만 볼 수 있어요.</div>
     <div style="margin-bottom:10px;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="go('member')">← 멤버현황으로</button></div>
     ${writeToggle}
