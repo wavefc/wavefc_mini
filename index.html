@@ -4798,8 +4798,9 @@ let _praisedThisVisit=false; // 이번 방문에서 칭찬 떴는지
 // 개인 1:1 피드백 페이지 열기 (열람: 본인 또는 임원/관리자)
 let feedbackTarget=null;
 function openFeedbackByIdx(idx){
-  const m=(window._memberCardOrder||[])[idx];
-  if(!m) return;
+  const order=window._memberCardOrder||[];
+  const m=order[idx];
+  if(!m){ alert('멤버 정보를 찾지 못했어요. (idx='+idx+', 총 '+order.length+'명)\n페이지를 새로고침(Ctrl+Shift+R) 후 다시 시도해주세요.'); return; }
   openFeedback(m.name);
 }
 function openFeedback(name){
@@ -4861,7 +4862,8 @@ function bindStatButtons(){
       setMyStat(idx, key, delta);
       return;
     }
-    // 뒷면의 버튼 아닌 곳을 누르면 앞면으로 복귀
+    // 뒷면의 버튼 아닌 곳을 누르면 앞면으로 복귀 (단, 유니폼 클릭은 제외)
+    if(e.target.closest('.mc-fb-open')) return;
     const back=e.target.closest('.mc-back');
     if(back){
       const card=back.closest('.member-card.flip');
@@ -4985,7 +4987,7 @@ function pageMember(){
         </div>
         <div class="mc-back">
           <div class="mc-back-head">
-            <span class="mc-back-jersey mc-fb-open" data-fbidx="${idx}" style="cursor:pointer;" title="1:1 피드백 보기">${avSmall}</span>
+            <span class="mc-back-jersey mc-fb-open" data-fbidx="${idx}" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();event.preventDefault();openFeedbackByIdx(${idx});">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
