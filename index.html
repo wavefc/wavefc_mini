@@ -5060,26 +5060,31 @@ function pageFeedback(){
   const jersey=jerseyImg(num||'-',54);
   const statList=STAT_KEYS.map(k=>`<div class="fbp-stat-row"><span>${k}</span><span class="fbp-pips">${statBarHtml(stats[k])}</span></div>`).join('');
   const prof=((DATA.fb_profile||{})[target])||{};
-  const canEditProfile=isSelf||(adminLevel()===1); // 목표·장점·단점은 본인(또는 관리자1)
+  const canEditProfile=isSelf||(adminLevel()===1); // 목표·툴·보완점은 본인(또는 관리자1)
+  const profPh={
+    goal:'이번 시즌 나의 풋살 목표를 직접 적어보세요! (예: 왼발 슛 자신있게 차기)',
+    strength:'내가 가장 자신있는 플레이나 무기를 적어보세요! (예: 빠른 스피드, 정확한 패스)',
+    weakness:'더 키우고 싶은 부분을 스스로 적어보세요! (예: 수비 위치 선정, 체력)'
+  };
   const profCard=(label,key,val,color)=>`
     <div class="fbp-card">
       <div class="fbp-title" style="color:${color};">${label}</div>
-      <div class="fbp-body" id="fbp_${key}">${val?esc(val).replace(/\n/g,'<br>'):'<span style=\"color:#aab8c2;\">아직 작성 전이에요.</span>'}</div>
-      ${canEditProfile?`<button class="fbp-edit" onclick="editFbProfile('${key}')">✏️ 수정</button>`:''}
+      <div class="fbp-body" id="fbp_${key}">${val?esc(val).replace(/\n/g,'<br>'):'<span style=\"color:#aab8c2;\">'+profPh[key]+'</span>'}</div>
+      ${canEditProfile?`<button class="fbp-edit" onclick="editFbProfile('${key}')">✏️ ${val?'수정':'직접 작성하기'}</button>`:''}
     </div>`;
   const profilePanel=`
     <div class="fbp-grid">
       <div class="fbp-card fbp-stat-card">
         <div class="fbp-title" style="color:#2176a8;">현재 스탯</div>
         <div class="fbp-stat-wrap">
-          <div class="fbp-stats">${statList}</div>
           <div class="fbp-jersey">${jersey}<div class="fbp-jersey-num">${esc(target)}${num?' #'+esc(num):''}</div></div>
+          <div class="fbp-stats">${statList}</div>
         </div>
         <div style="font-size:10px;color:#9aa6ae;margin-top:4px;">※ 스탯은 멤버현황에서만 수정할 수 있어요.</div>
       </div>
       ${profCard('현재 목표','goal',prof.goal,'#2e8b3d')}
-      ${profCard('장점','strength',prof.strength,'#e0699a')}
-      ${profCard('단점','weakness',prof.weakness,'#e0772b')}
+      ${profCard('핵심 툴 (Tool)','strength',prof.strength,'#e0699a')}
+      ${profCard('보완점 (Shortcoming)','weakness',prof.weakness,'#e0772b')}
     </div>`;
 
   // ===== 상세 보기 (글 하나 펼침) =====
@@ -5183,9 +5188,9 @@ function editFbProfile(key){
   const target=feedbackTarget; if(!target) return;
   const isSelf=(target===myRealName());
   if(!isSelf && adminLevel()!==1) return alert('본인만 작성할 수 있어요.');
-  const labels={goal:'현재 목표',strength:'장점',weakness:'단점'};
+  const labels={goal:'현재 목표',strength:'핵심 툴(Tool)',weakness:'보완점(Shortcoming)'};
   const prof=((DATA.fb_profile||{})[target])||{};
-  const v=prompt(labels[key]+'을(를) 입력하세요. (풋살 플레이 관련)', prof[key]||'');
+  const v=prompt(labels[key]+'을(를) 직접 작성해보세요. (풋살 플레이 관련)', prof[key]||'');
   if(v===null) return;
   const all=JSON.parse(JSON.stringify(DATA.fb_profile||{}));
   all[target]=all[target]||{};
@@ -5219,6 +5224,7 @@ function saveFeedbackEdit(fid){
   fbEditing=null;
   renderPage('feedback');
 }
+function fbDate(ts){ if(!ts) return ''; const d=new Date(ts); return `${String(d.getFullYear()).slice(2)}.${d.getMonth()+1}.${d.getDate()}`; }
 function fbCanDelComment(target,by){ return (adminLevel()===1)||(by&&by===me); }
 let fbWriting=false;
 function addFeedback(){
