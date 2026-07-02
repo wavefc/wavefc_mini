@@ -4841,6 +4841,15 @@ function bindStatButtons(){
   if(!grid || grid._statBound) return;
   grid._statBound=true;
   grid.addEventListener('click', function(e){
+    // 유니폼(등번호) 클릭 → 1:1 피드백 페이지 (복귀 로직보다 먼저 처리)
+    const fbBtn=e.target.closest('.mc-fb-open');
+    if(fbBtn){
+      e.stopPropagation();
+      e.preventDefault();
+      const idx=parseInt(fbBtn.getAttribute('data-fbidx'),10);
+      openFeedbackByIdx(idx);
+      return;
+    }
     const btn=e.target.closest('.stat-btn');
     if(btn){
       // +/- 버튼: 스탯만 조정, 카드는 그대로 둠
@@ -4976,7 +4985,7 @@ function pageMember(){
         </div>
         <div class="mc-back">
           <div class="mc-back-head">
-            <span class="mc-back-jersey" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();openFeedbackByIdx(${idx})">${avSmall}</span>
+            <span class="mc-back-jersey mc-fb-open" data-fbidx="${idx}" style="cursor:pointer;" title="1:1 피드백 보기">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
