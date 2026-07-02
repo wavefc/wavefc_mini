@@ -339,6 +339,22 @@
   .manner-single ul{margin:0;padding-left:20px;}
   .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .fb-list{display:flex;flex-direction:column;gap:16px;}
+  .fb-card{border:2px solid #6ab8e8;border-radius:12px;background:#fff;padding:16px;box-shadow:0 2px 8px rgba(90,155,212,.12);}
+  .fb-card-head{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #d5e6f2;padding-bottom:8px;margin-bottom:10px;}
+  .fb-by{font-weight:800;color:#2176a8;font-size:14px;}
+  .fb-card .fb-date{font-size:11px;color:#8aa;}
+  .fb-del{font-size:11px;color:#c0392b;cursor:pointer;margin-left:auto;}
+  .fb-body{font-size:14px;color:#3a5566;line-height:1.7;}
+  .fb-cmt-list{margin-top:12px;}
+  .fb-cmt{background:#f2fafe;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;color:#3a5566;}
+  .fb-reply{margin:5px 0 0 16px;padding-left:8px;border-left:2px solid #bfe0f5;font-size:12px;color:#4a5f6d;}
+  .fb-cmt .fb-date,.fb-reply .fb-date{font-size:10px;color:#9aa6ae;margin-left:3px;}
+  .fb-cmt-input,.fb-reply-input{display:flex;gap:4px;margin-top:8px;}
+  .fb-reply-input{margin-left:16px;}
+  .fb-cmt-input input,.fb-reply-input input{flex:1;border:1px solid #cdd6dd;border-radius:6px;padding:6px 8px;font-size:12px;}
+  .fb-cmt-input button,.fb-reply-input button{background:var(--frame);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
+  .fb-write{border:2px solid #bfe0f5;border-radius:12px;padding:12px;margin-bottom:14px;background:#f7fbfe;}
   .member-card{border:2px solid #6ab8e8;padding:8px;text-align:center;font-size:13px;background:#f7fbfe;}
   .member-card.is-exec{border:2px solid #e0a93b;background:linear-gradient(#fffaf0,#fff3da);box-shadow:2px 2px 0 rgba(224,169,59,.2);}
   .member-card.is-honor{border:2px solid #2a2a2a;background:linear-gradient(#f4f4f6,#e9e9ee);box-shadow:2px 2px 0 rgba(0,0,0,.25);}
@@ -2463,6 +2479,7 @@ const DEFAULT={
   top6_bonus:{},
   top6_bonus_pending:{},
   top6_bonus_msg:{},
+  feedbacks:{},
   videos:[],
   videoCats:["기초","기본","응용","경기"],
   roomTips:[
@@ -2553,6 +2570,7 @@ ROOT.on('value',snap=>{
     _backfilled:(v._backfilled===true),
     _attYearMigrated:(v._attYearMigrated===true),
     _june6thFixed:(v._june6thFixed===true),
+    feedbacks:(v.feedbacks||{}),
     _manualAdj1:(v._manualAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
@@ -2720,9 +2738,10 @@ function renderAll(){
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
   } else if(currentPage==='diary' && document.querySelector('.dv-frame iframe')){
-    // 훈련일지에서 영상 재생 중: 다른 사람 접속/재생 등으로 데이터가 바뀌어도 재렌더하지 않아 영상이 끊기지 않게 함.
-    // 좋아요/댓글 수 같은 표시만 살짝 갱신.
+    // 훈련일지에서 영상 재생 중: 재렌더하지 않아 영상이 끊기지 않게 함.
     refreshDiaryMeta();
+  } else if(currentPage==='feedback' && document.querySelector('.dv-frame iframe')){
+    // 1:1 피드백에서 영상 재생 중: 재렌더 생략(영상 끊김 방지). 댓글 등은 나갔다 오면 갱신.
   } else if(currentPage==='member' && document.querySelector('.member-grid')){
     // 멤버현황: 카드 수가 그대로면 스탯 막대만 갱신(출렁임 방지), 멤버 추가/삭제 시엔 전체 재렌더
     const shown=document.querySelectorAll('.member-card.flip').length;
@@ -2894,6 +2913,7 @@ function go(page,btn){
   if(page==='home') applyNoticeDefaultOpen(); // 홈 진입 시 기본 펼침 공지 선택
   if(page==='home') cmtPage=-1, cmtPageLocked=false; // 홈 진입 시 일촌평도 마지막(최신) 페이지로
   if(page==='quiz') quizPage=-1, quizPageLocked=false; // 깜짝퀴즈 진입 시 최신 페이지로
+  if(page==='feedback') fbWriting=false; // 피드백 진입 시 작성폼 접힘
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
@@ -2918,6 +2938,7 @@ function renderPage(page){
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
   else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
+  else if(page==='feedback')c.innerHTML=pageFeedback();
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
@@ -2973,7 +2994,11 @@ function buildFeed(){
   const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[];
   let diaryForFeed=[];
   if(picks.length){
-    picks.forEach(ts=>{ const l=(DATA.logs||[]).find(x=>x&&x.ts===ts); if(l && !l.secret) diaryForFeed.push(l); });
+    picks.forEach(ts=>{
+      // ts로 훈련일지 찾기 (문자/숫자 혼용 대비 느슨한 비교)
+      const l=(DATA.logs||[]).find(x=>x && String(x.ts)===String(ts));
+      if(l && !l.secret && diaryForFeed.indexOf(l)<0) diaryForFeed.push(l);
+    });
   } else {
     diaryForFeed=(DATA.logs||[]).filter(l=>l && !l.secret).slice(0,2);
   }
@@ -3434,6 +3459,7 @@ function _reactSave(node, arr){
 function _likedKey(node,ts){ return 'wavefc_like_'+node+'_'+ts; }
 function hasLiked(node,ts){ try{ return localStorage.getItem(_likedKey(node,ts))==='1'; }catch(e){ return false; } }
 function toggleLike(node,idx){
+  if(!me){ alert('로그인 후 좋아요를 누를 수 있어요 :)'); return; }
   const arr=JSON.parse(JSON.stringify(_reactArr(node)));
   const item=arr[idx]; if(!item) return;
   const ts=item.ts||0;
@@ -3441,17 +3467,17 @@ function toggleLike(node,idx){
   item.likedBy=Array.isArray(item.likedBy)?item.likedBy:[];
   const key=_likedKey(node,ts);
   if(hasLiked(node,ts)){
-    item.likes=Math.max(0,item.likes-1);
     try{localStorage.removeItem(key);}catch(e){}
-    if(me) item.likedBy=item.likedBy.filter(n=>n!==me);
+    item.likedBy=item.likedBy.filter(n=>n!==me);
     revokeActivity('like');
   }
   else {
-    item.likes=item.likes+1;
     try{localStorage.setItem(key,'1');}catch(e){}
-    if(me && item.likedBy.indexOf(me)<0) item.likedBy.push(me);
+    if(item.likedBy.indexOf(me)<0) item.likedBy.push(me);
     logActivity('like');
   }
+  // 하트 수는 명단 인원과 항상 일치시킴 (누락/불일치 방지)
+  item.likes=item.likedBy.length;
   // 저장 + 즉시 화면 갱신 (_reactSave가 낙관적 반영·렌더 처리)
   _reactSave(node,arr);
 }
@@ -3511,7 +3537,9 @@ function reactBox(node,idx,opts){
   const likeOnly=!!opts.likeOnly;
   const item=_reactArr(node)[idx]; if(!item) return '';
   const ts=item.ts||0;
-  const likes=item.likes||0;
+  // 하트 수는 '누른 사람 명단' 인원을 기준으로 표시(명단과 항상 일치). 옛 데이터 호환 위해 큰 값 사용.
+  const likedByLen=Array.isArray(item.likedBy)?item.likedBy.length:0;
+  const likes=Math.max(item.likes||0, likedByLen);
   const liked=hasLiked(node,ts);
   const cmts=item.comments||[];
   const isExec=rankOf(me)==='exec';
@@ -4766,6 +4794,16 @@ function markViewed(name){
 let _flippedCards={}; // {idx:true} 현재 뒤집힌 카드 (재렌더 후 복원용)
 let _peekedThisVisit={}; // 이번 멤버현황 방문에서 펼쳐본 멤버 (칭찬 판정용, 진입 시 초기화)
 let _praisedThisVisit=false; // 이번 방문에서 칭찬 떴는지
+// 개인 1:1 피드백 페이지 열기 (열람: 본인 또는 임원/관리자)
+let feedbackTarget=null;
+function openFeedback(name){
+  if(!isApproved()) return alert('로그인 후 이용할 수 있어요.');
+  const isExecOrAdmin=(rankOf(me)==='exec')||(adminLevel()>0);
+  const isSelf=(name===myRealName());
+  if(!isExecOrAdmin && !isSelf) return alert('본인 또는 임원/관리자만 볼 수 있어요.');
+  feedbackTarget=name;
+  go('feedback');
+}
 function flipMemberCard(idx){
   const card=document.getElementById('mcard_'+idx);
   if(!card) return;
@@ -4932,10 +4970,11 @@ function pageMember(){
         </div>
         <div class="mc-back">
           <div class="mc-back-head">
-            <span class="mc-back-jersey">${avSmall}</span>
+            <span class="mc-back-jersey" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();openFeedback('${esc(m.name).replace(/'/g,"\\'")}')">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
+          <div class="mc-fb-hint" onclick="event.stopPropagation();openFeedback('${esc(m.name).replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;color:#5a9bd4;font-weight:700;margin-top:4px;">📋 유니폼을 눌러 1:1 피드백 보기</div>
         </div>
       </div>
     </div>`;
@@ -4950,7 +4989,137 @@ function pageMember(){
     <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요!</div>
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
+// ===== 개인 1:1 피드백 페이지 =====
+function fbCanWrite(){ return (rankOf(me)==='exec')||(adminLevel()===1); } // 임원+관리자1
+function fbCanComment(target){ return (target===myRealName())||(rankOf(me)==='exec'); } // 본인+모든 임원
+function pageFeedback(){
+  const target=feedbackTarget;
+  if(!target) return `<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#8aa;">멤버현황에서 멤버의 유니폼을 눌러 들어와주세요.</div>`;
+  const isExecOrAdmin=(rankOf(me)==='exec')||(adminLevel()>0);
+  const isSelf=(target===myRealName());
+  if(!isExecOrAdmin && !isSelf) return `<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#c0392b;">본인 또는 임원/관리자만 볼 수 있어요.</div>`;
+
+  const list=((DATA.feedbacks||{})[target]||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const canWrite=fbCanWrite();
+
+  // 작성 폼 (임원+관리자1)
+  const writeBox = (canWrite && fbWriting) ? `
+    <div class="fb-write">
+      ${rteBox('fbText','','피드백 내용을 적어주세요. (예: 오늘 드리블 연습이 필요해 보여요! 아래 영상 참고해서 연습해봐요)')}
+      <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 참고 영상 유튜브 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="qna-send sm" style="margin:0;" onclick="addFeedback()">피드백 등록</button>
+        <button class="qna-send sm" style="margin:0;background:#9aa6ae;" onclick="fbWriting=false;renderPage('feedback')">취소</button>
+      </div>
+    </div>` : '';
+  const writeToggle = canWrite && !fbWriting
+    ? `<div style="text-align:right;margin-bottom:10px;"><button class="qna-send sm" onclick="fbWriting=true;renderPage('feedback')">✏️ 피드백 작성</button></div>`
+    : '';
+
+  // 피드백 프리뷰(큰 카드, 1:1 형태)
+  const cards = list.length ? list.map((f)=>{
+    const cmts=Array.isArray(f.comments)?f.comments:[];
+    const cmtHtml=cmts.map((c,ci)=>{
+      const reps=Array.isArray(c.replies)?c.replies:[];
+      const repHtml=reps.map((r,ri)=>`<div class="fb-reply"><b>${esc(userLabel(r.by)||r.by||'')}</b> ${esc(r.text)} <span class="fb-date">${fbDate(r.ts)}</span>${fbCanDelComment(target,r.by)?` <span class="fb-del" onclick="delFbReply('${esc(target).replace(/'/g,"\\'")}','${f.id}',${ci},${ri})">삭제</span>`:''}</div>`).join('');
+      return `<div class="fb-cmt">
+        <div><b>${esc(userLabel(c.by)||c.by||'')}</b> ${esc(c.text)} <span class="fb-date">${fbDate(c.ts)}</span>${fbCanDelComment(target,c.by)?` <span class="fb-del" onclick="delFbComment('${esc(target).replace(/'/g,"\\'")}','${f.id}',${ci})">삭제</span>`:''}</div>
+        ${repHtml}
+        ${fbCanComment(target)?`<div class="fb-reply-input"><input id="fbrep_${f.id}_${ci}" maxlength="300" placeholder="답글 달기…" onkeydown="if(event.key==='Enter')addFbReply('${esc(target).replace(/'/g,"\\'")}','${f.id}',${ci})"><button onclick="addFbReply('${esc(target).replace(/'/g,"\\'")}','${f.id}',${ci})">확인</button></div>`:''}
+      </div>`;
+    }).join('');
+    const commentInput=fbCanComment(target)
+      ? `<div class="fb-cmt-input"><input id="fbc_${f.id}" maxlength="300" placeholder="댓글 달기…" onkeydown="if(event.key==='Enter')addFbComment('${esc(target).replace(/'/g,"\\'")}','${f.id}')"><button onclick="addFbComment('${esc(target).replace(/'/g,"\\'")}','${f.id}')">확인</button></div>`
+      : '';
+    return `<div class="fb-card">
+      <div class="fb-card-head">
+        <span class="fb-by">✍️ ${esc(userLabel(f.by)||f.by||'')}</span>
+        <span class="fb-date">${fbDate(f.ts)}</span>
+        ${canWrite?`<span class="fb-del" onclick="delFeedback('${esc(target).replace(/'/g,"\\'")}','${f.id}')">삭제</span>`:''}
+      </div>
+      <div class="fb-body">${diaryBodyRender(f.text||'')}</div>
+      <div class="fb-cmt-list">${cmtHtml}</div>
+      ${commentInput}
+    </div>`;
+  }).join('') : `<div style="padding:20px;color:#8aa;text-align:center;">아직 등록된 피드백이 없어요.${canWrite?' ✏️ 피드백 작성으로 첫 피드백을 남겨보세요!':''}</div>`;
+
+  return `<div class="page-h">📋 ${esc(maskMemName(target))} 님의 1:1 피드백</div>
+    <div style="font-size:12px;color:#5a7585;margin:-4px 0 10px;">🔒 이 피드백은 본인과 임원·관리자만 볼 수 있어요.</div>
+    <div style="margin-bottom:10px;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="go('member')">← 멤버현황으로</button></div>
+    ${writeToggle}
+    ${writeBox}
+    <div class="fb-list">${cards}</div>`;
+}
+function fbDate(ts){ if(!ts) return ''; const d=new Date(ts); return `${String(d.getFullYear()).slice(2)}.${d.getMonth()+1}.${d.getDate()}`; }
+function fbCanDelComment(target,by){ return (adminLevel()===1)||(by&&by===me); }
+let fbWriting=false;
+function addFeedback(){
+  const target=feedbackTarget;
+  if(!fbCanWrite()) return alert('임원 또는 관리자1만 작성할 수 있어요.');
+  if(!target) return;
+  const tx=rteGetHtml('fbText');
+  if(rteIsEmpty('fbText')) return alert('피드백 내용을 입력하세요.');
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  fb[target]=fb[target]||[];
+  fb[target].push({id:'f'+Date.now(), text:tx, ts:Date.now(), by:me, comments:[]});
+  fbWriting=false;
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function delFeedback(target,fid){
+  if(!fbCanWrite()) return;
+  if(!confirm('이 피드백을 삭제할까요?')) return;
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  fb[target]=(fb[target]||[]).filter(f=>f.id!==fid);
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function addFbComment(target,fid){
+  if(!fbCanComment(target)) return alert('본인 또는 임원만 댓글을 달 수 있어요.');
+  const inp=document.getElementById('fbc_'+fid); if(!inp) return;
+  const t=inp.value.trim(); if(!t) return;
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f) return;
+  f.comments=f.comments||[]; f.comments.push({by:me, text:t, ts:Date.now(), replies:[]});
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function addFbReply(target,fid,ci){
+  if(!fbCanComment(target)) return alert('본인 또는 임원만 답글을 달 수 있어요.');
+  const inp=document.getElementById('fbrep_'+fid+'_'+ci); if(!inp) return;
+  const t=inp.value.trim(); if(!t) return;
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f||!f.comments||!f.comments[ci]) return;
+  f.comments[ci].replies=f.comments[ci].replies||[];
+  f.comments[ci].replies.push({by:me, text:t, ts:Date.now()});
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function delFbComment(target,fid,ci){
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f||!f.comments) return;
+  if(!fbCanDelComment(target, f.comments[ci]&&f.comments[ci].by)) return;
+  f.comments.splice(ci,1);
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function delFbReply(target,fid,ci,ri){
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f||!f.comments||!f.comments[ci]) return;
+  const reps=f.comments[ci].replies||[];
+  if(!fbCanDelComment(target, reps[ri]&&reps[ri].by)) return;
+  reps.splice(ri,1);
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
 function pageActivity(){
+  // 활동현황 이름 마스킹: 임원·멤버·관리자1·본인은 전체, 그 외(응원단·새내기·방문객)는 가운데만
   // 활동현황 이름 마스킹: 임원·멤버·관리자1·본인은 전체, 그 외(응원단·새내기·방문객)는 가운데만
   //  3글자 박지예 → ＊지＊ / 4글자 박새로이 → ＊새로＊ / 2글자 김민 → ＊민
   const fullNames=nameUnmasked(); // 임원·멤버·관리자1
@@ -5544,32 +5713,38 @@ function renderDiaryHomeAdmin(){
   if(!el) return;
   const logs=DATA.logs||[];
   if(!logs.length){ el.innerHTML='등록된 훈련일지가 없어요.'; return; }
-  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[];
+  const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[]).map(String);
   el.innerHTML=logs.map((l,i)=>{
-    const on=picks.indexOf(l.ts)>=0;
+    const on=picks.indexOf(String(l.ts))>=0;
     return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px dotted #e0d4b0;">
-      <a href="#" onclick="toggleDiaryHome(${l.ts||0});return false;" style="color:${on?'#e0a93b':'#9aa6ae'};text-decoration:none;font-size:14px;flex-shrink:0;" title="홈 노출">${on?'⭐':'☆'}</a>
+      <a href="#" onclick="toggleDiaryHome('${l.ts||0}');return false;" style="color:${on?'#e0a93b':'#9aa6ae'};text-decoration:none;font-size:14px;flex-shrink:0;" title="홈 노출">${on?'⭐':'☆'}</a>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.secret?'🔒':''}${esc(l.title||'(제목없음)')}</span>
-      <a href="#" onclick="moveDiaryHome(${l.ts||0},-1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▲</a>
-      <a href="#" onclick="moveDiaryHome(${l.ts||0},1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▼</a>
+      <a href="#" onclick="moveDiaryHome('${l.ts||0}',-1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▲</a>
+      <a href="#" onclick="moveDiaryHome('${l.ts||0}',1);return false;" style="color:#2176a8;text-decoration:none;flex-shrink:0;">▼</a>
     </div>`;
   }).join('');
 }
 function toggleDiaryHome(ts){
   if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
-  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[];
+  ts=String(ts);
+  const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[]).map(String);
   const idx=picks.indexOf(ts);
   if(idx>=0) picks.splice(idx,1); else picks.push(ts);
+  DATA.diary_home_pick=picks;            // 즉시 반영
   ROOT.child('diary_home_pick').set(picks);
+  renderPage(currentPage);               // 홈 새소식·관리 패널 즉시 갱신
 }
 function moveDiaryHome(ts,dir){
   if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
-  const picks=Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[];
+  ts=String(ts);
+  const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick.slice():[]).map(String);
   const i=picks.indexOf(ts);
   if(i<0) return alert('먼저 ⭐로 홈 노출을 선택하세요.');
   const j=i+dir; if(j<0||j>=picks.length) return;
   const t=picks[i]; picks[i]=picks[j]; picks[j]=t;
+  DATA.diary_home_pick=picks;            // 즉시 반영
   ROOT.child('diary_home_pick').set(picks);
+  renderPage(currentPage);
 }
 function delLog(i){const a=DATA.logs.slice();a.splice(i,1);ROOT.child('logs').set(a);}
 function addRosterMember(){
