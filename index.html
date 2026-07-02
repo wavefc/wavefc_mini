@@ -388,6 +388,7 @@
   .member-card.flip .mc-back{flex-direction:column;align-items:center;}
   .mc-back-head{display:flex;flex-direction:column;align-items:center;margin-bottom:5px;cursor:pointer;}
   .mc-back-jersey{font-size:22px;line-height:1;}
+  .mc-back-jersey *{pointer-events:none;}
   .mc-back-name{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--frame-dark);margin-top:2px;word-break:keep-all;}
   .mc-back-close{font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:10px;color:#5aa9e6;margin-top:1px;}
   .mc-back-stats{width:100%;display:flex;flex-direction:column;align-items:center;}
@@ -4796,6 +4797,11 @@ let _peekedThisVisit={}; // 이번 멤버현황 방문에서 펼쳐본 멤버 (�
 let _praisedThisVisit=false; // 이번 방문에서 칭찬 떴는지
 // 개인 1:1 피드백 페이지 열기 (열람: 본인 또는 임원/관리자)
 let feedbackTarget=null;
+function openFeedbackByIdx(idx){
+  const m=(window._memberCardOrder||[])[idx];
+  if(!m) return;
+  openFeedback(m.name);
+}
 function openFeedback(name){
   if(!isApproved()) return alert('로그인 후 이용할 수 있어요.');
   const isExecOrAdmin=(rankOf(me)==='exec')||(adminLevel()>0);
@@ -4970,11 +4976,10 @@ function pageMember(){
         </div>
         <div class="mc-back">
           <div class="mc-back-head">
-            <span class="mc-back-jersey" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();openFeedback('${esc(m.name).replace(/'/g,"\\'")}')">${avSmall}</span>
+            <span class="mc-back-jersey" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();openFeedbackByIdx(${idx})">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
-          <div class="mc-fb-hint" onclick="event.stopPropagation();openFeedback('${esc(m.name).replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;color:#5a9bd4;font-weight:700;margin-top:4px;">📋 유니폼을 눌러 1:1 피드백 보기</div>
         </div>
       </div>
     </div>`;
@@ -4986,7 +4991,7 @@ function pageMember(){
     · 등번호가 있으면 유니폼으로 표시</div>`;
   return `<div class="page-h">👕 멤버 현황 (${all.length}명)</div>
     ${legend}
-    <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요!</div>
+    <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요! <span style="color:#e02b2b;font-weight:700;">능력치(스탯)에서 내 유니폼을 누르면 1:1 피드백을 요청하고 받아볼 수 있어요.</span></div>
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 // ===== 개인 1:1 피드백 페이지 =====
