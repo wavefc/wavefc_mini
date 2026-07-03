@@ -1169,6 +1169,8 @@ function runMigrations(){
   }
   // --- 출석 날짜 연도 정규화 (한 번만) ---
   try{ migrateAttendanceYears(); }catch(e){}
+  // --- 성장기록 조회수 전체 리셋 (한 번만) ---
+  try{ resetFeedbackViews(); }catch(e){}
   // --- (2) 과거 활동 소급 점수 (한 번만, _backfilled 플래그로 중복 방지) ---
   if(DATA._backfilled) return;
   try{
@@ -2632,6 +2634,7 @@ ROOT.on('value',snap=>{
     _backfilled:(v._backfilled===true),
     _attYearMigrated:(v._attYearMigrated===true),
     _june6thFixed:(v._june6thFixed===true),
+    _fbViewsReset:(v._fbViewsReset===true),
     feedbacks:(v.feedbacks||{}),
     fb_profile:(v.fb_profile||{}),
     _manualAdj1:(v._manualAdj1===true),
@@ -3001,7 +3004,7 @@ function renderPage(page){
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
   else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
-  else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#c0392b;">피드백 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } }
+  else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#c0392b;">기록 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } }
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
@@ -4577,6 +4580,17 @@ function sortAttendance(arr){
   return arr.slice().sort((a,b)=>attDateKey(a.date)-attDateKey(b.date));
 }
 // 기존 출석 날짜(연도 없는 6/14 등)를 올해(기본 2026) 연-월-일로 정규화. 1회만 실행.
+// 성장기록 조회수 전체 1회 리셋 (_fbViewsReset 플래그로 중복 방지)
+function resetFeedbackViews(){
+  if(DATA._fbViewsReset) return;
+  const fb=DATA.feedbacks||{};
+  let changed=false;
+  Object.keys(fb).forEach(name=>{
+    (fb[name]||[]).forEach(f=>{ if(f && f.views){ f.views=0; changed=true; } });
+  });
+  if(changed) ROOT.child('feedbacks').set(fb);
+  ROOT.child('_fbViewsReset').set(true);
+}
 function migrateAttendanceYears(){
   if(DATA._attYearMigrated) return;
   const arr=(DATA.attendance||[]).slice();
@@ -5049,7 +5063,7 @@ function pageMember(){
         </div>
         <div class="mc-back">
           <div class="mc-back-head">
-            <span class="mc-back-jersey mc-fb-open" data-fbidx="${idx}" style="cursor:pointer;" title="1:1 피드백 보기" onclick="event.stopPropagation();event.preventDefault();openFeedbackByIdx(${idx});">${avSmall}</span>
+            <span class="mc-back-jersey mc-fb-open" data-fbidx="${idx}" style="cursor:pointer;" title="성장 기록 일지 보기" onclick="event.stopPropagation();event.preventDefault();openFeedbackByIdx(${idx});">${avSmall}</span>
             <span class="mc-back-name">${esc(maskMemName(m.name))}${num?' #'+esc(num):''}</span>
           </div>
           <div class="mc-back-stats">${statRows}</div>
@@ -5064,7 +5078,7 @@ function pageMember(){
     · 등번호가 있으면 유니폼으로 표시</div>`;
   return `<div class="page-h">👕 멤버 현황 (${all.length}명)</div>
     ${legend}
-    <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요! <span style="color:#e02b2b;font-weight:700;">능력치(스탯)에서 내 유니폼을 누르면 1:1 피드백을 요청하고 받아볼 수 있어요.</span></div>
+    <div style="font-family:'Pretendard','Malgun Gothic',sans-serif;font-size:12px;color:#5aa9e6;margin:-6px 0 10px;">🔹 카드를 누르면 멤버 능력치(스탯)가 보여요. 내 카드는 직접 설정할 수 있어요! <span style="color:#e02b2b;font-weight:700;">능력치(스탯)에서 내 유니폼을 누르면 나의 성장 기록 일지를 쓰고 궁금한 점을 물어볼 수 있어요.</span></div>
     <div class="member-grid">${cards||'<div style=\"color:#8aa;padding:20px;\">아직 등록된 멤버가 없어요. 관리(⚙)에서 추가하세요.</div>'}</div>`;
 }
 // ===== 개인 1:1 피드백 페이지 =====
@@ -5076,10 +5090,10 @@ let fbPage=1;         // 피드백 그리드 페이지 (1페이지=최신 10개)
 function fbCanEdit(f){ return (adminLevel()===1) || (f&&f.by&&f.by===me); } // 작성자 본인 또는 관리자1
 function pageFeedback(){
   const target=feedbackTarget;
-  if(!target) return `<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#8aa;">멤버현황에서 멤버의 유니폼을 눌러 들어와주세요.</div>`;
+  if(!target) return `<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#8aa;">멤버현황에서 멤버의 유니폼을 눌러 들어와주세요.</div>`;
   const isExecOrAdmin=(rankOf(me)==='exec')||(adminLevel()>0);
   const isSelf=(target===myRealName());
-  if(!isExecOrAdmin && !isSelf) return `<div class="page-h">📋 1:1 피드백</div><div style="padding:16px;color:#c0392b;">본인 또는 임원/관리자만 볼 수 있어요.</div>`;
+  if(!isExecOrAdmin && !isSelf) return `<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#c0392b;">본인 또는 임원/관리자만 볼 수 있어요.</div>`;
 
   const list=((DATA.feedbacks||{})[target]||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
   const canWrite=fbCanWrite();
@@ -5135,11 +5149,11 @@ function pageFeedback(){
     if(f){
       // 편집 모드
       if(fbEditing===f.id && fbCanEdit(f)){
-        return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
+        return `<div class="page-h">📋 ${esc(target)}의 성장 기록 일지</div>
           <div style="margin:8px 0;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="fbEditing=null;renderPage('feedback')">← 취소</button></div>
           <div class="fb-write">
-            <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련 피드백)" value="${esc(f.title||'')}">
-            ${rteBox('fbText',(/<[a-z][\s\S]*>/i.test(f.text||'')?(f.text||''):esc(f.text||'').replace(/\n/g,'<br>')),'피드백 내용')}
+            <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련이 궁금해요)" value="${esc(f.title||'')}">
+            ${rteBox('fbText',(/<[a-z][\s\S]*>/i.test(f.text||'')?(f.text||''):esc(f.text||'').replace(/\n/g,'<br>')),'기록 내용을 적어주세요')}
             <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 참고 영상 유튜브 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
             <button class="qna-send sm" onclick="saveFeedbackEdit('${f.id}')">수정 완료</button>
           </div>`;
@@ -5162,7 +5176,7 @@ function pageFeedback(){
       // 관리자1이면 좋아요 누른 사람 명단 표시
       const likedByRow=(adminLevel()===1 && Array.isArray(f.likedBy) && f.likedBy.length)
         ? `<div class="fb-likedby">❤️ ${f.likedBy.map(k=>rankEmoji(k)+esc(userLabel(k)||k)).join(', ')}</div>` : '';
-      return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
+      return `<div class="page-h">📋 ${esc(target)}의 성장 기록 일지</div>
         <div style="margin:8px 0;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="fbOpen=null;renderPage('feedback')">← 목록으로</button></div>
         <div class="fb-card fb-detail">
           <div class="fb-card-head">
@@ -5185,16 +5199,16 @@ function pageFeedback(){
   // ===== 작성 폼 =====
   const writeBox = (canWrite && fbWriting) ? `
     <div class="fb-write">
-      <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련 피드백)">
-      ${rteBox('fbText','','피드백 내용을 적어주세요. (예: 오늘 드리블 연습이 필요해 보여요! 아래 영상 참고해서 연습해봐요)')}
+      <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련이 궁금해요)">
+      ${rteBox('fbText','','배우고 싶은 것, 하고 싶은 훈련, 궁금한 점을 자유롭게 적어보세요! (예: 드리블이 약한데 어떤 연습이 좋을까요?)')}
       <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 참고 영상 유튜브 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
       <div style="display:flex;gap:6px;margin-top:6px;">
-        <button class="qna-send sm" style="margin:0;" onclick="addFeedback()">피드백 등록</button>
+        <button class="qna-send sm" style="margin:0;" onclick="addFeedback()">기록 남기기</button>
         <button class="qna-send sm" style="margin:0;background:#9aa6ae;" onclick="fbWriting=false;renderPage('feedback')">취소</button>
       </div>
     </div>` : '';
   const writeToggle = canWrite && !fbWriting
-    ? `<div style="text-align:right;margin-bottom:10px;"><button class="qna-send sm" onclick="fbWriting=true;renderPage('feedback')">✏️ 피드백 작성</button></div>`
+    ? `<div style="text-align:right;margin-bottom:10px;"><button class="qna-send sm" onclick="fbWriting=true;renderPage('feedback')">✏️ 기록 작성</button></div>`
     : '';
 
   // ===== 미리보기 그리드 (웹 1행5개·최대2행=10개/페이지, 모바일 2열) =====
@@ -5219,7 +5233,7 @@ function pageFeedback(){
       </div>
       <div class="fb-gcard-by">✍️ ${esc(userLabel(f.by)||f.by||'')} · ${fbDate(f.ts)}</div>
     </div>`;
-  }).join('') : `<div style="padding:20px;color:#8aa;text-align:center;grid-column:1/-1;">아직 등록된 피드백이 없어요.${canWrite?' ✏️ 피드백 작성으로 첫 피드백을 남겨보세요!':''}</div>`;
+  }).join('') : `<div style="padding:20px;color:#8aa;text-align:center;grid-column:1/-1;">아직 작성된 기록이 없어요.${canWrite?' ✏️ 기록 작성으로 첫 기록을 남겨보세요!':''}</div>`;
   // 페이지 버튼 (왼쪽=1=과거 … 오른쪽=최신)
   let pager='';
   if(pageCount>1){
@@ -5230,8 +5244,8 @@ function pageFeedback(){
     pager=`<div style="text-align:center;margin:12px 0 4px;">${btns}<div style="font-size:10px;color:#9aa6ae;margin-top:3px;">◀ 과거 · 최신 ▶</div></div>`;
   }
 
-  return `<div class="page-h">📋 ${esc(target)} 님의 1:1 피드백</div>
-    <div style="font-size:12px;color:#5a7585;margin:-4px 0 10px;">🔒 이 피드백은 본인과 임원·관리자만 볼 수 있어요.</div>
+  return `<div class="page-h">📋 ${esc(target)}의 성장 기록 일지</div>
+    <div style="font-size:12px;color:#5a7585;margin:-4px 0 10px;">🔒 이 기록은 본인과 임원·관리자만 볼 수 있어요.</div>
     <div style="margin-bottom:10px;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="go('member')">← 멤버현황으로</button></div>
     ${profilePanel}
     ${writeToggle}
@@ -5298,7 +5312,7 @@ function addFeedback(){
   if(!target) return;
   const title=(document.getElementById('fbTitle')||{}).value||'';
   const tx=rteGetHtml('fbText');
-  if(rteIsEmpty('fbText')) return alert('피드백 내용을 입력하세요.');
+  if(rteIsEmpty('fbText')) return alert('내용을 입력하세요.');
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[target]=fb[target]||[];
   fb[target].push({id:'f'+Date.now(), title:title.trim(), text:tx, ts:Date.now(), by:me, comments:[], likedBy:[], views:0});
@@ -5310,7 +5324,7 @@ function addFeedback(){
 }
 function delFeedback(target,fid){
   if(!fbCanWrite()) return;
-  if(!confirm('이 피드백을 삭제할까요?')) return;
+  if(!confirm('이 기록을 삭제할까요?')) return;
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[target]=(fb[target]||[]).filter(f=>f.id!==fid);
   DATA.feedbacks=fb;
