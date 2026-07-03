@@ -4190,6 +4190,7 @@ function monthTop6(monthKey){
     .slice().sort((a,b)=> String(a.name).localeCompare(String(b.name),'ko')); // 출석현황과 동일: 가나다순
   const stats=[];
   roster.forEach(m=>{
+    const hasPeriods=Array.isArray(m.rest_periods)&&m.rest_periods.length>0;
     const isRest=memStatus(m)==='rest';
     const joinKey=m.join?attDateKey(m.join):0;
     let oCnt=0, denom=0, anyValid=false;
@@ -4198,6 +4199,13 @@ function monthTop6(monthKey){
       const preJoin = joinKey && attDateKey(s.date)<joinKey;
       let st;
       if(preJoin){ if(raw==='E') st='E'; else return; }
+      else if(hasPeriods && isRestingOnDate(m, s.date)){
+        if(raw===true) st='O';
+        else if(raw==='E') st='E';
+        else if(raw==='I') st='I';
+        else if(raw==='P') st='P';
+        else st='R';
+      }
       else if(raw===true) st='O';
       else if(raw==='E') st='E';
       else if(raw==='A') st='A';
@@ -4205,13 +4213,14 @@ function monthTop6(monthKey){
       else if(raw==='I') st='I';
       else if(raw==='P') st='P';
       else if(raw===false||raw==='X') st='X';
-      else st=isRest?'R':'X';
+      else st=(hasPeriods?'X':(isRest?'R':'X'));
       anyValid=true;
       if(st==='R') return;
       denom++;
       if(st==='O'||st==='E') oCnt++;
     });
-    if(anyValid && denom>0 && !isRest){
+    const excludeAll = hasPeriods ? false : isRest;
+    if(anyValid && denom>0 && !excludeAll){
       stats.push({name:m.name, rate:Math.round(oCnt/denom*100), oCnt});
     }
   });
@@ -4286,6 +4295,7 @@ function pageAttend(){
   // 선택한 달/기간에서 '휴식중'인 멤버는 아래쪽으로 정렬
   // (그 기간에 출석/체험이 한 번도 없고, 휴식 또는 rest 상태인 경우)
   function isRestingInPeriod(m){
+    const hasPeriods=Array.isArray(m.rest_periods)&&m.rest_periods.length>0;
     const isRest=memStatus(m)==='rest';
     const joinKey=m.join?attDateKey(m.join):0;
     let hasActive=false, hasRest=false, anyValid=false;
@@ -4293,20 +4303,25 @@ function pageAttend(){
       if(joinKey && attDateKey(s.date)<joinKey) return;
       const raw=(s.present&&s.present[m.name]);
       let st;
-      if(raw===true) st='O';
+      if(hasPeriods && isRestingOnDate(m, s.date)){
+        if(raw===true) st='O'; else if(raw==='E') st='E';
+        else if(raw==='I') st='I'; else if(raw==='P') st='P';
+        else st='R';
+      }
+      else if(raw===true) st='O';
       else if(raw==='E') st='E';
       else if(raw==='A') st='A';
       else if(raw==='R') st='R';
       else if(raw==='I') st='I';
       else if(raw==='P') st='P';
       else if(raw===false||raw==='X') st='X';
-      else st=isRest?'R':'X';
+      else st=(hasPeriods?'X':(isRest?'R':'X'));
       anyValid=true;
       if(st==='O'||st==='E') hasActive=true;
       if(st==='R') hasRest=true;
     });
     if(!anyValid) return false;
-    return !hasActive && (hasRest || isRest); // 출석 한 번도 없고 휴식 위주면 아래로
+    return !hasActive && (hasRest || (isRest && !hasPeriods)); // 출석 없고 휴식 위주면 아래로
   }
   members=members.slice().sort((a,b)=>{
     const ra=isRestingInPeriod(a)?1:0, rb=isRestingInPeriod(b)?1:0;
@@ -4342,8 +4357,14 @@ function pageAttend(){
   }
   const rows=members.map(m=>{
     const name=m.name;
+    const hasPeriods=Array.isArray(m.rest_periods)&&m.rest_periods.length>0;
     const isRest=memStatus(m)==='rest';
     const joinKey = m.join ? attDateKey(m.join) : 0; // 가입일(없으면 0=처음부터)
+    // 미입력 세션 기본값: 그 날짜가 휴식 기간이면 R, 아니면 (레거시 상태 반영)
+    const restDefault=(s)=>{
+      if(hasPeriods) return isRestingOnDate(m, s.date) ? 'R' : 'X';
+      return isRest ? 'R' : 'X';
+    };
     // 멤버별 세션 상태 계산 함수. 가입 전이면 'PRE'(미입력) 또는 'E'(체험 입력됨)
     const stateOf=(s)=>{
       const raw=(s.present&&s.present[name]);
@@ -4352,6 +4373,14 @@ function pageAttend(){
         // 가입 전: 체험(E)만 의미 있음(출석 인정). 그 외 입력/미입력은 'PRE'(해당없음)
         return (raw==='E') ? 'E' : 'PRE';
       }
+      // 휴식 기간이면 명시 입력(O/E 등)이 없는 한 R 우선 (날짜 단위 휴식)
+      if(hasPeriods && isRestingOnDate(m, s.date)){
+        if(raw===true) return 'O';       // 휴식 기간에도 나왔으면 출석 인정
+        if(raw==='E') return 'E';
+        if(raw==='I') return 'I';
+        if(raw==='P') return 'P';
+        return 'R';                       // 그 외는 휴식중
+      }
       if(raw===true) return 'O';
       if(raw==='E') return 'E';
       if(raw==='A') return 'A';
@@ -4359,7 +4388,7 @@ function pageAttend(){
       if(raw==='I') return 'I';
       if(raw==='P') return 'P';
       if(raw===false||raw==='X') return 'X';
-      return isRest?'R':'X'; // 미입력 기본값
+      return restDefault(s); // 미입력 기본값
     };
     const cells=sessions.map((s,si)=>{
       const state=stateOf(s);
@@ -4384,10 +4413,13 @@ function pageAttend(){
     const rate=denom?Math.round(oCnt/denom*100):0;
     // 월별 이모티콘: 그 달에 부상/개인사정이 있으면 우선 표시
     let rateEmoji;
+    // 출석 정보가 3개 미만으로 쌓였을 땐 아직 표정 판단을 하지 않고 🙂 로 통일
+    const recordCount=denom; // 평가 대상 세션 수(휴식 제외)
     if(hasInjury) rateEmoji='🤕';            // 부상 한 번이라도
-    else if(hasRest) rateEmoji='😴';          // 휴식중 한 번이라도
+    else if(hasRest && denom===0) rateEmoji='😴'; // 그 기간 전부 휴식이면 휴식 표정
     else if(hasPersonal) rateEmoji='🫡';      // 개인사정 한 번이라도
     else if(!anyValid || denom===0) rateEmoji='😉'; // 평가할 기록 없음(가입 전 포함)
+    else if(recordCount<3) rateEmoji='🙂';    // 출석 정보 3개 미만 → 아직 표정 판단 보류
     else if(rate>=100) rateEmoji='😍';
     else if(rate>=80) rateEmoji='😄';
     else if(rate>=60) rateEmoji='😊';
@@ -4410,6 +4442,7 @@ function pageAttend(){
   function calcStats(sessionList){
     const stats=[]; let tO=0, tD=0;
     members.forEach(m=>{
+      const hasPeriods=Array.isArray(m.rest_periods)&&m.rest_periods.length>0;
       const isRest=memStatus(m)==='rest';
       const joinKey=m.join?attDateKey(m.join):0;
       let oCnt=0, denom=0, anyValid=false, pureO=0, pureD=0;
@@ -4421,6 +4454,14 @@ function pageAttend(){
           if(raw==='E') st='E';   // 가입 전 체험은 출석 인정
           else return;            // 그 외 가입 전은 제외
         }
+        else if(hasPeriods && isRestingOnDate(m, s.date)){
+          // 날짜 단위 휴식: 명시 출석/부상/개인사정만 반영, 나머지는 R
+          if(raw===true) st='O';
+          else if(raw==='E') st='E';
+          else if(raw==='I') st='I';
+          else if(raw==='P') st='P';
+          else st='R';
+        }
         else if(raw===true) st='O';
         else if(raw==='E') st='E';
         else if(raw==='A') st='A';
@@ -4428,7 +4469,7 @@ function pageAttend(){
         else if(raw==='I') st='I';
         else if(raw==='P') st='P';
         else if(raw===false||raw==='X') st='X';
-        else st=isRest?'R':'X';
+        else st=(hasPeriods?'X':(isRest?'R':'X'));
         anyValid=true;
         // 순수 출석률(옐로카드용): 휴식·부상·개인사정 모두 분모 제외
         if(st!=='R' && st!=='I' && st!=='P'){ pureD++; if(st==='O'||st==='E') pureO++; }
@@ -4436,7 +4477,9 @@ function pageAttend(){
         denom++;                    // 부상·개인사정 포함(0%)
         if(st==='O'||st==='E') oCnt++;
       });
-      if(anyValid && denom>0 && !isRest){
+      // rest_periods 쓰는 멤버는 그 기간(달)에 denom>0이면 포함(복귀한 달). 레거시 rest는 제외.
+      const excludeAll = hasPeriods ? false : isRest;
+      if(anyValid && denom>0 && !excludeAll){
         const rate=Math.round(oCnt/denom*100);
         const pureRate=pureD?Math.round(pureO/pureD*100):null; // 평가할 순수 출석 없으면 null
         stats.push({name:m.name, rate, oCnt, denom, pureRate, pureD});
@@ -4692,6 +4735,20 @@ function memStatus(m){
   if(m.status) return m.status; // 'active' | 'honor' | 'rest'
   if(m.number==='★') return 'honor';
   return 'active';
+}
+// 특정 세션 날짜(dateStr)에 이 멤버가 '휴식 기간'인지 판단.
+// m.rest_periods = [{from:'2026-1-1', to:'2026-6-30'}] (to 생략 시 아직 복귀 안 함=계속 휴식)
+// 날짜 단위로 휴식/복귀를 관리 → 과거 출석은 그대로 보존됨.
+function isRestingOnDate(m, dateStr){
+  const k=attDateKey(dateStr);
+  const periods=Array.isArray(m.rest_periods)?m.rest_periods:[];
+  for(const p of periods){
+    if(!p||!p.from) continue;
+    const fromK=attDateKey(p.from);
+    const toK=p.to?attDateKey(p.to):99999999; // to 없으면 계속 휴식중
+    if(k>=fromK && k<=toK) return true;
+  }
+  return false;
 }
 function memNumber(m){
   // 표시용 등번호: ★/- 같은 옛 표기는 번호 아님
@@ -6045,6 +6102,90 @@ function setMemberStatus(i,status){
   if(status==='honor'){ a[i].number=''; } // 명예회원은 등번호 비움(★ 표시)
   ROOT.child('roster').set(a);
 }
+// 날짜 단위 휴식 기간 추가 (과거 출석 보존). 예) 장하현: from 비우고 to=2026-6-30 → 복귀 전까지 휴식
+// ① 휴식 시작 (복귀일 미정) — 시작일만 받고 종료일 비움 = 계속 휴식중
+function startRest(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const name=a[i].name;
+  a[i].rest_periods=Array.isArray(a[i].rest_periods)?a[i].rest_periods:[];
+  // 이미 열린(복귀일 없는) 휴식이 있으면 중복 방지
+  if(a[i].rest_periods.some(p=>p&&!p.to)){
+    return alert(name+' 님은 이미 휴식 중이에요.\n복귀가 정해지면 [복귀일 지정]을 눌러주세요.');
+  }
+  const from=prompt(name+' 휴식 시작일을 입력하세요. (예: 2026-7-1)\n비워두면 오늘부터 휴식으로 처리해요.\n\n※ 복귀일은 나중에 [복귀일 지정]으로 넣으면 돼요.','');
+  if(from===null) return;
+  let f=(from||'').trim();
+  if(!f){ const d=new Date(); f=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+  a[i].rest_periods.push({from:f, to:''}); // to 비움 = 계속 휴식
+  a[i].status='active'; // 날짜 기반으로 판단하므로 단일 status는 active
+  ROOT.child('roster').set(a);
+  alert(name+' 님이 '+f+'부터 휴식에 들어갔어요. 🛌\n복귀가 정해지면 [복귀일 지정]을 눌러주세요.\n\n이 기간의 출석은 \'휴식중\'으로 처리되고, 과거 기록은 그대로 보존돼요.');
+}
+// ② 복귀일 지정 — 열린 휴식(복귀일 없는 기간)에 종료일을 채움
+function setReturnDate(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const name=a[i].name;
+  const periods=Array.isArray(a[i].rest_periods)?a[i].rest_periods:[];
+  const open=periods.filter(p=>p&&!p.to);
+  if(!open.length) return alert(name+' 님은 현재 열린 휴식이 없어요.\n먼저 [휴식 시작]을 눌러주세요.');
+  const ret=prompt(name+' 님의 복귀일을 입력하세요. (예: 2026-8-5)\n이 날짜부터 다시 정상 출석 체크됩니다.\n\n※ 복귀일 하루 전까지 휴식으로 처리돼요.','');
+  if(ret===null) return;
+  const r=(ret||'').trim();
+  if(!r) return alert('복귀일을 입력해주세요.');
+  // 복귀일 하루 전 = 휴식 종료일. attDateKey로 계산 후 하루 빼기
+  const retK=attDateKey(r);
+  // 종료일은 복귀일 하루 전. 간단히 복귀일 자체를 넘겨받아, 종료 판정은 '< 복귀일'로 처리하기 위해
+  // to에는 복귀일 하루 전 날짜를 저장 (Date 연산)
+  const parts=r.split(/[\/\.\-]/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  let toStr=r;
+  if(parts.length>=3){
+    const d=new Date(parts[0], parts[1]-1, parts[2]);
+    d.setDate(d.getDate()-1);
+    toStr=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+  }
+  // 가장 최근 열린 휴식에 종료일 채움
+  for(let k=periods.length-1;k>=0;k--){
+    if(periods[k] && !periods[k].to){ periods[k].to=toStr; break; }
+  }
+  a[i].rest_periods=periods;
+  a[i].status='active';
+  ROOT.child('roster').set(a);
+  alert(name+' 님이 '+r+'부터 복귀해요! 🎉\n휴식 기간: '+toStr+'까지\n\n복귀일부터 정상 출석 체크되고, 휴식 기간 출석은 계산에서 빠져요.');
+}
+// ③ (수동) 휴식 기간 직접 추가 — 시작/종료 모두 지정 (과거 소급 입력용)
+function addRestPeriod(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  const name=a[i].name;
+  const from=prompt(name+' 휴식 시작일을 입력하세요. (예: 2026-1-1)\n비워두면 처음부터 휴식으로 처리해요.','');
+  if(from===null) return;
+  const to=prompt(name+' 휴식 종료일(복귀 전날)을 입력하세요. (예: 2026-6-30)\n아직 복귀 안 했으면 비워두세요. (계속 휴식중)','');
+  if(to===null) return;
+  a[i].rest_periods=Array.isArray(a[i].rest_periods)?a[i].rest_periods:[];
+  a[i].rest_periods.push({from:(from||'2000-1-1').trim(), to:(to||'').trim()});
+  a[i].status='active';
+  ROOT.child('roster').set(a);
+  alert(name+' 휴식 기간을 추가했어요.\n'+(from||'처음')+' ~ '+(to||'복귀 전까지')+'\n\n이 기간의 출석은 \'휴식중\'으로 처리되고, 그 외 기간은 정상 계산돼요.');
+}
+function clearRestPeriods(i){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i])return;
+  if(!confirm(a[i].name+'의 모든 휴식 기간을 지울까요?')) return;
+  a[i].rest_periods=[];
+  ROOT.child('roster').set(a);
+}
+// 특정 휴식 기간 하나만 삭제
+function delOneRestPeriod(i, pi){
+  const a=JSON.parse(JSON.stringify(DATA.roster));
+  if(!a[i]||!Array.isArray(a[i].rest_periods))return;
+  const p=a[i].rest_periods[pi];
+  if(!p) return;
+  if(!confirm(a[i].name+'의 이 휴식 기간을 지울까요?\n'+(p.from||'처음')+' ~ '+(p.to||'복귀 미정'))) return;
+  a[i].rest_periods.splice(pi,1);
+  ROOT.child('roster').set(a);
+}
 // 멤버 역할 변경 (member/exec)
 function setMemberRole(i,role){
   const a=JSON.parse(JSON.stringify(DATA.roster));
@@ -6072,11 +6213,21 @@ function renderRosterAdmin(){
     const roleIcon=m.role==='exec'?'👑':'🌊';
     const stLabel=st==='honor'?'⚫명예':(st==='rest'?'⚪휴식':'🔵일반');
     // 상태 전환 버튼: 현재 상태 빼고 보여줌
+    const periods=Array.isArray(m.rest_periods)?m.rest_periods:[];
+    const hasOpenRest=periods.some(p=>p&&!p.to); // 복귀일 없는(진행중) 휴식이 있나
+    const restBtn = hasOpenRest
+      ? `<a href="#" onclick="setReturnDate(${i});return false;" style="color:#2e8b3d;font-weight:700;">[복귀일지정]</a>`
+      : `<a href="#" onclick="startRest(${i});return false;" style="color:#8e44ad;">[휴식시작]</a>`;
     const stBtns=[
       st!=='active'?`<a href="#" onclick="setMemberStatus(${i},'active');return false;" style="color:#2176a8;">[활동]</a>`:'',
       st!=='honor'?`<a href="#" onclick="setMemberStatus(${i},'honor');return false;" style="color:#2a2a2a;">[명예]</a>`:'',
-      st!=='rest'?`<a href="#" onclick="setMemberStatus(${i},'rest');return false;" style="color:#7a868e;">[휴식]</a>`:''
+      restBtn,
+      `<a href="#" onclick="addRestPeriod(${i});return false;" style="color:#9b7cb8;font-size:8px;">[기간직접입력]</a>`
     ].join(' ');
+    // 등록된 휴식 기간 표시
+    const periodInfo=periods.length
+      ? `<div style="font-size:10px;color:#8e44ad;margin-top:2px;">🛌 휴식: ${periods.map((p,pi)=>(p.from||'처음')+'~'+(p.to||'<b>복귀 미정</b>')+` <a href="#" onclick="delOneRestPeriod(${i},${pi});return false;" style="color:#c0392b;">✕</a>`).join(' / ')}</div>`
+      : '';
     const roleBtn=m.role==='exec'
       ? `<a href="#" onclick="setMemberRole(${i},'member');return false;" style="color:#2176a8;">[일반직]</a>`
       : `<a href="#" onclick="setMemberRole(${i},'exec');return false;" style="color:#e0a93b;">[임원]</a>`;
@@ -6089,6 +6240,7 @@ function renderRosterAdmin(){
         ${roleBtn} ${stBtns}
         <a href="#" onclick="delRosterMember(${i});return false;" style="color:#c0392b;">[삭제]</a>
       </span>
+      ${periodInfo}
     </div>`;
   }).join('');
 }
