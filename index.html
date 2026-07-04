@@ -1119,9 +1119,10 @@ const ACT_POINTS={
   extlink:0.1,// WAVE 더 구경하기(인스타/유튜브) 클릭, 하루 0.5점 한도
   vidplay:3,  // 참고영상 재생/유튜브에서 보기, 하루 9점 한도
   peek:0.1,   // 멤버 스탯 구경, 하루 3점 한도
-  statset:0.1,// 내 스탯 설정(하루 0.1점 = 하루 1번)
+  statset:0.5,// 내 스탯 설정(1회 0.5점, 하루 최대 1점)
   memopeek:0.5,// 다른 사람 활동현황 뒷메모 확인(하루 3점 한도)
-  memowrite:2 // 활동현황 메모 작성(하루 2점 = 하루 1번)
+  memowrite:2, // 활동현황 메모 작성(하루 2점 = 하루 1번)
+  profileset:2 // 성장일기 프로필(목표/툴/보완점) 작성(칸별 하루 1회 2점)
 };
 function actPoints(type){ return ACT_POINTS[type]!==undefined?ACT_POINTS[type]:1; }
 // 하루 1회 접속 점수 (중복 방지: 오늘 login 기록 없을 때만)
@@ -1163,6 +1164,20 @@ function runMigrations(){
       });
       ROOT.child('activity_log').set(log);
       ROOT.child('_manualAdj1').set(true);
+    }catch(e){}
+  }
+  // --- (1.55) 성장일기 프로필 기작성자 소급 점수 (박지예·조안나·조은비 각 6점) 1회성 ---
+  if(!DATA._profileAdj1){
+    try{
+      const names=['박지예','조안나','조은비'];
+      const log=(DATA.activity_log||[]).slice();
+      names.forEach(nm=>{
+        const m=(DATA.roster||[]).find(x=>x.name===nm);
+        const userKey=(m&&m.key)?m.key:nm.replace(/[.#$\[\]\/]/g,'_');
+        log.push({user:userKey, type:'profileset', ts:0, pts:6, note:'성장일기 프로필 기작성 소급', backfill:true});
+      });
+      ROOT.child('activity_log').set(log);
+      ROOT.child('_profileAdj1').set(true);
     }catch(e){}
   }
   // (오프사이드 등 잘못 출제된 퀴즈 결과는 '깜짝퀴즈' 탭의 관리자1 전체기록에서 결과를 클릭해 정정)
@@ -1323,7 +1338,9 @@ function dismissTop6BonusModal(){
   const ov=document.getElementById('top6BonusOverlay');
   const isPreview = ov && ov.dataset.preview==='1';
   if(ov) ov.remove();
-  if(isPreview) return; // 미리보기는 데이터 변경 없음
+  if(isPreview) return; // 미리보기는 데이터 변경 없음(알림 큐도 건드리지 않음)
+  // TOP6 축하를 닫으면, 대기 중인 성장일기 알림을 이어서 표시
+  setTimeout(function(){ try{ showNextGrowthNotify(); }catch(e){} }, 250);
   // 내 pending에서 '표시된 그 항목'을 제거 (showFrom 지난 가장 최근 1건)
   if(!me) return;
   const pending=JSON.parse(JSON.stringify(DATA.top6_bonus_pending||{}));
@@ -1832,10 +1849,15 @@ function pickQuiz(qIdx, val){
     const d=new Date();
     const dateStr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
     const rec={user:me, qk:qk, q:(q.q||''), type:q.type, picked:val, correct:correct, date:dateStr, ts:Date.now(), answer:q.answer, options:(q.options||null)};
-    const arr=(DATA.quiz_records||[]).slice();
-    arr.push(rec);
-    ROOT.child('quiz_records').set(arr);
-    if(correct) logActivity('quiz'); // 정답이면 2점
+    // 결과를 즉시 화면에 표시(이 문제만 잠금 상태로 렌더)
+    renderPage('home');
+    // 1.2초 뒤 기록/점수 저장 → onValue 콜백이 리렌더하며 푼 문제가 목록에서 사라짐
+    setTimeout(()=>{
+      const cur=(DATA.quiz_records||[]).slice();
+      cur.push(rec);
+      ROOT.child('quiz_records').set(cur);
+      if(correct) logActivity('quiz'); // 정답이면 2점
+    }, 1200);
   } else {
     renderPage('home');
   }
@@ -2600,6 +2622,8 @@ function migrateTactics(v){
 }
 
 var _didMigrate=false; // roomTips 좌표/소급점수 1회성 마이그레이션 플래그
+var _fbNotifyChecked=false; // 성장일기 알림: 접속 후 1회만 표시하기 위한 세션 플래그
+var _fbNotifyQueue=[]; // 성장일기 알림 대기 큐(순서대로 하나씩 표시)
 var _initialized=false; // 최초 1회 정상 데이터 수신 여부
 ROOT.on('value',snap=>{
   const v=snap.val();
@@ -2649,6 +2673,7 @@ ROOT.on('value',snap=>{
     fb_profile:(v.fb_profile||{}),
     month_plan_count:(v.month_plan_count&&typeof v.month_plan_count==='object'?v.month_plan_count:{}),
     _manualAdj1:(v._manualAdj1===true),
+    _profileAdj1:(v._profileAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
     member_stats:(v.member_stats&&typeof v.member_stats==='object'?v.member_stats:{}),
@@ -2667,7 +2692,15 @@ ROOT.on('value',snap=>{
   markLoginToday();  // 재방문 시에도 하루 1회 접속 점수
   try{ checkLevelReward(); }catch(e){} // 10·20·30레벨 달성 시 축하 모달
   try{ refreshTabBadges(); }catch(e){} // 새 글/반응 N 배지 갱신
-  try{ if(!document.getElementById('top6BonusOverlay')) checkTop6BonusModal(); }catch(e){} // 출석 TOP6 보너스 축하
+  try{ if(!document.getElementById('top6BonusOverlay')) checkTop6BonusModal(); }catch(e){} // 1순위: 출석 TOP6 보너스 축하
+  try{
+    // 성장일기 알림: 접속 후 1회만 큐 생성(데이터 변경 콜백마다 반복 방지).
+    // 표시는 showNextGrowthNotify가 TOP6/현재 카드 상태를 보고 순서대로 처리함.
+    if(!_fbNotifyChecked){
+      _fbNotifyChecked=true;
+      checkGrowthDiaryNotify();
+    }
+  }catch(e){}
 },()=>setStatus(false));
 
 function setStatus(ok){const el=document.getElementById('dbStatus');el.textContent=ok?'● DB 연결됨':'○ 연결 실패';el.style.color=ok?'#2e8b3d':'#c0392b';}
@@ -2708,7 +2741,7 @@ function renderLoginBox(){
     }
   }
 }
-function logout(){me=null;localStorage.removeItem('wavefc_user');sessionStorage.removeItem('wavefc_admin');renderLoginBox();updateLocks();renderPage(currentPage);}
+function logout(){me=null;localStorage.removeItem('wavefc_user');sessionStorage.removeItem('wavefc_admin');_fbNotifyChecked=false;_fbNotifyQueue=[];renderLoginBox();updateLocks();renderPage(currentPage);}
 
 /* 모달 */
 let modalMode='login';
@@ -2746,6 +2779,12 @@ function modalSubmit(){
     sessionStorage.removeItem('wavefc_admin'); // 계정 전환 시 관리자 모드 해제
     closeModal();renderLoginBox();updateLocks();renderPage(currentPage);
     markLoginToday();
+    _fbNotifyChecked=false; _fbNotifyQueue=[]; // 계정 전환 시 이전 알림 큐 비우고 새 계정 기준으로 다시 확인
+    try{
+      if(!document.getElementById('top6BonusOverlay') && !document.getElementById('fbNotifyOverlay')){
+        _fbNotifyChecked=true; checkGrowthDiaryNotify();
+      }
+    }catch(e){}
   }
 }
 
@@ -4738,7 +4777,9 @@ function setAttPick(si, name, val){
   else if(val==='O'){ arr[si].present[name]=true; }
   else { arr[si].present[name]=val; }
   closeAttPick();
+  DATA.attendance=arr;               // 로컬 즉시 반영
   ROOT.child('attendance').set(arr);
+  if(currentPage==='attend') renderPage('attend'); // 다른 페이지 안 가도 바로 갱신
 }
 function delAttendSession(si){
   if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
@@ -5078,6 +5119,92 @@ function showAllViewedPraise(){
   setTimeout(()=>{ d.classList.add('show'); }, 30);
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>d.remove(),400); }, 3800);
 }
+// ===== 성장일기 알림 (접속 시 화면 중앙 카드) =====
+// 마지막 확인 시점(개인 기기 localStorage). 종류별로 관리.
+function _fbSeenKey(kind){ return 'wavefc_fbseen_'+kind+'_'+(me||'guest'); }
+function getFbSeen(kind){ try{ return parseInt(localStorage.getItem(_fbSeenKey(kind))||'0',10)||0; }catch(e){ return 0; } }
+function setFbSeen(kind, ts){ try{ localStorage.setItem(_fbSeenKey(kind), String(ts||Date.now())); }catch(e){} }
+// 성장일기 데이터에서 알림거리 계산
+function checkGrowthDiaryNotify(){
+  if(!me) return;
+  if(!isMember()) return;
+  const myName=myRealName(); if(!myName) return;
+  const fb=DATA.feedbacks||{};
+  const now=Date.now();
+  const notes=[]; // {msg, kind, ts} 표시 후보
+
+  // (5-1) 내 성장일기에 '남이 쓴' 새 글
+  {
+    const seen=getFbSeen('mypost');
+    const mine=fb[myName]||[];
+    let latest=0;
+    mine.forEach(p=>{ if(p && p.by!==me && (p.ts||0)>seen && (p.ts||0)>latest) latest=p.ts||0; });
+    if(latest>0) notes.push({kind:'mypost', ts:latest,
+      msg:'나의 성장 일기에\n새로운 기록이 쌓였어요 💙'});
+  }
+  // (5-2) 내가 쓴 글(내 성장일기 안의 내 게시글)에 달린 '남의 댓글/답글'만 (좋아요는 제외)
+  {
+    const seen=getFbSeen('myreact');
+    const mine=fb[myName]||[];
+    let latest=0;
+    mine.forEach(p=>{
+      if(!p || p.by!==me) return; // 내가 작성한 글만
+      (p.comments||[]).forEach(c=>{
+        if(c && c.by!==me && (c.ts||0)>seen && (c.ts||0)>latest) latest=c.ts||0;
+        (c.replies||[]).forEach(r=>{ if(r && r.by!==me && (r.ts||0)>seen && (r.ts||0)>latest) latest=r.ts||0; });
+      });
+    });
+    if(latest>0) notes.push({kind:'myreact', ts:latest,
+      msg:'나의 성장 일기에\n누군가 새로운 댓글을 남겼어요!\n확인해보세요 ✨'});
+  }
+  // (5-3) 임원: 누구든 성장일기에 새 글이 쌓이면
+  if(rankOf(me)==='exec'){
+    const seen=getFbSeen('execpost');
+    let latest=0, whoName='';
+    Object.keys(fb).forEach(target=>{
+      (fb[target]||[]).forEach(p=>{
+        if(p && (p.ts||0)>seen && (p.ts||0)>latest){ latest=p.ts||0; whoName=target; }
+      });
+    });
+    if(latest>0) notes.push({kind:'execpost', ts:latest,
+      msg:esc(whoName)+' 님의\n성장 기록에 기록이 쌓였어요 📖'});
+  }
+  if(!notes.length){ _fbNotifyQueue=[]; return; }
+  // 순서: 내 새글(mypost) → 내 글 새 댓글(myreact) → 임원 OO님 기록(execpost)
+  const order={mypost:0, myreact:1, execpost:2};
+  notes.sort((a,b)=> (order[a.kind]-order[b.kind]) || (b.ts-a.ts));
+  _fbNotifyQueue=notes.slice();     // 대기 큐에 순서대로 저장
+  showNextGrowthNotify();           // 첫 알림부터 하나씩 표시
+}
+// 대기 큐에서 다음 알림을 꺼내 표시 (카드 닫을 때마다 호출됨)
+function showNextGrowthNotify(){
+  if(document.getElementById('fbNotifyOverlay')) return; // 아직 떠 있으면 대기
+  if(document.getElementById('top6BonusOverlay')) return; // TOP6 축하가 먼저(1순위)
+  if(!_fbNotifyQueue || !_fbNotifyQueue.length) return;
+  const note=_fbNotifyQueue.shift();
+  showGrowthNotifyCard(note);
+}
+// 화면 정중앙, 스탯카드 뒷면 느낌의 이미지카드로 알림 표시
+function showGrowthNotifyCard(note){
+  if(document.getElementById('fbNotifyOverlay')) return; // 중복 방지
+  const ov=document.createElement('div');
+  ov.id='fbNotifyOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(20,30,45,.45);backdrop-filter:blur(2px);animation:lvRewardFade .25s ease;';
+  const emoji = note.kind==='myreact' ? '💌' : (note.kind==='execpost' ? '📖' : '🌱');
+  ov.innerHTML=
+    '<div style="position:relative;max-width:300px;width:82%;background:linear-gradient(160deg,#f7fbfe,#eaf4fb);border:3px solid #6ab8e8;border-radius:18px;padding:26px 20px 20px;text-align:center;box-shadow:0 16px 44px rgba(30,90,140,.32);font-family:\'Escoredream\',\'Pretendard\',\'Malgun Gothic\',sans-serif;animation:lvRewardPop .35s cubic-bezier(.2,1.3,.5,1);">'
+    + '<div style="font-size:50px;line-height:1;margin-bottom:8px;">'+emoji+'</div>'
+    + '<div style="font-size:15px;color:#2176a8;font-weight:800;line-height:1.7;white-space:pre-wrap;margin:6px 0 18px;">'+note.msg+'</div>'
+    + '<button onclick="dismissGrowthNotify(\''+note.kind+'\','+note.ts+')" style="background:linear-gradient(135deg,#9ec5ff,#5a9bd4);color:#fff;border:none;border-radius:13px;padding:10px 26px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(90,155,212,.4);font-family:inherit;">확인했어요 😊</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+}
+function dismissGrowthNotify(kind, ts){
+  const ov=document.getElementById('fbNotifyOverlay');
+  if(ov) ov.remove();
+  setFbSeen(kind, ts); // 이 시점까지 확인 처리 → 다음 접속엔 안 뜸
+  setTimeout(showNextGrowthNotify, 250); // 대기 중인 다음 알림을 이어서 표시
+}
 // 본인 스탯 조절(+/-) 후 저장 (idx = 정렬된 카드 인덱스). 본인 또는 관리자1만
 function setMyStat(idx, key, delta){
   const m=(window._memberCardOrder||[])[idx];
@@ -5090,8 +5217,8 @@ function setMyStat(idx, key, delta){
   cur[key]=v;
   cur._ts=Date.now(); // 멤버현황 N 배지용 갱신 시각
   ROOT.child('member_stats/'+statKey(name)).set(cur);
-  // 본인이 자기 스탯을 설정하면 하루 1번 0.1점
-  if(name===myRealName()) logActivityCapped('statset', 0.1);
+  // 본인이 자기 스탯을 설정하면 1회 0.5점, 하루 최대 1점
+  if(name===myRealName()) logActivityCapped('statset', 1);
 }
 function pageMember(){
   // 멤버현황 이름 마스킹: 임원·멤버·관리자1은 전체, 응원단·새내기는 가운데만 노출
@@ -5361,11 +5488,23 @@ function saveFbProfile(key){
   if(!isSelf && adminLevel()!==1) return alert('본인만 작성할 수 있어요.');
   const ta=document.getElementById('fbpEdit_'+key);
   const v=ta?ta.value:'';
+  const newVal=v.trim();
   const all=JSON.parse(JSON.stringify(DATA.fb_profile||{}));
   all[target]=all[target]||{};
-  all[target][key]=v.trim();
+  const oldVal=(all[target][key]||'').trim();
+  all[target][key]=newVal;
   DATA.fb_profile=all;
   ROOT.child('fb_profile').set(all);
+  // 본인이 목표/핵심툴/보완점을 작성하면 칸별 하루 1회 2점 (내용이 있고, 오늘 그 칸 점수 미지급 시)
+  if(isSelf && newVal){
+    const today=_dayKey(Date.now());
+    const gotToday=(DATA.activity_log||[]).some(r=>r.user===me && r.type==='profileset' && r.field===key && _dayKey(r.ts)===today);
+    if(!gotToday){
+      const arr=(DATA.activity_log||[]).slice();
+      arr.push({user:me, type:'profileset', field:key, ts:Date.now(), pts:2});
+      ROOT.child('activity_log').set(arr);
+    }
+  }
   fbProfEditing=null;
   renderPage('feedback');
 }
