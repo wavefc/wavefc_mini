@@ -335,7 +335,16 @@
     .home-qna-q{font-size:13px;}
   }
   /* 모바일: 화요일(3열)만 넓게, 나머지 요일은 좁게 */
-  @media(max-width:760px){ .cal-grid{grid-template-columns:0.78fr 0.78fr 1.9fr 0.78fr 0.78fr 0.78fr 0.78fr !important;} }
+  @media(max-width:760px){
+    .cal-grid{grid-template-columns:0.72fr 0.72fr 2.1fr 0.72fr 0.72fr 0.72fr 0.72fr !important;}
+    .cal-cell{min-height:58px;padding:2px;}
+    .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
+    /* 이벤트 카드: 글씨 확 작게, 세로로 쪼개지지 않게, 여백 최소화 */
+    .cal-ev{font-size:8.5px !important;padding:2px 11px 2px 3px !important;line-height:1.25 !important;margin-bottom:1px !important;word-break:break-word !important;overflow-wrap:break-word !important;overflow:hidden;}
+    .cal-ev-x{font-size:9px;top:1px;right:2px;}
+    .cal-time{font-size:8px !important;padding:0 2px !important;white-space:nowrap;display:inline-block;}
+    .cal-place{font-size:8px !important;padding:0 2px !important;margin-top:1px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  }
   .manner-single ul{margin:0;padding-left:20px;}
   .manner-single p{margin:0 0 10px;font-size:15px;color:#c0392b;line-height:1.7;}
   .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
@@ -2544,6 +2553,7 @@ const DEFAULT={
   top6_bonus_msg:{},
   feedbacks:{},
   fb_profile:{},
+  month_plan_count:{},
   videos:[],
   videoCats:["기초","기본","응용","경기"],
   roomTips:[
@@ -2637,6 +2647,7 @@ ROOT.on('value',snap=>{
     _fbViewsReset:(v._fbViewsReset===true),
     feedbacks:(v.feedbacks||{}),
     fb_profile:(v.fb_profile||{}),
+    month_plan_count:(v.month_plan_count&&typeof v.month_plan_count==='object'?v.month_plan_count:{}),
     _manualAdj1:(v._manualAdj1===true),
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
@@ -4526,11 +4537,15 @@ function pageAttend(){
     ? yellowList.map(t=>`<div class="att-list-row"><span>🚨 ${esc(maskAttName(t.name))}</span><b style="color:#d48806;">${t.pureRate}%</b></div>`).join('')
     : `<div style="font-size:12px;color:#9aa6ae;">해당 멤버가 없어요 👍</div>`;
 
+  // 이번 달 일정 횟수: 관리자가 직접 지정한 값이 있으면 그걸, 없으면 자동 계산값
+  const planCount=(DATA.month_plan_count||{})[curMonth];
+  const showCount=(planCount!==undefined && planCount!==null && planCount!=='') ? planCount : sessionCount;
+  const canEditPlan=(rankOf(me)==='exec'||adminLevel()===1);
   const summaryCards=`
     <div class="att-summary">
       <div class="att-card att-card-stat">
-        <div class="att-card-t">이번 달 일정</div>
-        <div class="att-card-v" style="color:#2f6fed;">${sessionCount}회</div>
+        <div class="att-card-t">이번 달 일정${canEditPlan?` <a href="#" onclick="editMonthPlanCount('${curMonth}');return false;" style="font-size:10px;color:#2176a8;">✏️</a>`:''}</div>
+        <div class="att-card-v" style="color:#2f6fed;">${showCount}회</div>
       </div>
       <div class="att-card att-card-stat">
         <div class="att-card-t">${latestMonthNum}월 팀 출석률</div>
@@ -4650,6 +4665,25 @@ function migrateAttendanceYears(){
   });
   if(changed){ ROOT.child('attendance').set(sortAttendance(norm)); }
   ROOT.child('_attYearMigrated').set(true);
+}
+// 이번 달 일정 횟수 직접 지정 (자동 계산 대신). 비우면 자동값으로 복귀.
+function editMonthPlanCount(monthKey){
+  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
+  const cur=(DATA.month_plan_count||{})[monthKey];
+  const mLabel=attMonthLabel?attMonthLabel(monthKey):monthKey;
+  const v=prompt(mLabel+' 일정 횟수를 직접 입력하세요.\n(보통 주4회 = 월 4회, 5회일 때도 있어요)\n\n비우고 확인하면 자동 계산으로 돌아갑니다.', cur!==undefined&&cur!==null?String(cur):'');
+  if(v===null) return;
+  const all=JSON.parse(JSON.stringify(DATA.month_plan_count||{}));
+  const t=v.trim();
+  if(t===''){ delete all[monthKey]; }        // 자동 계산으로 복귀
+  else {
+    const n=parseInt(t,10);
+    if(isNaN(n)||n<0) return alert('숫자를 입력해주세요.');
+    all[monthKey]=n;
+  }
+  DATA.month_plan_count=all;
+  ROOT.child('month_plan_count').set(all);
+  renderPage(currentPage);
 }
 function addAttendSession(){
   if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
