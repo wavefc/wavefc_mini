@@ -7022,6 +7022,7 @@ function diaryBodyRender(s){
     }
   });
   return root.innerHTML;
+}
 /* ===== 파도스냅 (WAVE FC 즐거운 순간 갤러리) ===== */
 // 글 작성은 훈련일지와 동일한 방식(리치 텍스트 에디터). 사진·영상은 본문 안에 순서대로 삽입(네이버식).
 var snapWriting=false;   // 글쓰기 폼 펼침
@@ -7343,10 +7344,6 @@ function onSnapCoverFile(ev){
     img.src=e.target.result;
   };
   reader.readAsDataURL(f);
-  ev.target.value='';
-}
-
-
   ev.target.value='';
 }
 
