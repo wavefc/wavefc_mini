@@ -605,6 +605,8 @@
   /* 파도스냅 */
   .snap-intro{text-align:center;margin:2px 0 14px;}
   .snap-intro .st{font-size:14px;color:#5a7585;}
+  .snap-intro-editbtn{background:none;border:1px solid #d5e0e8;border-radius:12px;color:#8aa;font-size:11px;padding:2px 9px;cursor:pointer;margin-left:4px;}
+  .snap-intro-editbtn:hover{background:#f0f6fb;}
   /* 대문: 16:9 고정, 안쪽 이미지를 위치/확대로 조절 */
   .snap-cover-wrap{position:relative;width:100%;max-width:720px;margin:0 auto 16px;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#eaf4fb,#f4eefc);border:1px solid #dfeaf2;}
   .snap-cover-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;user-select:none;cursor:zoom-in;}
@@ -619,21 +621,57 @@
   .snap-cover-ctrl .row{display:flex;align-items:center;gap:8px;font-size:12px;color:#3a5566;}
   .snap-cover-ctrl input[type=range]{flex:1;}
   .snap-cover-ctrl .btns{display:flex;gap:6px;justify-content:flex-end;}
-  /* 목록: 성장기록일지와 동일한 그리드/카드 크기 */
-  .snap-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
-  .snap-card2{border:2px solid #6ab8e8;border-radius:10px;background:#fff;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;aspect-ratio:1/1;overflow:hidden;box-sizing:border-box;}
-  .snap-card2:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,155,212,.2);}
-  .snap-thumb1{position:relative;width:100%;flex:1;min-height:0;background:#f0f4f7;}
+  /* 파도스냅 본문 미디어 그룹 (네이버식 레이아웃) */
+  .snap-mg{margin:8px 0;}
+  .snap-mg-indiv > *{margin:4px 0;}
+  .snap-mg-indiv .snap-mg-row{display:flex;gap:4px;}
+  .snap-mg-indiv .snap-mg-row .snap-mg-item{flex:1 1 0;min-width:0;}
+  .snap-mg-indiv img{width:100%;height:auto;display:block;border-radius:6px;}
+  .snap-mg-collage{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .snap-mg-collage .snap-mg-item{aspect-ratio:1/1;}
+  .snap-mg-collage img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;}
+  .snap-mg-slide{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;}
+  .snap-mg-slide .snap-mg-item{flex:0 0 auto;scroll-snap-align:start;max-height:340px;}
+  .snap-mg-slide img{height:300px;width:auto;border-radius:6px;display:block;}
+  .snap-mg-single img{width:100%;height:auto;display:block;border-radius:6px;}
+  .snap-mg-item{position:relative;}
+  /* 편집 모드 컨트롤 (대표/삭제) — 저장된 본문에는 안 보임 */
+  .snap-mg-edit .snap-mg-item{outline:1px dashed #cdd6dd;}
+  .snap-mg-tools{position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2;}
+  .snap-mg-tool{background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:6px;font-size:11px;padding:3px 7px;cursor:pointer;line-height:1.2;}
+  .snap-mg-tool.rep-on{background:#2e8b3d;}
+  .snap-mg-rep-badge{position:absolute;top:4px;left:4px;background:#2e8b3d;color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;z-index:2;}
+  /* 첨부 레이아웃 선택 팝업 */
+  .snap-lay-ov{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .snap-lay-box{background:#fff;border-radius:14px;max-width:460px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35);}
+  .snap-lay-h{text-align:center;font-size:18px;font-weight:800;color:#2a4356;margin-bottom:4px;}
+  .snap-lay-sub{text-align:center;font-size:12px;color:#8aa;margin-bottom:16px;}
+  .snap-lay-opts{display:flex;gap:12px;justify-content:center;}
+  .snap-lay-opt{flex:1;border:1px solid #e0ebf2;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .1s,background .1s;}
+  .snap-lay-opt:hover{border-color:#5aa9e6;background:#f5fbff;}
+  .snap-lay-ic{font-size:26px;margin-bottom:6px;}
+  .snap-lay-nm{font-size:13px;color:#3a5566;font-weight:700;}
+  .snap-lay-cancel{display:block;margin:16px auto 0;background:#f0f4f7;border:none;border-radius:8px;padding:8px 20px;font-size:13px;color:#5a7585;cursor:pointer;}
+  /* 해상도 지정(단일 이미지) */
+  .snap-res-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:4px;background:#f5f9fc;border:1px solid #e0ebf2;border-radius:8px;padding:6px 8px;}
+  .snap-res-row .snap-res-btn{border:1px solid #cdd6dd;background:#fff;border-radius:6px;font-size:11px;padding:2px 8px;cursor:pointer;}
+  .snap-res-row .snap-res-btn.on{background:#5aa9e6;color:#fff;border-color:#5aa9e6;}
+  .snap-res-row input{width:64px;border:1px solid #cdd6dd;border-radius:6px;padding:2px 6px;font-size:11px;}
+  /* 목록: 참고 이미지처럼 테두리 없이, 정사각 1:1 이미지 */
+  .snap-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 16px;align-items:start;}
+  .snap-card2{background:transparent;cursor:pointer;display:flex;flex-direction:column;overflow:visible;box-sizing:border-box;}
+  .snap-card2:hover .snap-thumb1 img{filter:brightness(1.03);}
+  .snap-thumb1{position:relative;width:100%;aspect-ratio:1/1;background:#f0f4f7;border-radius:8px;overflow:hidden;}
   .snap-thumb1 img{width:100%;height:100%;object-fit:cover;display:block;}
   .snap-thumb1-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;color:#c3d3de;}
   .snap-more-badge{position:absolute;right:6px;top:6px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 7px;border-radius:12px;}
-  .snap-meta{padding:8px 9px;}
-  .snap-meta-title{font-size:13px;font-weight:800;color:#2176a8;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
-  .snap-meta-sub{font-size:10px;color:#9aa6ae;margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-  .snap-meta-react{display:flex;gap:6px;font-size:10px;color:#8aa;margin-top:4px;}
+  .snap-meta{padding:9px 2px 0;}
+  .snap-meta-title{font-size:14px;font-weight:700;color:rgb(79,79,79);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .snap-meta-sub{font-size:11px;color:#9aa6ae;margin-top:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .snap-meta-react{display:flex;gap:8px;font-size:11px;color:#9aa6ae;margin-top:4px;}
   @media(max-width:640px){
-    .snap-cards{grid-template-columns:repeat(2,1fr);gap:8px;}
-    .snap-meta-title{font-size:13px;}
+    .snap-cards{grid-template-columns:repeat(2,1fr);gap:16px 12px;}
+    .snap-meta-title{font-size:14px;}
   }
   /* 전체보기 오버레이 */
   .snap-overlay{position:fixed;inset:0;background:rgba(20,30,40,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;}
@@ -2639,7 +2677,8 @@ const DEFAULT={
   ],
   snaps:[],
   snap_cover:"",
-  snap_cover_pos:{x:50,y:50,zoom:100}
+  snap_cover_pos:{x:50,y:50,zoom:100},
+  snap_intro:"WAVE FC의 즐거운 순간을 담아주세요 💙"
 };
 let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
@@ -2742,7 +2781,8 @@ ROOT.on('value',snap=>{
     top6_bonus_msg:(v.top6_bonus_msg||{}),
     snaps:(Array.isArray(v.snaps)?v.snaps:[]),
     snap_cover:(v.snap_cover!==undefined?v.snap_cover:''),
-    snap_cover_pos:(v.snap_cover_pos&&typeof v.snap_cover_pos==='object'?v.snap_cover_pos:{x:50,y:50,zoom:100})};
+    snap_cover_pos:(v.snap_cover_pos&&typeof v.snap_cover_pos==='object'?v.snap_cover_pos:{x:50,y:50,zoom:100}),
+    snap_intro:(v.snap_intro!==undefined?v.snap_intro:'WAVE FC의 즐거운 순간을 담아주세요 💙')};
     _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
@@ -2884,6 +2924,7 @@ function _isUserTyping(){
   for(const r of rtes){
     if(r.offsetParent===null) continue;
     if((r.textContent||'').trim().length>0) return true;
+    if(r.querySelector && r.querySelector('img')) return true; // 사진/영상만 있는 경우도 보호(파도스냅)
   }
   return false;
 }
@@ -6935,6 +6976,13 @@ function rteSanitize(html){
       const an=a.name.toLowerCase();
       if(an==='style') return;             // 색·크기 등 인라인 스타일 유지
       if(an==='color'||an==='size'||an==='face') return; // <font> 속성 유지
+      if(an==='class'){ // 파도스냅 레이아웃 클래스만 유지
+        const kept=(a.value||'').split(/\s+/).filter(c=>/^snap-mg/.test(c)).join(' ');
+        if(kept) n.setAttribute('class',kept); else n.removeAttribute('class');
+        return;
+      }
+      if(an==='data-snapgroup') return;    // 그룹 레이아웃 마커
+      if(an==='contenteditable') return;   // 그룹 블록 편집 잠금
       // 이미지의 src는 유지 (파도스냅 본문 내 사진). data:/http(s) 만 허용.
       if(isImg && an==='src'){
         const v=(a.value||'').trim().toLowerCase();
@@ -7042,6 +7090,7 @@ function diaryBodyRender(s){
 var snapWriting=false;   // 글쓰기 폼 펼침
 var snapEditing=null;    // 편집 중인 스냅 ts (null=없음)
 var snapOpen=null;       // 전체보기 오버레이로 열린 스냅 ts
+var snapIntroEditing=false; // 인트로 문구 인라인 편집 중
 const SNAP_MAX=30;       // 1게시글당 사진+영상 최대 개수
 
 function snapYtId(url){
@@ -7075,6 +7124,42 @@ function snapRepImg(s){
   if(s && s.rep){ return s.rep; }
   return snapFirstImg(s?s.text:'');
 }
+// 인트로 문구 (관리자1: 인라인 수정/숨김 가능)
+function snapIntroHtml(){
+  const a1=adminLevel()===1;
+  const txt=(DATA.snap_intro!==undefined?DATA.snap_intro:'');
+  if(snapIntroEditing && a1){
+    return `<div class="snap-intro snap-intro-edit">
+      <input id="snapIntroInput" class="qna-input" style="max-width:420px;margin:0 auto 6px;text-align:center;" value="${esc(txt)}" placeholder="문구를 비우면 숨겨져요">
+      <div style="text-align:center;">
+        <button class="qna-send sm" onclick="saveSnapIntro()">저장</button>
+        <button class="qna-send sm" style="background:#9aa6ae;" onclick="snapIntroEditing=false;renderPage('snap')">취소</button>
+        <button class="qna-send sm" style="background:#c0392b;" onclick="hideSnapIntro()">숨기기</button>
+      </div>
+    </div>`;
+  }
+  if(!txt){
+    // 문구 없음: 관리자1에게만 '문구 추가' 버튼 노출
+    return a1 ? `<div class="snap-intro"><button class="snap-intro-editbtn" onclick="snapIntroEditing=true;renderPage('snap')">＋ 소개 문구 추가</button></div>` : '';
+  }
+  return `<div class="snap-intro"><span class="st">${esc(txt)}</span>${a1?` <button class="snap-intro-editbtn" onclick="snapIntroEditing=true;renderPage('snap')" title="문구 수정">✏️</button>`:''}</div>`;
+}
+function saveSnapIntro(){
+  if(adminLevel()!==1)return;
+  const inp=document.getElementById('snapIntroInput');
+  const v=inp?inp.value.trim():'';
+  DATA.snap_intro=v;
+  ROOT.child('snap_intro').set(v);
+  snapIntroEditing=false;
+  renderPage('snap');
+}
+function hideSnapIntro(){
+  if(adminLevel()!==1)return;
+  DATA.snap_intro='';
+  ROOT.child('snap_intro').set('');
+  snapIntroEditing=false;
+  renderPage('snap');
+}
 function pageSnap(){
   const a1=adminLevel()===1;
   const cover=DATA.snap_cover||'';
@@ -7104,27 +7189,31 @@ function pageSnap(){
   const cards=list.map(s=>{
     const rep=snapRepImg(s);
     const d=s.ts?new Date(s.ts):null;
-    const dateStr=d?`${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`:'';
-    const author=s.by?userLabel(s.by):'익명';
+    const dateStr=d?`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`:'';
+    const author=s.by?(userLabel(s.by)||'익명'):'익명';
+    const emoji=s.by?rankEmoji(s.by):'';
     const cnt=snapCountMedia(s.text||'');
     const likeCnt=(Array.isArray(s.likedBy)?s.likedBy.length:0)||s.likes||0;
     const cmtCnt=(s.comments&&s.comments.length)?s.comments.length:0;
     const viewCnt=s.views||0;
+    // 제목 약 30자: 29자까지 표기, 넘으면 …
+    let ttl=(s.title||'무제');
+    if(ttl.length>30) ttl=ttl.slice(0,29)+'…';
     return `<div class="snap-card2" onclick="openSnapPost(${s.ts})">
       <div class="snap-thumb1">
         ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">🌊</div>'}
         ${cnt>1?`<span class="snap-more-badge">📷 ${cnt}</span>`:''}
       </div>
       <div class="snap-meta">
-        <div class="snap-meta-title">${esc(s.title||'무제')}${newBadge(s.ts)}</div>
-        <div class="snap-meta-sub">✍ ${esc(author)} · ${dateStr}</div>
+        <div class="snap-meta-title">${esc(ttl)}${newBadge(s.ts)}</div>
+        <div class="snap-meta-sub">${emoji} ${esc(author)} · ${dateStr}</div>
         <div class="snap-meta-react"><span>❤️ ${likeCnt}</span><span>💬 ${cmtCnt}</span><span>👀 ${viewCnt}</span></div>
       </div>
     </div>`;
   }).join('');
 
   return `<div class="page-h">🌊 파도스냅</div>
-    <div class="snap-intro"><span class="st">WAVE FC의 즐거운 순간을 담아주세요 💙</span></div>
+    ${snapIntroHtml()}
     ${coverHtml}
     ${writeToggle}
     ${writeBox}
@@ -7153,7 +7242,7 @@ function snapWriteForm(editTs){
         <input id="${eid}_vurl" class="qna-input" style="margin:0;flex:1;" placeholder="🎬 유튜브 영상 주소 (선택)" onkeydown="if(event.key==='Enter'){snapInsertVideo('${eid}');return false;}">
         <button class="qna-send sm" type="button" onclick="snapInsertVideo('${eid}')">영상 넣기</button>
       </div>
-      <div style="font-size:10px;color:#8aa;margin:2px 0 8px;">사진을 선택하면 글 내용 안에 순서대로 들어가요. 사진 사이에 글도 함께 쓸 수 있어요.</div>
+      <div style="font-size:10px;color:#8aa;margin:2px 0 8px;">📎를 누르면 최대 30장까지 한 번에 골라 <b>개별사진·콜라주·슬라이드</b> 레이아웃을 정할 수 있어요. 각 사진은 <b>대표 설정</b>·<b>🗑 삭제</b>가 가능하고, 1장만 넣으면 해상도도 바꿀 수 있어요. 영상은 1열로 들어갑니다.</div>
       <div style="text-align:right;">
         ${isEdit?`<button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelSnapEdit()">취소</button>`:''}
         <button class="qna-send" onclick="${isEdit?`saveSnap(${editTs})`:'addSnap()'}">${isEdit?'저장':'스냅 등록'}</button>
@@ -7186,7 +7275,9 @@ function snapAppendToEditor(eid, node){
     el.appendChild(document.createElement('br'));
   }
 }
-// 사진 첨부 → 순서대로 본문에 삽입 (최대 30개, 사진+영상 합산)
+// 사진 첨부 → 전부 읽은 뒤 레이아웃 선택 팝업 → 그룹으로 본문 삽입
+var _snapAttachBuf=[];   // [{src}]
+var _snapAttachEid=null;
 function onSnapAttach(ev, eid){
   const files=Array.from(ev.target.files||[]);
   if(!files.length)return;
@@ -7196,30 +7287,26 @@ function onSnapAttach(ev, eid){
   if(room<=0){ alert('사진과 영상 합쳐 최대 '+SNAP_MAX+'개까지예요.'); ev.target.value=''; return; }
   let take=files.filter(f=>/^image\//.test(f.type));
   if(take.length>room){ alert('최대 '+SNAP_MAX+'개까지예요. '+room+'개만 넣을게요.'); take=take.slice(0,room); }
-  // 순서 보장: 순차적으로 읽어 삽입
+  _snapAttachBuf=[]; _snapAttachEid=eid;
   let idx=0;
+  const results=new Array(take.length);
+  const done=()=>{
+    _snapAttachBuf=results.filter(Boolean);
+    if(_snapAttachBuf.length) openSnapLayoutPopup();
+    ev.target.value='';
+  };
   const processNext=()=>{
-    if(idx>=take.length){ ev.target.value=''; return; }
-    const f=take[idx++];
+    if(idx>=take.length){ done(); return; }
+    const my=idx; const f=take[idx++];
     const reader=new FileReader();
     reader.onload=function(e){
       const img=new Image();
       img.onload=function(){
-        const max=1000; let w=img.width,h=img.height;
+        const max=1200; let w=img.width,h=img.height;
         if(w>max){ h=Math.round(h*max/w); w=max; }
         const cv=document.createElement('canvas');cv.width=w;cv.height=h;
         cv.getContext('2d').drawImage(img,0,0,w,h);
-        const el2=document.getElementById(eid);
-        if(el2){
-          const im=document.createElement('img');
-          im.src=cv.toDataURL('image/jpeg',0.82);
-          im.style.maxWidth='100%';
-          im.style.borderRadius='8px';
-          im.style.display='block';
-          im.style.margin='6px 0';
-          el2.appendChild(im);
-          el2.appendChild(document.createElement('br'));
-        }
+        results[my]={src:cv.toDataURL('image/jpeg',0.82)};
         processNext();
       };
       img.onerror=processNext;
@@ -7230,7 +7317,151 @@ function onSnapAttach(ev, eid){
   };
   processNext();
 }
-// 유튜브 영상을 본문에 순서대로 삽입 (썸네일 카드 형태의 마커)
+// 레이아웃 선택 팝업
+function openSnapLayoutPopup(){
+  const n=_snapAttachBuf.length;
+  const ov=document.createElement('div');
+  ov.className='snap-lay-ov'; ov.id='snapLayOv';
+  ov.innerHTML=`<div class="snap-lay-box" onclick="event.stopPropagation();">
+      <div class="snap-lay-h">사진 첨부 방식</div>
+      <div class="snap-lay-sub">첨부되는 사진(${n}장)의 레이아웃을 선택할 수 있어요.</div>
+      <div class="snap-lay-opts">
+        <div class="snap-lay-opt" onclick="chooseSnapLayout('indiv')"><div class="snap-lay-ic">🖼️</div><div class="snap-lay-nm">개별사진</div></div>
+        <div class="snap-lay-opt" onclick="chooseSnapLayout('collage')"><div class="snap-lay-ic">▦</div><div class="snap-lay-nm">콜라주</div></div>
+        <div class="snap-lay-opt" onclick="chooseSnapLayout('slide')"><div class="snap-lay-ic">⇄</div><div class="snap-lay-nm">슬라이드</div></div>
+      </div>
+      <button class="snap-lay-cancel" onclick="closeSnapLayoutPopup()">취소</button>
+    </div>`;
+  ov.addEventListener('click', closeSnapLayoutPopup);
+  document.body.appendChild(ov);
+}
+function closeSnapLayoutPopup(){ const ov=document.getElementById('snapLayOv'); if(ov) ov.remove(); _snapAttachBuf=[]; }
+function chooseSnapLayout(layout){
+  const ov=document.getElementById('snapLayOv'); if(ov) ov.remove();
+  const eid=_snapAttachEid; const imgs=_snapAttachBuf.slice();
+  _snapAttachBuf=[];
+  if(!imgs.length) return;
+  const el=document.getElementById(eid); if(!el) return;
+  const group=buildSnapGroup(layout, imgs.map(x=>x.src));
+  snapAppendToEditor(eid, group);
+  snapDecorateGroups(eid);
+}
+// 미디어 그룹 DOM 생성 (contenteditable=false 블록)
+function buildSnapGroup(layout, srcs){
+  const wrap=document.createElement('div');
+  wrap.className='snap-mg snap-mg-'+layout;
+  wrap.setAttribute('data-snapgroup', layout);
+  wrap.setAttribute('contenteditable','false');
+  const single=(srcs.length===1);
+  if(single) wrap.classList.add('snap-mg-single');
+  const makeItem=(src)=>{
+    const item=document.createElement('div');
+    item.className='snap-mg-item';
+    const im=document.createElement('img');
+    im.src=src;
+    item.appendChild(im);
+    return item;
+  };
+  if(layout==='indiv'){
+    // 최대 3장씩 같은 행
+    for(let i=0;i<srcs.length;i+=3){
+      const row=document.createElement('div');
+      row.className='snap-mg-row';
+      srcs.slice(i,i+3).forEach(s=>row.appendChild(makeItem(s)));
+      wrap.appendChild(row);
+    }
+  } else {
+    // collage / slide / single: 평면 배치
+    srcs.forEach(s=>wrap.appendChild(makeItem(s)));
+  }
+  return wrap;
+}
+// 편집 모드: 각 그룹에 대표/삭제 컨트롤(+단일 해상도) 부착
+function snapDecorateGroups(eid){
+  const el=document.getElementById(eid); if(!el) return;
+  el.classList.add('snap-mg-edit');
+  el.querySelectorAll('.snap-mg').forEach(group=>{
+    const layout=group.getAttribute('data-snapgroup');
+    const items=[...group.querySelectorAll('.snap-mg-item')];
+    items.forEach(item=>{
+      // 중복 부착 방지
+      if(item.querySelector('.snap-mg-tools')) return;
+      const img=item.querySelector('img'); if(!img) return;
+      const tools=document.createElement('div');
+      tools.className='snap-mg-tools';
+      tools.setAttribute('contenteditable','false');
+      const repBtn=document.createElement('button');
+      repBtn.type='button'; repBtn.className='snap-mg-tool';
+      repBtn.textContent='대표';
+      repBtn.onclick=(e)=>{ e.stopPropagation(); snapSetRep(eid, img.getAttribute('src')); };
+      const delBtn=document.createElement('button');
+      delBtn.type='button'; delBtn.className='snap-mg-tool';
+      delBtn.textContent='🗑';
+      delBtn.onclick=(e)=>{ e.stopPropagation(); snapDeleteItem(eid, item); };
+      tools.appendChild(repBtn); tools.appendChild(delBtn);
+      item.appendChild(tools);
+    });
+    // 단일 이미지: 해상도(가로폭) 지정
+    if(layout==='single' || group.classList.contains('snap-mg-single')){
+      if(!group.querySelector('.snap-res-row')){
+        const img=group.querySelector('img');
+        const res=document.createElement('div');
+        res.className='snap-res-row';
+        res.setAttribute('contenteditable','false');
+        const presets=[360,480,640,800,'원본'];
+        res.innerHTML='<span style="font-size:11px;color:#5a7585;">해상도</span>'+
+          presets.map(p=>`<button type="button" class="snap-res-btn" data-w="${p==='원본'?'':p}">${p==='원본'?'원본':p+'px'}</button>`).join('')+
+          '<span style="font-size:11px;color:#5a7585;">직접</span><input type="number" min="120" max="1200" placeholder="px"><button type="button" class="snap-res-btn snap-res-apply">적용</button>';
+        group.appendChild(res);
+        res.querySelectorAll('.snap-res-btn[data-w]').forEach(b=>{
+          b.onclick=(e)=>{ e.stopPropagation(); snapSetImgWidth(img, b.getAttribute('data-w')); res.querySelectorAll('.snap-res-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+        });
+        const inp=res.querySelector('input');
+        res.querySelector('.snap-res-apply').onclick=(e)=>{ e.stopPropagation(); const v=parseInt(inp.value,10); if(v>=120&&v<=1200){ snapSetImgWidth(img, v); } };
+      }
+    }
+  });
+}
+function snapSetImgWidth(img, w){
+  if(!img) return;
+  if(!w){ img.style.width=''; img.style.maxWidth='100%'; }
+  else { img.style.width=w+'px'; img.style.maxWidth='100%'; }
+}
+function snapDeleteItem(eid, item){
+  const group=item.closest('.snap-mg');
+  const img=item.querySelector('img');
+  const wasRep=img && _snapRepDraft && img.getAttribute('src')===_snapRepDraft;
+  item.remove();
+  if(group){
+    const remain=group.querySelectorAll('.snap-mg-item');
+    if(!remain.length){ group.remove(); }
+    else {
+      // indiv 레이아웃이면 빈 행 정리
+      group.querySelectorAll('.snap-mg-row').forEach(r=>{ if(!r.querySelector('.snap-mg-item')) r.remove(); });
+    }
+  }
+  if(wasRep) _snapRepDraft=null;
+}
+var _snapRepDraft=null; // 작성 중 지정한 대표 이미지 src
+function snapSetRep(eid, src){
+  _snapRepDraft=src;
+  const el=document.getElementById(eid); if(!el) return;
+  // 모든 대표 표시 초기화 후 해당 이미지에 배지
+  el.querySelectorAll('.snap-mg-rep-badge').forEach(b=>b.remove());
+  el.querySelectorAll('.snap-mg-tool.rep-on').forEach(b=>b.classList.remove('rep-on'));
+  el.querySelectorAll('.snap-mg-item').forEach(item=>{
+    const img=item.querySelector('img');
+    if(img && img.getAttribute('src')===src){
+      const badge=document.createElement('div');
+      badge.className='snap-mg-rep-badge'; badge.textContent='✓ 대표';
+      badge.setAttribute('contenteditable','false');
+      item.appendChild(badge);
+      const repBtn=item.querySelector('.snap-mg-tool');
+      if(repBtn) repBtn.classList.add('rep-on');
+    }
+  });
+}
+// 유튜브 영상을 본문에 1열 전용 블록으로 삽입
 function snapInsertVideo(eid){
   const inp=document.getElementById(eid+'_vurl');
   if(!inp)return;
@@ -7240,11 +7471,11 @@ function snapInsertVideo(eid){
   const el=document.getElementById(eid);
   if(el && snapCountMedia(el.innerHTML)>=SNAP_MAX){ alert('사진과 영상 합쳐 최대 '+SNAP_MAX+'개까지예요.'); return; }
   if(el){
-    // data-snapvid 마커: 저장 후 렌더 시 실제 플레이어로 변환
+    // 영상은 항상 1열(한 줄) — data-snapvid 마커
     const marker=document.createElement('img');
     marker.setAttribute('data-snapvid', id);
     marker.src='https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
-    marker.style.maxWidth='100%';
+    marker.style.width='100%';
     marker.style.borderRadius='8px';
     marker.style.display='block';
     marker.style.margin='6px 0';
@@ -7255,42 +7486,70 @@ function snapInsertVideo(eid){
   inp.value='';
 }
 
+// 저장 전 본문 정리: 편집 전용 컨트롤 제거, 대표 이미지 src 반환
+function snapCleanBody(html){
+  const d=document.createElement('div'); d.innerHTML=html||'';
+  // 대표: rep-badge가 붙은 이미지 우선
+  let rep='';
+  const repItem=d.querySelector('.snap-mg-rep-badge');
+  if(repItem){ const im=repItem.parentNode&&repItem.parentNode.querySelector('img'); if(im) rep=im.getAttribute('src')||''; }
+  // 편집 전용 요소 제거
+  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge').forEach(n=>n.remove());
+  // 편집 잠금 표시(outline 등) 정리
+  d.querySelectorAll('.snap-mg-item').forEach(it=>{ it.style.outline=''; });
+  d.querySelectorAll('img[data-snapvid]').forEach(im=>{ im.style.outline=''; });
+  if(!rep){ const first=d.querySelector('img'); if(first) rep=first.getAttribute('src')||''; }
+  return {html:d.innerHTML, rep:rep};
+}
 function addSnap(){
   if(!isApproved())return;
   const t=(document.getElementById('snapTitle')?document.getElementById('snapTitle').value:'').trim();
-  const body=rteGetHtml('snapText');
-  if(!body || (snapCountMedia(body)===0 && snapPlainText(body)==='')){
+  const raw=rteGetHtml('snapText');
+  if(!raw || (snapCountMedia(raw)===0 && snapPlainText(raw)==='')){
     alert('사진·영상 또는 내용을 입력해주세요.'); return;
   }
+  const cleaned=snapCleanBody(raw);
   const arr=Array.isArray(DATA.snaps)?JSON.parse(JSON.stringify(DATA.snaps)):[];
   arr.push({
     ts:Date.now(),
     title:t||'무제',
-    text:body,
+    text:cleaned.html,
+    rep:cleaned.rep||'',
     by:me||'',
     likes:0, likedBy:[], comments:[], views:0
   });
-  snapWriting=false;
+  snapWriting=false; _snapRepDraft=null;
   DATA.snaps=arr;
   ROOT.child('snaps').set(arr);
   // 사진·영상 게시글 작성: 1게시물 3점, 하루 1번(=하루 3점 한도)
-  try{ if(snapCountMedia(body)>0) logActivityCapped('snap', 3); }catch(e){}
+  try{ if(snapCountMedia(cleaned.html)>0) logActivityCapped('snap', 3); }catch(e){}
   renderPage('snap');
 }
-function editSnap(ts){ if(adminLevel()!==1 && !snapIsMine(ts))return; snapEditing=ts; snapOpen=null; snapWriting=false; renderPage('snap'); }
+function editSnap(ts){
+  if(adminLevel()!==1 && !snapIsMine(ts))return;
+  snapEditing=ts; snapOpen=null; snapWriting=false; _snapRepDraft=null;
+  renderPage('snap');
+  // 편집 폼이 그려진 뒤 그룹 컨트롤 부착 + 기존 대표 표시
+  setTimeout(()=>{
+    snapDecorateGroups('snapEditText');
+    const s=(DATA.snaps||[]).find(x=>x&&x.ts===ts);
+    if(s && s.rep) snapSetRep('snapEditText', s.rep);
+  }, 40);
+}
 function snapIsMine(ts){ const s=(DATA.snaps||[]).find(x=>x&&x.ts===ts); return !!(s && me && s.by===me); }
-function cancelSnapEdit(){ snapEditing=null; renderPage('snap'); }
+function cancelSnapEdit(){ snapEditing=null; _snapRepDraft=null; renderPage('snap'); }
 function saveSnap(ts){
   const s0=(DATA.snaps||[]).find(x=>x&&x.ts===ts);
   if(!s0) return;
   if(adminLevel()!==1 && !(me && s0.by===me)) return;
   const t=(document.getElementById('snapEditTitle')?document.getElementById('snapEditTitle').value:'').trim();
-  const body=rteGetHtml('snapEditText');
+  const cleaned=snapCleanBody(rteGetHtml('snapEditText'));
   const arr=JSON.parse(JSON.stringify(DATA.snaps||[]));
   const s=arr.find(x=>x&&x.ts===ts); if(!s)return;
   s.title=t||'무제';
-  s.text=body;
-  snapEditing=null;
+  s.text=cleaned.html;
+  s.rep=cleaned.rep||'';
+  snapEditing=null; _snapRepDraft=null;
   DATA.snaps=arr;
   ROOT.child('snaps').set(arr);
   renderPage('snap');
