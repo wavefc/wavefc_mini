@@ -104,7 +104,7 @@
   @keyframes lvRewardFade{from{opacity:0;}to{opacity:1;}}
   @keyframes lvRewardPop{0%{transform:scale(.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
   /* 새 글 NEW 배지 (약 6일간 반짝임) */
-  .new-badge{display:inline-block;vertical-align:middle;margin-left:5px;font-size:9px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff5e62,#ff2a68);border-radius:8px;padding:1px 6px;letter-spacing:.5px;line-height:1.4;box-shadow:0 1px 3px rgba(255,42,104,.45);animation:newBadgeBlink 1.2s ease-in-out infinite;}
+  .new-badge{display:inline-block;vertical-align:middle;margin-left:5px;flex-shrink:0;font-size:9px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff5e62,#ff2a68);border-radius:8px;padding:1px 6px;letter-spacing:.5px;line-height:1.4;box-shadow:0 1px 3px rgba(255,42,104,.45);animation:newBadgeBlink 1.2s ease-in-out infinite;}
   @keyframes newBadgeBlink{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(255,42,104,.55);}50%{opacity:.55;transform:scale(1.08);box-shadow:0 0 0 5px rgba(255,42,104,0);}}
   .lv-guide-face{text-align:center;}
   .lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
@@ -3121,9 +3121,12 @@ function buildFeed(){
   } else {
     diaryForFeed=(DATA.logs||[]).filter(l=>l && !l.secret).slice(0,2);
   }
+  const hasPick=picks.length>0;
   diaryForFeed.forEach((l)=>{
     const i=DATA.logs.indexOf(l);
-    items.push({kind:'훈련일지',label:'[훈련일지]',title:l.title||('훈련일지'+(l.date?' '+l.date:'')),text:l.text||'',ts:l.ts||0,_t:'diary',_i:i,_sort:(l.ts||0)});
+    // ⭐로 지정된 훈련일지는 고정공지 아래·일정 위에 오도록 큰 정렬값 부여(항상 상단 노출)
+    const sortVal=hasPick ? 9000000000000000 : (l.ts||0); // 고정공지(MAX_SAFE_INTEGER)보다 작고 일정 타임스탬프보다 큼
+    items.push({kind:'훈련일지',label:'[훈련일지]',title:l.title||('훈련일지'+(l.date?' '+l.date:'')),text:l.text||'',ts:l.ts||0,_t:'diary',_i:i,_pick:hasPick,_sort:sortVal});
   });
 
   // 정렬: 고정공지 먼저 → 날짜 가까운 순
@@ -3138,17 +3141,17 @@ let feedSel=0;
 // 관리자가 ⭐로 지정한 글(공지 또는 훈련일지)을 홈 새소식에서 자동 선택(펼침)
 function applyNoticeDefaultOpen(){
   const top=buildFeed().slice(0,4);
-  // ① 공지 기본 펼침 지정이 있으면 최우선
-  const di=DATA.notice_default_open;
-  if(typeof di==='number'){
-    const pos=top.findIndex(it=>it._t==='notice' && it._i===di);
-    if(pos>=0){ feedSel=pos; return; }
-  }
-  // ② 없으면, ⭐로 지정된 훈련일지 중 홈에 노출된 첫 글을 자동 펼침
+  // ① ⭐로 지정된 훈련일지가 홈에 노출돼 있으면 최우선 펼침
   const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[]).map(String);
   if(picks.length){
     const dpos=top.findIndex(it=>it._t==='diary' && it._i>=0 && DATA.logs[it._i] && picks.indexOf(String(DATA.logs[it._i].ts))>=0);
     if(dpos>=0){ feedSel=dpos; return; }
+  }
+  // ② 공지 기본 펼침(⭐) 지정이 있으면 그 다음 우선
+  const di=DATA.notice_default_open;
+  if(typeof di==='number'){
+    const pos=top.findIndex(it=>it._t==='notice' && it._i===di);
+    if(pos>=0){ feedSel=pos; return; }
   }
   feedSel=0;
 }
@@ -3168,10 +3171,31 @@ function pageHome(){
     const tmp=document.createElement('div'); tmp.innerHTML=html||'';
     return (tmp.textContent||tmp.innerText||'').replace(/\s+/g,' ').trim();
   }
+  // 줄바꿈을 살린 순수 텍스트 추출(미리보기용) — 영상/이미지 제거, 엔터는 유지
+  function plainTextBr(html){
+    let s=String(html||'');
+    // 유튜브/iframe/영상 블록 통째 제거
+    s=s.replace(/<iframe[\s\S]*?<\/iframe>/gi,'')
+       .replace(/<video[\s\S]*?<\/video>/gi,'')
+       .replace(/<img[^>]*>/gi,'');
+    // 줄바꿈 유발 태그를 개행 문자로
+    s=s.replace(/<br\s*\/?>/gi,'\n')
+       .replace(/<\/(p|div|li|h[1-6])>/gi,'\n')
+       .replace(/<[^>]+>/g,''); // 남은 태그 제거
+    // 엔티티 정리
+    const tmp=document.createElement('div'); tmp.innerHTML=s;
+    s=tmp.textContent||tmp.innerText||'';
+    // 공백은 정리하되 개행은 보존 (연속 개행은 최대 1개로)
+    s=s.replace(/[ \t\u00a0]+/g,' ')
+       .replace(/ *\n */g,'\n')
+       .replace(/\n{2,}/g,'\n')
+       .trim();
+    return s;
+  }
   const previews= top.length
     ? top.map((it,idx)=>`<div class="feed-item ${idx===feedSel?'on':''}" onclick="feedSel=${idx};renderPage('home')">
         <span class="feed-label" style="${feedStyle(it)}">${it.label}</span>
-        <span class="feed-title">${esc(it.title)}</span></div>`).join('')
+        <span class="feed-title">${esc(it.title)}</span>${(it._t==='notice'||it._t==='diary')?newBadge(it.ts):''}</div>`).join('')
     : '<div style="color:#5a7585;font-size:12px;padding:14px;line-height:1.6;">다가오는 일정이 아직 없어요.<br>일정안내에서 정기훈련을 등록해보세요 :)</div>';
   // 선택된 글 본문
   const cur=top[feedSel]||top[0];
@@ -3182,11 +3206,11 @@ function pageHome(){
   let fdBody;
   if(!cur) fdBody='';
   else if(cur._t==='notice') fdBody=bodyRender(cur.text);
-  else if(cur._t==='diary'){ const pt=plainText(cur.text); fdBody=esc(pt.slice(0,100))+(pt.length>100?'…':''); }
+  else if(cur._t==='diary'){ const pt=plainTextBr(cur.text); const cut=pt.slice(0,100); fdBody=esc(cut).replace(/\n/g,'<br>')+(pt.length>100?'…':''); }
   else fdBody=esc(cur.text)||'(내용 없음)';
   const detail = cur
     ? `<div class="feed-detail">
-         <div class="fd-h"><span class="feed-label" style="${feedStyle(cur)}">${cur.label}</span> ${esc(cur.title)}</div>
+         <div class="fd-h"><span class="feed-label" style="${feedStyle(cur)}">${cur.label}</span> ${esc(cur.title)}${(cur._t==='notice'||cur._t==='diary')?newBadge(cur.ts):''}</div>
          <div class="fd-body">${fdBody}</div>
          ${gotoBtn}
        </div>`
@@ -4266,6 +4290,7 @@ function monthTop6(monthKey){
         else if(raw==='E') st='E';
         else if(raw==='I') st='I';
         else if(raw==='P') st='P';
+        else if(raw==='D') st='D';
         else st='R';
       }
       else if(raw===true) st='O';
@@ -4274,6 +4299,7 @@ function monthTop6(monthKey){
       else if(raw==='R') st='R';
       else if(raw==='I') st='I';
       else if(raw==='P') st='P';
+      else if(raw==='D') st='D';
       else if(raw===false||raw==='X') st='X';
       else st=(hasPeriods?'X':(isRest?'R':'X'));
       anyValid=true;
@@ -4368,6 +4394,7 @@ function pageAttend(){
       if(hasPeriods && isRestingOnDate(m, s.date)){
         if(raw===true) st='O'; else if(raw==='E') st='E';
         else if(raw==='I') st='I'; else if(raw==='P') st='P';
+        else if(raw==='D') st='D';
         else st='R';
       }
       else if(raw===true) st='O';
@@ -4376,6 +4403,7 @@ function pageAttend(){
       else if(raw==='R') st='R';
       else if(raw==='I') st='I';
       else if(raw==='P') st='P';
+      else if(raw==='D') st='D';
       else if(raw===false||raw==='X') st='X';
       else st=(hasPeriods?'X':(isRest?'R':'X'));
       anyValid=true;
@@ -4415,6 +4443,7 @@ function pageAttend(){
     if(state==='R') return '<span style="color:#9aa6ae;font-size:13px;">휴식중</span>';
     if(state==='I') return '<span style="color:#e67e22;font-weight:700;font-size:13px;">부상</span>';
     if(state==='P') return '<span style="color:#2980b9;font-weight:700;font-size:13px;">개인사정</span>';
+    if(state==='D') return '<span style="color:#c0392b;font-weight:600;font-size:13px;white-space:nowrap;">×<span style="font-size:11px;">(당일)</span></span>';
     return '<span style="color:#c0392b;font-weight:600;font-size:20px;">×</span>';
   }
   const rows=members.map(m=>{
@@ -4441,6 +4470,7 @@ function pageAttend(){
         if(raw==='E') return 'E';
         if(raw==='I') return 'I';
         if(raw==='P') return 'P';
+        if(raw==='D') return 'D';
         return 'R';                       // 그 외는 휴식중
       }
       if(raw===true) return 'O';
@@ -4449,6 +4479,7 @@ function pageAttend(){
       if(raw==='R') return 'R';
       if(raw==='I') return 'I';
       if(raw==='P') return 'P';
+      if(raw==='D') return 'D';
       if(raw===false||raw==='X') return 'X';
       return restDefault(s); // 미입력 기본값
     };
@@ -4522,6 +4553,7 @@ function pageAttend(){
           else if(raw==='E') st='E';
           else if(raw==='I') st='I';
           else if(raw==='P') st='P';
+          else if(raw==='D') st='D';
           else st='R';
         }
         else if(raw===true) st='O';
@@ -4530,6 +4562,7 @@ function pageAttend(){
         else if(raw==='R') st='R';
         else if(raw==='I') st='I';
         else if(raw==='P') st='P';
+        else if(raw==='D') st='D';
         else if(raw===false||raw==='X') st='X';
         else st=(hasPeriods?'X':(isRest?'R':'X'));
         anyValid=true;
@@ -4666,7 +4699,7 @@ function pageAttend(){
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th style="font-size:16px;">이름</th>${dateHeads||'<th>해당 기간 기록 없음</th>'}<th style="font-size:16px;">출석률</th></tr>
     ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">체험은 출석으로 인정, 무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다. 풋살은 팀 활동이므로 꾸준한 출석이 가장 중요합니다. 최소 2회 출석 부탁드립니다.</div>':''}`;
+    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">체험은 출석으로 인정, 결석·당일 결석(×(당일))·무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다. 풋살은 팀 활동이므로 꾸준한 출석이 가장 중요합니다. 최소 2회 출석 부탁드립니다.</div>':''}`;
 }
 function setAttView(mode){ attViewMode=mode; renderPage('attend'); }
 function attDateKey(d){
@@ -4763,7 +4796,7 @@ function openAttPick(si, name, preJoin){
   // 가입 전이면 체험/취소만, 아니면 전체 선택지
   const opts = preJoin
     ? [['E','🎯 체험 (출석 인정)','#7b3fb5'],['','지우기','#9aa6ae']]
-    : [['O','○ 출석','#2e8b3d'],['X','× 결석','#c0392b'],['A','무단','#d40000'],['E','체험','#7b3fb5'],['R','휴식중','#9aa6ae'],['I','부상','#e67e22'],['P','개인사정','#2980b9'],['','지우기','#9aa6ae']];
+    : [['O','○ 출석','#2e8b3d'],['X','× 결석','#c0392b'],['D','× (당일) 당일 결석','#c0392b'],['A','무단','#d40000'],['E','체험','#7b3fb5'],['R','휴식중','#9aa6ae'],['I','부상','#e67e22'],['P','개인사정','#2980b9'],['','지우기','#9aa6ae']];
   const curVal = (cur===true)?'O':(cur===false?'X':(cur||''));
   const ov=document.createElement('div');
   ov.id='attPickOverlay';
@@ -6722,7 +6755,8 @@ function rteCmd(id,cmd,val){
   }catch(e){}
   el.focus();
 }
-// 선택 영역을 span으로 감싸 px 단위 글씨크기 지정 (세분화)
+// 선택 영역의 글씨크기를 px 단위로 지정 (세분화)
+// 여러 문단(블록)에 걸친 선택도 블록 구조를 깨지 않고 각 텍스트 조각에만 적용.
 function rteSetFontSizePx(id, px){
   const el=document.getElementById(id); if(!el) return;
   el.focus();
@@ -6730,15 +6764,57 @@ function rteSetFontSizePx(id, px){
   if(!sel||sel.rangeCount===0) return;
   const range=sel.getRangeAt(0);
   if(range.collapsed) return; // 선택 없으면 무시
-  const span=document.createElement('span');
-  span.style.fontSize=px+'px';
-  try{
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
-    // 선택 유지
-    sel.removeAllRanges();
-    const nr=document.createRange(); nr.selectNodeContents(span); sel.addRange(nr);
-  }catch(e){}
+
+  // 선택 범위와 교차하는 '텍스트 노드'만 골라 각각 span으로 감싼다.
+  // (extractContents로 통째 감싸면 문단 경계가 무너지고 빈 줄까지 크기가 바뀜)
+  const walker=document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode(node){
+      if(!node.nodeValue) return NodeFilter.FILTER_REJECT;
+      // 선택 범위와 겹치는 노드만
+      const r=document.createRange();
+      r.selectNodeContents(node);
+      const intersects = range.compareBoundaryPoints(Range.END_TO_START, r) < 0
+                      && range.compareBoundaryPoints(Range.START_TO_END, r) > 0;
+      return intersects ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const targets=[];
+  let n;
+  while((n=walker.nextNode())) targets.push(n);
+  if(!targets.length) return;
+
+  const firstNode=targets[0], lastNode=targets[targets.length-1];
+  const startOff=(range.startContainer===firstNode)?range.startOffset:0;
+  const endOff=(range.endContainer===lastNode)?range.endOffset:lastNode.nodeValue.length;
+
+  let firstSpan=null, lastSpan=null;
+  targets.forEach(tn=>{
+    let s=(tn===firstNode)?startOff:0;
+    let e=(tn===lastNode)?endOff:tn.nodeValue.length;
+    if(e<=s) return;
+    const full=tn.nodeValue;
+    // 공백만 있는(줄바꿈용) 구간은 건너뜀 → 빈 줄에 크기 적용 방지
+    if(!full.slice(s,e).trim()) return;
+    // s..e 구간을 별도 텍스트 노드로 분리
+    let mid=tn;
+    if(e<full.length) mid.splitText(e);   // 뒤쪽 분리
+    if(s>0) mid=mid.splitText(s);         // 앞쪽 분리 → mid = 선택 구간
+    const span=document.createElement('span');
+    span.style.fontSize=px+'px';
+    mid.parentNode.insertBefore(span, mid);
+    span.appendChild(mid);
+    if(!firstSpan) firstSpan=span;
+    lastSpan=span;
+  });
+
+  // 선택 상태 복원 (적용된 첫~마지막 span 전체)
+  if(firstSpan&&lastSpan){
+    const nr=document.createRange();
+    nr.setStartBefore(firstSpan);
+    nr.setEndAfter(lastSpan);
+    sel.removeAllRanges(); sel.addRange(nr);
+    _rteSavedRange=nr.cloneRange();
+  }
 }
 // 색상 input의 현재 값을 선택 영역에 다시 적용 (✓ 버튼)
 function rteApplyColor(id, cmd, inputId){
