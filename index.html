@@ -3089,23 +3089,16 @@ function buildFeed(){
     .filter(x=>x.d && x.d>=today)
     .sort((a,b)=>a.d-b.d);
 
-  // ① 정기훈련: 가장 가까운 미래 1개
-  const nextTrain=future.find(x=>x.e.etype==='정기훈련');
-  if(nextTrain){
-    const e=nextTrain.e;
-    items.push({kind:'정기훈련',label:'[정기훈련]',
-      title:`${fmtD(nextTrain.d)} 정기훈련${e.time?' '+e.time:''}`,
-      text:(e.place?'📍'+e.place+'\n':'')+(e.memo||'이번 주 정기훈련이에요. 함께 뛰어요!'),
-      ts:e.ts||nextTrain.d.getTime(),_t:'cal',_i:nextTrain.i,_sort:nextTrain.d.getTime()});
-  }
-  // ② 친선경기 / 특별훈련 / 대회 / 회식 / 기타: 다가오는 것 모두
-  future.filter(x=>x.e.etype && x.e.etype!=='정기훈련').forEach(x=>{
-    const e=x.e;
+  // ① 일정안내: 종류 상관없이 현재·미래 중 가장 가까운 1개만 노출
+  const nextEvent=future.find(x=>x.e.etype);
+  if(nextEvent){
+    const e=nextEvent.e;
+    const isTrain=e.etype==='정기훈련';
     items.push({kind:e.etype,label:`[${e.etype}]`,
-      title:`${fmtD(x.d)} ${e.etype}${e.time?' '+e.time:''}`,
-      text:(e.place?'📍'+e.place+'\n':'')+(e.memo||''),
-      ts:e.ts||x.d.getTime(),_t:'cal',_i:x.i,_sort:x.d.getTime()});
-  });
+      title:`${fmtD(nextEvent.d)} ${e.etype}${e.time?' '+e.time:''}`,
+      text:(e.place?'📍'+e.place+'\n':'')+(e.memo||(isTrain?'이번 주 정기훈련이에요. 함께 뛰어요!':'')),
+      ts:e.ts||nextEvent.d.getTime(),_t:'cal',_i:nextEvent.i,_sort:nextEvent.d.getTime()});
+  }
   // ③ 고정공지(pinned)는 항상 노출
   DATA.notices.forEach((n,i)=>{ if(n.pinned) items.push({kind:'공지사항',label:'[공지사항]',title:n.title||(n.text||'').slice(0,20),text:n.text||'',ts:n.ts||0,_t:'notice',_i:i,pinned:true,_sort:Number.MAX_SAFE_INTEGER}); });
 
@@ -3140,7 +3133,7 @@ function buildFeed(){
 let feedSel=0;
 // 관리자가 ⭐로 지정한 글(공지 또는 훈련일지)을 홈 새소식에서 자동 선택(펼침)
 function applyNoticeDefaultOpen(){
-  const top=buildFeed().slice(0,4);
+  const top=buildFeed().slice(0,5);
   // ① ⭐로 지정된 훈련일지가 홈에 노출돼 있으면 최우선 펼침
   const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[]).map(String);
   if(picks.length){
@@ -3157,7 +3150,7 @@ function applyNoticeDefaultOpen(){
 }
 function pageHome(){
   const feed=buildFeed();
-  const top=feed.slice(0,4);
+  const top=feed.slice(0,5);
   // 우측 미리보기 리스트
   function feedStyle(it){
     let bg='#5a7585';
@@ -4443,7 +4436,7 @@ function pageAttend(){
     if(state==='R') return '<span style="color:#9aa6ae;font-size:13px;">휴식중</span>';
     if(state==='I') return '<span style="color:#e67e22;font-weight:700;font-size:13px;">부상</span>';
     if(state==='P') return '<span style="color:#2980b9;font-weight:700;font-size:13px;">개인사정</span>';
-    if(state==='D') return '<span style="color:#c0392b;font-weight:600;font-size:13px;white-space:nowrap;">×<span style="font-size:11px;">(당일)</span></span>';
+    if(state==='D') return '<span style="color:#c0392b;font-weight:600;white-space:nowrap;"><span style="font-size:20px;">×</span><span style="font-size:11px;">(당일)</span></span>';
     return '<span style="color:#c0392b;font-weight:600;font-size:20px;">×</span>';
   }
   const rows=members.map(m=>{
