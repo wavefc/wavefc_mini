@@ -623,20 +623,30 @@
   .snap-cover-ctrl .btns{display:flex;gap:6px;justify-content:flex-end;}
   /* 파도스냅 본문 미디어 그룹 (네이버식 레이아웃) */
   .snap-mg{margin:8px 0;}
-  .snap-mg-indiv > *{margin:4px 0;}
-  .snap-mg-indiv .snap-mg-row{display:flex;gap:4px;}
-  .snap-mg-indiv .snap-mg-row .snap-mg-item{flex:1 1 0;min-width:0;}
-  .snap-mg-indiv img{width:100%;height:auto;display:block;border-radius:6px;}
-  .snap-mg-collage{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .snap-mg-indiv > *{margin:3px 0;}
+  .snap-mg-indiv .snap-mg-row{display:flex;gap:3px;align-items:flex-start;}
+  .snap-mg-indiv .snap-mg-row .snap-mg-item{min-width:0;flex:1 1 0;}
+  .snap-mg-indiv img{width:100%;height:auto;display:block;border-radius:4px;cursor:zoom-in;}
+  .snap-mg-collage{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
   .snap-mg-collage .snap-mg-item{aspect-ratio:1/1;}
-  .snap-mg-collage img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;}
-  .snap-mg-slide{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;}
+  .snap-mg-collage img{width:100%;height:100%;object-fit:cover;border-radius:4px;display:block;}
+  .snap-mg-slide{display:flex;gap:4px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;}
   .snap-mg-slide .snap-mg-item{flex:0 0 auto;scroll-snap-align:start;max-height:340px;}
-  .snap-mg-slide img{height:300px;width:auto;border-radius:6px;display:block;}
-  .snap-mg-single img{width:100%;height:auto;display:block;border-radius:6px;}
+  .snap-mg-slide img{height:300px;width:auto;border-radius:4px;display:block;}
+  .snap-mg-single img{width:100%;height:auto;display:block;border-radius:4px;}
   .snap-mg-item{position:relative;}
-  /* 편집 모드 컨트롤 (대표/삭제) — 저장된 본문에는 안 보임 */
-  .snap-mg-edit .snap-mg-item{outline:1px dashed #cdd6dd;}
+  /* 편집 모드: 점선 없이, 드래그 가능한 손잡이 커서만 */
+  .snap-mg-edit .snap-mg-indiv .snap-mg-item{cursor:grab;}
+  .snap-mg-edit .snap-mg-indiv .snap-mg-item img{touch-action:none;cursor:grab;}
+  .snap-mg-edit .snap-mg-indiv .snap-mg-item:active{cursor:grabbing;}
+  .snap-drag-ghost{position:fixed;transform:translate(-50%,-50%);width:90px;height:90px;z-index:10050;pointer-events:none;opacity:.9;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .snap-drag-ghost img{width:100%;height:100%;object-fit:cover;display:block;}
+  .snap-mg-item.snap-drag-over{outline:2px solid #5aa9e6;outline-offset:-2px;}
+  .snap-mg-item.snap-dragging{opacity:.45;}
+  .snap-mg-edit .snap-mg-indiv .snap-mg-row{min-height:30px;}
+  .snap-mg-row.snap-row-target{outline:2px dashed #9ccbf0;outline-offset:1px;}
+  .snap-mg-newrow{margin-top:4px;border:1.5px dashed #cdd6dd;border-radius:8px;text-align:center;font-size:11px;color:#9aa6ae;padding:6px;background:#fafcfe;}
+  .snap-mg-newrow.snap-row-target{border-color:#5aa9e6;color:#5aa9e6;background:#eef7ff;}
   .snap-mg-tools{position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2;}
   .snap-mg-tool{background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:6px;font-size:11px;padding:3px 7px;cursor:pointer;line-height:1.2;}
   .snap-mg-tool.rep-on{background:#2e8b3d;}
@@ -683,6 +693,7 @@
   .snap-overlay-x:hover{background:#e3edf3;}
   .snap-overlay-body{padding:16px;line-height:1.75;color:#3a5566;}
   .snap-overlay-body img{max-width:100%;border-radius:8px;display:block;margin:8px 0;}
+  .snap-overlay-body .snap-mg img{cursor:zoom-in;}
   .snap-overlay-admin{padding:0 16px 8px;}
   .snap-overlay-react{padding:0 16px 16px;}
   /* 달력 */
@@ -7306,7 +7317,7 @@ function onSnapAttach(ev, eid){
         if(w>max){ h=Math.round(h*max/w); w=max; }
         const cv=document.createElement('canvas');cv.width=w;cv.height=h;
         cv.getContext('2d').drawImage(img,0,0,w,h);
-        results[my]={src:cv.toDataURL('image/jpeg',0.82)};
+        results[my]={src:cv.toDataURL('image/jpeg',0.82), w:w, h:h};
         processNext();
       };
       img.onerror=processNext;
@@ -7342,37 +7353,44 @@ function chooseSnapLayout(layout){
   _snapAttachBuf=[];
   if(!imgs.length) return;
   const el=document.getElementById(eid); if(!el) return;
-  const group=buildSnapGroup(layout, imgs.map(x=>x.src));
+  const group=buildSnapGroup(layout, imgs);
   snapAppendToEditor(eid, group);
   snapDecorateGroups(eid);
 }
 // 미디어 그룹 DOM 생성 (contenteditable=false 블록)
-function buildSnapGroup(layout, srcs){
+// items: [{src,w,h}] 또는 [src] 문자열 배열 모두 허용
+function buildSnapGroup(layout, items){
+  const arr=items.map(it=> (typeof it==='string')?{src:it}:it );
   const wrap=document.createElement('div');
   wrap.className='snap-mg snap-mg-'+layout;
   wrap.setAttribute('data-snapgroup', layout);
   wrap.setAttribute('contenteditable','false');
-  const single=(srcs.length===1);
+  const single=(arr.length===1);
   if(single) wrap.classList.add('snap-mg-single');
-  const makeItem=(src)=>{
+  const makeItem=(o, useRatio)=>{
     const item=document.createElement('div');
     item.className='snap-mg-item';
+    // 개별사진: 같은 열에서 높이는 같게, 폭은 원본 비율대로 → flex-grow = 가로/세로 비율
+    if(useRatio && o.w && o.h){
+      const ratio=o.w/o.h;
+      item.style.flex=ratio+' 1 0';
+    }
     const im=document.createElement('img');
-    im.src=src;
+    im.src=o.src;
     item.appendChild(im);
     return item;
   };
   if(layout==='indiv'){
-    // 최대 3장씩 같은 행
-    for(let i=0;i<srcs.length;i+=3){
+    // 최대 3장씩 같은 행. 같은 행 내 높이는 동일, 폭은 비율대로.
+    for(let i=0;i<arr.length;i+=3){
       const row=document.createElement('div');
       row.className='snap-mg-row';
-      srcs.slice(i,i+3).forEach(s=>row.appendChild(makeItem(s)));
+      arr.slice(i,i+3).forEach(o=>row.appendChild(makeItem(o,true)));
       wrap.appendChild(row);
     }
   } else {
     // collage / slide / single: 평면 배치
-    srcs.forEach(s=>wrap.appendChild(makeItem(s)));
+    arr.forEach(o=>wrap.appendChild(makeItem(o,false)));
   }
   return wrap;
 }
@@ -7420,7 +7438,109 @@ function snapDecorateGroups(eid){
         res.querySelector('.snap-res-apply').onclick=(e)=>{ e.stopPropagation(); const v=parseInt(inp.value,10); if(v>=120&&v<=1200){ snapSetImgWidth(img, v); } };
       }
     }
+    // 개별사진: 드래그로 열/행 재배치
+    if(layout==='indiv'){ snapEnableIndivDrag(eid, group); }
   });
+}
+// ===== 개별사진 드래그 재배치 (포인터 기반: 마우스+터치 모두) =====
+var _snapDragItem=null, _snapDragEid=null, _snapDragGroup=null, _snapDragGhost=null;
+function snapEnableIndivDrag(eid, group){
+  if(!group.querySelector('.snap-mg-newrow')){
+    const nr=document.createElement('div');
+    nr.className='snap-mg-newrow';
+    nr.setAttribute('contenteditable','false');
+    nr.textContent='＋ 여기로 끌어오면 새 줄';
+    group.appendChild(nr);
+  }
+  [...group.querySelectorAll('.snap-mg-item')].forEach(item=>{
+    if(item._snapDrag) return; item._snapDrag=true;
+    const img=item.querySelector('img');
+    if(img){
+      img.addEventListener('pointerdown',(e)=>{
+        // 도구 버튼 위에서는 드래그 시작 안 함
+        if(e.target.closest('.snap-mg-tool,.snap-res-row')) return;
+        snapDragStart(e, item, group, eid);
+      });
+    }
+  });
+}
+function snapDragStart(e, item, group, eid){
+  e.preventDefault();
+  _snapDragItem=item; _snapDragGroup=group; _snapDragEid=eid;
+  item.classList.add('snap-dragging');
+  // 고스트(따라다니는 미리보기)
+  const img=item.querySelector('img');
+  _snapDragGhost=document.createElement('div');
+  _snapDragGhost.className='snap-drag-ghost';
+  _snapDragGhost.innerHTML=`<img src="${img?img.getAttribute('src'):''}">`;
+  document.body.appendChild(_snapDragGhost);
+  snapDragMoveGhost(e.clientX, e.clientY);
+  window.addEventListener('pointermove', snapDragMove, {passive:false});
+  window.addEventListener('pointerup', snapDragEnd, {once:true});
+}
+function snapDragMoveGhost(x,y){
+  if(_snapDragGhost){ _snapDragGhost.style.left=x+'px'; _snapDragGhost.style.top=y+'px'; }
+}
+function snapDragMove(e){
+  if(!_snapDragItem) return;
+  e.preventDefault();
+  snapDragMoveGhost(e.clientX, e.clientY);
+  // 현재 포인터 아래 요소 하이라이트
+  _snapDragGroup.querySelectorAll('.snap-drag-over,.snap-row-target').forEach(n=>n.classList.remove('snap-drag-over','snap-row-target'));
+  const t=snapDropTargetAt(e.clientX, e.clientY);
+  if(t){ if(t.kind==='item') t.el.classList.add('snap-drag-over'); else t.el.classList.add('snap-row-target'); }
+}
+function snapDropTargetAt(x,y){
+  if(_snapDragGhost) _snapDragGhost.style.display='none';
+  const under=document.elementFromPoint(x,y);
+  if(_snapDragGhost) _snapDragGhost.style.display='';
+  if(!under||!_snapDragGroup.contains(under)) return null;
+  const item=under.closest('.snap-mg-item');
+  if(item && item!==_snapDragItem) return {kind:'item', el:item};
+  const nr=under.closest('.snap-mg-newrow');
+  if(nr) return {kind:'newrow', el:nr};
+  const row=under.closest('.snap-mg-row');
+  if(row) return {kind:'row', el:row};
+  return null;
+}
+function snapDragEnd(e){
+  window.removeEventListener('pointermove', snapDragMove);
+  const item=_snapDragItem, group=_snapDragGroup, eid=_snapDragEid;
+  if(_snapDragGhost){ _snapDragGhost.remove(); _snapDragGhost=null; }
+  if(item) item.classList.remove('snap-dragging');
+  if(group) group.querySelectorAll('.snap-drag-over,.snap-row-target').forEach(n=>n.classList.remove('snap-drag-over','snap-row-target'));
+  if(!item||!group){ _snapDragItem=null; return; }
+  const t=snapDropTargetAt(e.clientX, e.clientY);
+  if(t){
+    if(t.kind==='item'){ t.el.parentNode.insertBefore(item, t.el); }
+    else if(t.kind==='row'){ t.el.appendChild(item); }
+    else if(t.kind==='newrow'){
+      const row=document.createElement('div'); row.className='snap-mg-row';
+      group.insertBefore(row, t.el); row.appendChild(item);
+    }
+    snapNormalizeIndiv(group, eid);
+  }
+  _snapDragItem=null; _snapDragGroup=null;
+}
+// 재배치 후 정리: 행당 최대 3개(초과분은 다음 행으로), 빈 행 제거, 새 행 드래그 부착
+function snapNormalizeIndiv(group, eid){
+  let rows=[...group.querySelectorAll('.snap-mg-row')];
+  for(let ri=0; ri<rows.length; ri++){
+    let row=rows[ri];
+    let its=[...row.querySelectorAll('.snap-mg-item')];
+    while(its.length>3){
+      const overflow=its.pop();
+      let next=rows[ri+1];
+      if(!next){ next=document.createElement('div'); next.className='snap-mg-row';
+        const nr=group.querySelector('.snap-mg-newrow');
+        group.insertBefore(next, nr||null); rows.push(next);
+      }
+      next.insertBefore(overflow, next.firstChild);
+      its=[...row.querySelectorAll('.snap-mg-item')];
+    }
+  }
+  group.querySelectorAll('.snap-mg-row').forEach(r=>{ if(!r.querySelector('.snap-mg-item')) r.remove(); });
+  snapEnableIndivDrag(eid, group);
 }
 function snapSetImgWidth(img, w){
   if(!img) return;
@@ -7494,9 +7614,14 @@ function snapCleanBody(html){
   const repItem=d.querySelector('.snap-mg-rep-badge');
   if(repItem){ const im=repItem.parentNode&&repItem.parentNode.querySelector('img'); if(im) rep=im.getAttribute('src')||''; }
   // 편집 전용 요소 제거
-  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge').forEach(n=>n.remove());
-  // 편집 잠금 표시(outline 등) 정리
-  d.querySelectorAll('.snap-mg-item').forEach(it=>{ it.style.outline=''; });
+  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge,.snap-mg-newrow').forEach(n=>n.remove());
+  // 드래그/하이라이트 흔적 제거
+  d.querySelectorAll('.snap-mg-item').forEach(it=>{
+    it.style.outline='';
+    it.classList.remove('snap-dragging','snap-drag-over');
+    it.removeAttribute('draggable');
+  });
+  d.querySelectorAll('.snap-mg-row').forEach(r=>r.classList.remove('snap-row-target'));
   d.querySelectorAll('img[data-snapvid]').forEach(im=>{ im.style.outline=''; });
   if(!rep){ const first=d.querySelector('img'); if(first) rep=first.getAttribute('src')||''; }
   return {html:d.innerHTML, rep:rep};
@@ -7613,6 +7738,17 @@ function renderSnapOverlay(){
     </div>`;
   ov.addEventListener('click', closeSnapOverlay);
   document.body.appendChild(ov);
+  // 본문 사진 클릭 → 크게 보기 (영상 마커/임베드는 제외)
+  const bodyEl=ov.querySelector('.snap-overlay-body');
+  if(bodyEl){
+    bodyEl.addEventListener('click', function(e){
+      const im=e.target.closest('img');
+      if(im && im.getAttribute('src') && !im.hasAttribute('data-snapvid') && !im.closest('.dv-embed')){
+        e.stopPropagation();
+        openImgSrc(im.getAttribute('src'));
+      }
+    });
+  }
 }
 
 // 대문 이미지 업로드 (관리자1 전용) — 원본 비율 유지(자르지 않음). 16:9 프레이밍은 위치/확대로.
