@@ -103,6 +103,9 @@
   .lv-guide-faces{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;justify-content:center;}
   @keyframes lvRewardFade{from{opacity:0;}to{opacity:1;}}
   @keyframes lvRewardPop{0%{transform:scale(.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  /* 새 글 NEW 배지 (약 6일간 반짝임) */
+  .new-badge{display:inline-block;vertical-align:middle;margin-left:5px;font-size:9px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff5e62,#ff2a68);border-radius:8px;padding:1px 6px;letter-spacing:.5px;line-height:1.4;box-shadow:0 1px 3px rgba(255,42,104,.45);animation:newBadgeBlink 1.2s ease-in-out infinite;}
+  @keyframes newBadgeBlink{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(255,42,104,.55);}50%{opacity:.55;transform:scale(1.08);box-shadow:0 0 0 5px rgba(255,42,104,0);}}
   .lv-guide-face{text-align:center;}
   .lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
   .lv-card{position:relative;border:2px solid var(--line);border-radius:10px;background:#fff;padding:12px 8px;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.06);}
@@ -3132,13 +3135,22 @@ function buildFeed(){
   return items;
 }
 let feedSel=0;
-// 관리자가 지정한 기본 펼침 공지를 홈 새소식에서 선택
+// 관리자가 ⭐로 지정한 글(공지 또는 훈련일지)을 홈 새소식에서 자동 선택(펼침)
 function applyNoticeDefaultOpen(){
-  const di=DATA.notice_default_open;
-  if(typeof di!=='number'){ feedSel=0; return; }
   const top=buildFeed().slice(0,4);
-  const pos=top.findIndex(it=>it._t==='notice' && it._i===di);
-  feedSel=(pos>=0)?pos:0;
+  // ① 공지 기본 펼침 지정이 있으면 최우선
+  const di=DATA.notice_default_open;
+  if(typeof di==='number'){
+    const pos=top.findIndex(it=>it._t==='notice' && it._i===di);
+    if(pos>=0){ feedSel=pos; return; }
+  }
+  // ② 없으면, ⭐로 지정된 훈련일지 중 홈에 노출된 첫 글을 자동 펼침
+  const picks=(Array.isArray(DATA.diary_home_pick)?DATA.diary_home_pick:[]).map(String);
+  if(picks.length){
+    const dpos=top.findIndex(it=>it._t==='diary' && it._i>=0 && DATA.logs[it._i] && picks.indexOf(String(DATA.logs[it._i].ts))>=0);
+    if(dpos>=0){ feedSel=dpos; return; }
+  }
+  feedSel=0;
 }
 function pageHome(){
   const feed=buildFeed();
@@ -3763,7 +3775,7 @@ function pageNotice(){
       <div class="qna-thread" style="margin-bottom:8px;">
         <div class="qna-q" style="cursor:pointer;font-weight:600;" onclick="toggleNoticeOpen(${n._i})">
           <span style="color:var(--frame);font-size:12px;">${opened?'▼':'▶'}</span>
-          ${n.secret?'🔒 ':''}${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}
+          ${n.secret?'🔒 ':''}${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}${newBadge(n.ts)}
           <span class="qna-src" style="float:right;">${dstr(n)}</span>
         </div>
         ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
@@ -3917,7 +3929,7 @@ function pageDiary(){
       <div class="diary-item">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
-          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${imgs.length?' 📷':''} <span class="diary-like" id="dlike_${l._i}" style="${likeCnt?'':'display:none;'}">❤️${likeCnt}</span> <span class="diary-cmt" id="dcmt_${l._i}" style="${cmtCnt?'':'display:none;'}">💬${cmtCnt}</span></span>
+          <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${newBadge(l.ts)}${imgs.length?' 📷':''} <span class="diary-like" id="dlike_${l._i}" style="${likeCnt?'':'display:none;'}">❤️${likeCnt}</span> <span class="diary-cmt" id="dcmt_${l._i}" style="${cmtCnt?'':'display:none;'}">💬${cmtCnt}</span></span>
           ${l.date?`<span class="diary-d">${esc(l.date)}</span>`:''}
         </div>
         ${body}
@@ -5444,7 +5456,7 @@ function pageFeedback(){
     const likes=Array.isArray(f.likedBy)?f.likedBy.length:0;
     const preview=fbPlainText(f.text).slice(0,30);
     return `<div class="fb-gcard" onclick="openFbPost('${jsStr(target)}','${f.id}')">
-      <div class="fb-gcard-title">${f.title?esc(f.title):'<span style=\"color:#aab8c2;\">(제목 없음)</span>'}</div>
+      <div class="fb-gcard-title">${f.title?esc(f.title):'<span style=\"color:#aab8c2;\">(제목 없음)</span>'}${newBadge(f.ts)}</div>
       <div class="fb-gcard-prev">${esc(preview)}${preview.length>=30?'…':''}</div>
       <div class="fb-gcard-foot">
         <span>❤️ ${likes}</span><span>💬 ${cmts.length}</span><span>👀 ${f.views||0}</span>
@@ -5761,7 +5773,7 @@ function pageQna(){
     }
     return `
       <div class="qna-thread">
-        <div class="qna-q"><b>Q.</b> ${secretTag}${esc(t.q)} ${badge} ${(a1 && t.byKey && DATA.users[t.byKey])?'<span class="qna-by">✍ '+esc(DATA.users[t.byKey].name)+'</span>':(a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':'')} ${btns}</div>
+        <div class="qna-q"><b>Q.</b> ${secretTag}${esc(t.q)}${newBadge(t.ts)} ${badge} ${(a1 && t.byKey && DATA.users[t.byKey])?'<span class="qna-by">✍ '+esc(DATA.users[t.byKey].name)+'</span>':(a1&&t.by?'<span class="qna-by">✍ '+esc(t.by)+'</span>':'')} ${btns}</div>
         ${answered?`<div class="qna-a"><b>A.</b> ${esc(t.answer)} ${src}</div>`:'<div class="qna-a wait">아직 등록된 답변이 없어요. 관리자가 곧 답변을 준비할게요!</div>'}
         ${adminAnswer}
       </div>`;
@@ -6883,6 +6895,13 @@ function diaryBodyRender(s){
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// 작성 후 약 6일 이내면 반짝이는 NEW 배지 HTML 반환 (아니면 빈 문자열)
+function newBadge(ts){
+  const t=Number(ts)||0;
+  if(!t) return '';
+  const SIX_DAYS=6*24*60*60*1000;
+  return (Date.now()-t < SIX_DAYS) ? '<span class="new-badge">NEW</span>' : '';
+}
 function tick(){const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,'0');const ap=h<12?'오전':'오후';if(h>12)h-=12;if(h===0)h=12;document.getElementById('clock').textContent=`${ap} ${h}:${m}`;}
 tick();setInterval(tick,10000);
 renderPage('home');
