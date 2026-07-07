@@ -605,24 +605,36 @@
   /* 파도스냅 */
   .snap-intro{text-align:center;margin:2px 0 14px;}
   .snap-intro .st{font-size:14px;color:#5a7585;}
-  .snap-cover-wrap{position:relative;width:100%;max-width:520px;margin:0 auto 16px;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#eaf4fb,#f4eefc);border:1px solid #dfeaf2;display:flex;align-items:center;justify-content:center;}
-  .snap-cover-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
-  .snap-cover-empty{color:#9fb2c0;font-size:14px;text-align:center;line-height:1.7;padding:20px;}
-  .snap-cover-edit{position:absolute;right:8px;bottom:8px;background:rgba(255,255,255,.92);border:1px solid #cdd6dd;border-radius:16px;padding:5px 12px;font-size:12px;color:#3a5566;cursor:pointer;font-family:inherit;}
+  /* 대문: 16:9 고정, 안쪽 이미지를 위치/확대로 조절 */
+  .snap-cover-wrap{position:relative;width:100%;max-width:720px;margin:0 auto 16px;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#eaf4fb,#f4eefc);border:1px solid #dfeaf2;}
+  .snap-cover-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;user-select:none;cursor:zoom-in;}
+  .snap-cover-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9fb2c0;font-size:14px;text-align:center;line-height:1.7;padding:20px;}
+  .snap-cover-edit{position:absolute;right:8px;bottom:8px;background:rgba(255,255,255,.92);border:1px solid #cdd6dd;border-radius:16px;padding:5px 12px;font-size:12px;color:#3a5566;cursor:pointer;font-family:inherit;z-index:3;}
   .snap-cover-edit:hover{background:#fff;}
-  /* 목록: 대표 1:1 미리보기 + 제목/작성자/날짜 */
-  .snap-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-  @media(max-width:480px){.snap-cards{grid-template-columns:1fr;}}
-  .snap-card2{border:1px solid #dfeaf2;border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s;}
-  .snap-card2:hover{box-shadow:0 4px 14px rgba(90,130,180,.18);transform:translateY(-2px);}
-  .snap-thumb1{position:relative;width:100%;aspect-ratio:1/1;background:#f0f4f7;}
+  /* 대문 영역지정(편집) 오버레이 */
+  .snap-cover-editing{cursor:grab;}
+  .snap-cover-editing:active{cursor:grabbing;}
+  .snap-cover-hint{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 9px;border-radius:10px;z-index:3;pointer-events:none;}
+  .snap-cover-ctrl{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(255,255,255,.94);border:1px solid #cdd6dd;border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:6px;z-index:4;}
+  .snap-cover-ctrl .row{display:flex;align-items:center;gap:8px;font-size:12px;color:#3a5566;}
+  .snap-cover-ctrl input[type=range]{flex:1;}
+  .snap-cover-ctrl .btns{display:flex;gap:6px;justify-content:flex-end;}
+  /* 목록: 성장기록일지와 동일한 그리드/카드 크기 */
+  .snap-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
+  .snap-card2{border:2px solid #6ab8e8;border-radius:10px;background:#fff;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;aspect-ratio:1/1;overflow:hidden;box-sizing:border-box;}
+  .snap-card2:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,155,212,.2);}
+  .snap-thumb1{position:relative;width:100%;flex:1;min-height:0;background:#f0f4f7;}
   .snap-thumb1 img{width:100%;height:100%;object-fit:cover;display:block;}
-  .snap-thumb1-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;color:#c3d3de;}
-  .snap-more-badge{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;}
-  .snap-meta{padding:9px 11px;}
-  .snap-meta-title{font-size:14px;font-weight:700;color:#2a4356;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .snap-meta-sub{font-size:11px;color:#8aa;margin-top:3px;}
-  .snap-meta-react{font-size:11px;color:#5a7585;margin-top:4px;}
+  .snap-thumb1-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;color:#c3d3de;}
+  .snap-more-badge{position:absolute;right:6px;top:6px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 7px;border-radius:12px;}
+  .snap-meta{padding:8px 9px;}
+  .snap-meta-title{font-size:13px;font-weight:800;color:#2176a8;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
+  .snap-meta-sub{font-size:10px;color:#9aa6ae;margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .snap-meta-react{display:flex;gap:6px;font-size:10px;color:#8aa;margin-top:4px;}
+  @media(max-width:640px){
+    .snap-cards{grid-template-columns:repeat(2,1fr);gap:8px;}
+    .snap-meta-title{font-size:13px;}
+  }
   /* 전체보기 오버레이 */
   .snap-overlay{position:fixed;inset:0;background:rgba(20,30,40,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;}
   .snap-overlay-box{background:#fff;border-radius:14px;max-width:560px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden;}
@@ -2626,7 +2638,8 @@ const DEFAULT={
     {x:62, y:62, label:"센터로고", text:"오늘도 다 같이 무브무브! 💙"}
   ],
   snaps:[],
-  snap_cover:""
+  snap_cover:"",
+  snap_cover_pos:{x:50,y:50,zoom:100}
 };
 let DATA=JSON.parse(JSON.stringify(DEFAULT));
 let imgIndex=0,imgTimer=null;
@@ -2728,7 +2741,8 @@ ROOT.on('value',snap=>{
     top6_bonus_pending:(v.top6_bonus_pending||{}),
     top6_bonus_msg:(v.top6_bonus_msg||{}),
     snaps:(Array.isArray(v.snaps)?v.snaps:[]),
-    snap_cover:(v.snap_cover!==undefined?v.snap_cover:'')};
+    snap_cover:(v.snap_cover!==undefined?v.snap_cover:''),
+    snap_cover_pos:(v.snap_cover_pos&&typeof v.snap_cover_pos==='object'?v.snap_cover_pos:{x:50,y:50,zoom:100})};
     _initialized=true; // 정상 데이터 1회 이상 수신함
   }
   setStatus(true);renderAll();
@@ -7056,15 +7070,24 @@ function snapPlainText(html){
   return (d.textContent||'').replace(/\s+/g,' ').trim();
 }
 
+// 대표 이미지(글에서 지정) 우선, 없으면 첫 이미지
+function snapRepImg(s){
+  if(s && s.rep){ return s.rep; }
+  return snapFirstImg(s?s.text:'');
+}
 function pageSnap(){
   const a1=adminLevel()===1;
   const cover=DATA.snap_cover||'';
+  const pos=DATA.snap_cover_pos||{x:50,y:50,zoom:100};
+  const imgStyle=`object-position:${pos.x}% ${pos.y}%;transform:scale(${(pos.zoom||100)/100});transform-origin:${pos.x}% ${pos.y}%;`;
   const coverHtml=`
-    <div class="snap-cover-wrap">
+    <div class="snap-cover-wrap" id="snapCoverWrap">
       ${cover
-        ? `<img src="${cover}" onclick="openSnapCover()" style="cursor:zoom-in;">`
+        ? `<img src="${cover}" class="snap-cover-img" id="snapCoverImg" style="${imgStyle}" onclick="openSnapCover()">`
         : `<div class="snap-cover-empty">🌊 WAVE FC의 즐거운 순간을 담아주세요<br><span style="font-size:12px;color:#b5c4d0;">대문 이미지가 아직 없어요</span></div>`}
-      ${a1?`<button class="snap-cover-edit" onclick="document.getElementById('snapCoverFile').click()">🖼️ 대문 이미지 ${cover?'변경':'등록'}</button>
+      ${a1?`
+        <button class="snap-cover-edit" onclick="document.getElementById('snapCoverFile').click()">🖼️ 대문 ${cover?'변경':'등록'}</button>
+        ${cover?`<button class="snap-cover-edit" style="right:96px;" onclick="startSnapCoverAdjust()">🎯 영역 지정</button>`:''}
         <input type="file" id="snapCoverFile" accept="image/*" onchange="onSnapCoverFile(event)" style="display:none;">`:''}
     </div>`;
 
@@ -7079,13 +7102,14 @@ function pageSnap(){
   const list=(DATA.snaps||[]).map((s,i)=>Object.assign({},s,{_i:i}))
     .sort((a,b)=>(b.ts||0)-(a.ts||0));
   const cards=list.map(s=>{
-    const rep=snapFirstImg(s.text||'');
+    const rep=snapRepImg(s);
     const d=s.ts?new Date(s.ts):null;
-    const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`:'';
+    const dateStr=d?`${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`:'';
     const author=s.by?userLabel(s.by):'익명';
     const cnt=snapCountMedia(s.text||'');
     const likeCnt=(Array.isArray(s.likedBy)?s.likedBy.length:0)||s.likes||0;
     const cmtCnt=(s.comments&&s.comments.length)?s.comments.length:0;
+    const viewCnt=s.views||0;
     return `<div class="snap-card2" onclick="openSnapPost(${s.ts})">
       <div class="snap-thumb1">
         ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">🌊</div>'}
@@ -7093,8 +7117,8 @@ function pageSnap(){
       </div>
       <div class="snap-meta">
         <div class="snap-meta-title">${esc(s.title||'무제')}${newBadge(s.ts)}</div>
-        <div class="snap-meta-sub">✍ ${esc(author)} · 📅 ${dateStr}</div>
-        <div class="snap-meta-react">❤️ ${likeCnt}　💬 ${cmtCnt}</div>
+        <div class="snap-meta-sub">✍ ${esc(author)} · ${dateStr}</div>
+        <div class="snap-meta-react"><span>❤️ ${likeCnt}</span><span>💬 ${cmtCnt}</span><span>👀 ${viewCnt}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -7244,7 +7268,7 @@ function addSnap(){
     title:t||'무제',
     text:body,
     by:me||'',
-    likes:0, likedBy:[], comments:[]
+    likes:0, likedBy:[], comments:[], views:0
   });
   snapWriting=false;
   DATA.snaps=arr;
@@ -7286,6 +7310,17 @@ function delSnap(ts){
 // ===== 전체보기 오버레이 =====
 function openSnapPost(ts){
   if(snapEditing===ts) return; // 편집 중이면 무시
+  // 조회수 +1 (같은 사람이 하루에 여러 번 열어도 1회만)
+  try{
+    const seenKey='wavefc_snapview_'+ts;
+    const today=_dayKey(Date.now());
+    if(localStorage.getItem(seenKey)!==today){
+      localStorage.setItem(seenKey, today);
+      const arr=JSON.parse(JSON.stringify(DATA.snaps||[]));
+      const s=arr.find(x=>x&&x.ts===ts);
+      if(s){ s.views=(s.views||0)+1; DATA.snaps=arr; ROOT.child('snaps').set(arr); }
+    }
+  }catch(e){}
   snapOpen=ts;
   renderSnapOverlay();
 }
@@ -7306,7 +7341,7 @@ function renderSnapOverlay(){
       <div class="snap-overlay-head">
         <div>
           <div class="snap-overlay-title">${esc(s.title||'무제')}</div>
-          <div class="snap-overlay-sub">✍ ${esc(author)} · 📅 ${dateStr}</div>
+          <div class="snap-overlay-sub">✍ ${esc(author)} · 📅 ${dateStr} · 👀 ${s.views||0}</div>
         </div>
         <button class="snap-overlay-x" onclick="closeSnapOverlay()">✕</button>
       </div>
@@ -7321,7 +7356,7 @@ function renderSnapOverlay(){
   document.body.appendChild(ov);
 }
 
-// 대문 이미지 업로드 (관리자1 전용)
+// 대문 이미지 업로드 (관리자1 전용) — 원본 비율 유지(자르지 않음). 16:9 프레이밍은 위치/확대로.
 function onSnapCoverFile(ev){
   if(adminLevel()!==1)return;
   const f=ev.target.files&&ev.target.files[0]; if(!f)return;
@@ -7330,21 +7365,97 @@ function onSnapCoverFile(ev){
   reader.onload=function(e){
     const img=new Image();
     img.onload=function(){
-      const size=800;
-      const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
-      const ctx=cv.getContext('2d');
-      const side=Math.min(img.width,img.height);
-      const sx=(img.width-side)/2, sy=(img.height-side)/2;
-      ctx.drawImage(img,sx,sy,side,side,0,0,size,size);
+      const max=1280; let w=img.width,h=img.height;
+      if(w>max){ h=Math.round(h*max/w); w=max; }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
       const data=cv.toDataURL('image/jpeg',0.85);
       DATA.snap_cover=data;
+      DATA.snap_cover_pos={x:50,y:50,zoom:100};
       ROOT.child('snap_cover').set(data);
+      ROOT.child('snap_cover_pos').set(DATA.snap_cover_pos);
       renderPage('snap');
+      // 업로드 직후 바로 영역 지정 모드로
+      setTimeout(()=>{ if(DATA.snap_cover) startSnapCoverAdjust(); }, 60);
     };
     img.src=e.target.result;
   };
   reader.readAsDataURL(f);
   ev.target.value='';
+}
+// ===== 대문 영역 지정(드래그로 이동 + 확대 슬라이더) =====
+var _snapCoverDraft=null; // {x,y,zoom}
+function startSnapCoverAdjust(){
+  if(adminLevel()!==1) return;
+  const wrap=document.getElementById('snapCoverWrap');
+  const imgEl=document.getElementById('snapCoverImg');
+  if(!wrap||!imgEl) return;
+  const p=DATA.snap_cover_pos||{x:50,y:50,zoom:100};
+  _snapCoverDraft={x:p.x,y:p.y,zoom:p.zoom||100};
+  // 편집 UI 구성
+  imgEl.style.cursor='grab';
+  imgEl.onclick=null;
+  wrap.classList.add('snap-cover-editing');
+  // 기존 편집버튼 숨기고 컨트롤 표시
+  wrap.querySelectorAll('.snap-cover-edit').forEach(b=>b.style.display='none');
+  const hint=document.createElement('div');
+  hint.className='snap-cover-hint'; hint.textContent='🖱️ 드래그해서 위치 조절';
+  wrap.appendChild(hint);
+  const ctrl=document.createElement('div');
+  ctrl.className='snap-cover-ctrl';
+  ctrl.innerHTML=`
+    <div class="row">🔍 확대 <input type="range" id="snapCoverZoom" min="100" max="300" value="${_snapCoverDraft.zoom}"> <span id="snapCoverZoomVal">${_snapCoverDraft.zoom}%</span></div>
+    <div class="btns">
+      <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelSnapCoverAdjust()">취소</button>
+      <button class="qna-send sm" onclick="saveSnapCoverAdjust()">저장</button>
+    </div>`;
+  wrap.appendChild(ctrl);
+  applySnapCoverDraft();
+  // 줌
+  const zr=document.getElementById('snapCoverZoom');
+  zr.oninput=function(){ _snapCoverDraft.zoom=parseInt(this.value,10); document.getElementById('snapCoverZoomVal').textContent=_snapCoverDraft.zoom+'%'; applySnapCoverDraft(); };
+  // 드래그로 object-position 이동
+  let dragging=false, lastX=0, lastY=0;
+  const onDown=(cx,cy)=>{ dragging=true; lastX=cx; lastY=cy; imgEl.style.cursor='grabbing'; };
+  const onMove=(cx,cy)=>{
+    if(!dragging) return;
+    const rect=wrap.getBoundingClientRect();
+    const dx=(cx-lastX)/rect.width*100;
+    const dy=(cy-lastY)/rect.height*100;
+    // 이미지를 끌면 보이는 영역은 반대로 이동
+    _snapCoverDraft.x=Math.min(100,Math.max(0,_snapCoverDraft.x - dx));
+    _snapCoverDraft.y=Math.min(100,Math.max(0,_snapCoverDraft.y - dy));
+    lastX=cx; lastY=cy;
+    applySnapCoverDraft();
+  };
+  const onUp=()=>{ dragging=false; imgEl.style.cursor='grab'; };
+  imgEl.onmousedown=(e)=>{ e.preventDefault(); onDown(e.clientX,e.clientY); };
+  window.addEventListener('mousemove', _snapCoverMouseMove=(e)=>onMove(e.clientX,e.clientY));
+  window.addEventListener('mouseup', _snapCoverMouseUp=onUp);
+  imgEl.ontouchstart=(e)=>{ const t=e.touches[0]; onDown(t.clientX,t.clientY); };
+  imgEl.ontouchmove=(e)=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); e.preventDefault(); };
+  imgEl.ontouchend=onUp;
+}
+var _snapCoverMouseMove=null, _snapCoverMouseUp=null;
+function applySnapCoverDraft(){
+  const imgEl=document.getElementById('snapCoverImg');
+  if(!imgEl||!_snapCoverDraft) return;
+  const p=_snapCoverDraft;
+  imgEl.style.objectPosition=`${p.x}% ${p.y}%`;
+  imgEl.style.transform=`scale(${(p.zoom||100)/100})`;
+  imgEl.style.transformOrigin=`${p.x}% ${p.y}%`;
+}
+function _snapCoverCleanupListeners(){
+  if(_snapCoverMouseMove){ window.removeEventListener('mousemove',_snapCoverMouseMove); _snapCoverMouseMove=null; }
+  if(_snapCoverMouseUp){ window.removeEventListener('mouseup',_snapCoverMouseUp); _snapCoverMouseUp=null; }
+}
+function cancelSnapCoverAdjust(){ _snapCoverDraft=null; _snapCoverCleanupListeners(); renderPage('snap'); }
+function saveSnapCoverAdjust(){
+  if(!_snapCoverDraft) return;
+  DATA.snap_cover_pos={x:_snapCoverDraft.x, y:_snapCoverDraft.y, zoom:_snapCoverDraft.zoom};
+  ROOT.child('snap_cover_pos').set(DATA.snap_cover_pos);
+  _snapCoverDraft=null; _snapCoverCleanupListeners();
+  renderPage('snap');
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
