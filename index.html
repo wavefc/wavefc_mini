@@ -669,7 +669,20 @@
   .snap-lay-ic{font-size:26px;margin-bottom:6px;}
   .snap-lay-nm{font-size:13px;color:#3a5566;font-weight:700;}
   .snap-lay-cancel{display:block;margin:16px auto 0;background:#f0f4f7;border:none;border-radius:8px;padding:8px 20px;font-size:13px;color:#5a7585;cursor:pointer;}
-  .snap-overlay-body .snap-res-row,.snap-overlay-body .snap-mg-switch,.snap-overlay-body .snap-mg-tools,.snap-overlay-body .snap-mg-newrow,.snap-overlay-body .snap-mg-rep-badge{display:none !important;}
+  .snap-overlay-body .snap-res-row,.snap-overlay-body .snap-mg-switch,.snap-overlay-body .snap-mg-tools,.snap-overlay-body .snap-mg-newrow,.snap-overlay-body .snap-mg-rep-badge,
+  .snap-detail-body .snap-res-row,.snap-detail-body .snap-mg-switch,.snap-detail-body .snap-mg-tools,.snap-detail-body .snap-mg-newrow,.snap-detail-body .snap-mg-rep-badge,.snap-detail-body .snap-res-btn,.snap-detail-body .snap-mg-tool{display:none !important;}
+  /* 파도스냅 인라인 상세 */
+  .snap-detail{background:#fff;border:1px solid #e3edf3;border-radius:12px;padding:16px 18px 18px;margin-bottom:18px;}
+  .snap-detail-top{margin-bottom:10px;}
+  .snap-detail-back{background:#eef4f8;color:#3a5566;}
+  .snap-detail-head{border-bottom:1px solid #eef2f5;padding-bottom:10px;margin-bottom:14px;}
+  .snap-detail-title{font-size:18px;font-weight:800;color:#28414f;line-height:1.35;}
+  .snap-detail-sub{font-size:12px;color:#8aa2b0;margin-top:6px;}
+  .snap-detail-body{line-height:1.7;color:#33474f;word-break:break-word;}
+  .snap-detail-body img{max-width:100%;height:auto;border-radius:8px;cursor:zoom-in;}
+  .snap-detail-admin{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+  .snap-detail-react{margin-top:16px;border-top:1px solid #eef2f5;padding-top:14px;}
+  @media(max-width:640px){ .snap-detail{padding:12px 12px 14px;border-radius:10px;} .snap-detail-title{font-size:16px;} }
   /* 해상도 지정(단일 이미지) */
   .snap-res-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:4px;background:#f5f9fc;border:1px solid #e0ebf2;border-radius:8px;padding:6px 8px;}
   .snap-res-row .snap-res-btn{border:1px solid #cdd6dd;background:#fff;border-radius:6px;font-size:11px;padding:2px 8px;cursor:pointer;}
@@ -3176,7 +3189,7 @@ function renderPage(page){
   else if(page==='qna'){c.innerHTML=pageQna();bindQnaForm();}
   else if(page==='quiz')c.innerHTML=pageQuiz();
   else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
-  else if(page==='snap'){ try{ c.innerHTML=pageSnap(); }catch(e){ c.innerHTML='<div class="page-h">🌊 파도스냅</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } try{ if(document.getElementById('snapText')) snapDecorateGroups('snapText'); if(document.getElementById('snapEditText')){ snapDecorateGroups('snapEditText'); const _s=(DATA.snaps||[]).find(x=>x&&x.ts===snapEditing); if(_s&&_s.rep&&!(_snapDraft&&_snapDraft.mode==='edit')) snapSetRep('snapEditText',_s.rep); } }catch(e){} }
+  else if(page==='snap'){ try{ c.innerHTML=pageSnap(); }catch(e){ c.innerHTML='<div class="page-h">🌊 파도스냅</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } try{ if(document.getElementById('snapText')) snapDecorateGroups('snapText'); if(document.getElementById('snapEditText')){ snapDecorateGroups('snapEditText'); const _s=(DATA.snaps||[]).find(x=>x&&x.ts===snapEditing); if(_s&&_s.rep&&!(_snapDraft&&_snapDraft.mode==='edit')) snapSetRep('snapEditText',_s.rep); } }catch(e){} try{ bindSnapDetailBody(); }catch(e){} }
   else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#c0392b;">기록 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } }
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
@@ -3738,10 +3751,8 @@ function _reactSave(node, arr){
   // DB 저장
   if(node==='logs'||node==='notices'||node==='snaps'){ ROOT.child(node).set(arr); }
   else { ROOT.child('board_react/'+node).set(arr[0]||{}); }
-  // 화면 즉시 갱신
+  // 화면 즉시 갱신 (파도스냅 인라인 상세도 renderPage로 함께 갱신됨)
   try{ renderPage(currentPage); }catch(e){}
-  // 파도스냅 전체보기 오버레이가 열려 있으면 반응 카운트도 갱신
-  try{ if(node==='snaps' && typeof snapOpen!=='undefined' && snapOpen!==null) renderSnapOverlay(); }catch(e){}
 }
 function _likedKey(node,ts){ return 'wavefc_like_'+node+'_'+ts; }
 function hasLiked(node,ts){ try{ return localStorage.getItem(_likedKey(node,ts))==='1'; }catch(e){ return false; } }
@@ -7204,7 +7215,53 @@ function hideSnapIntro(){
   snapIntroEditing=false;
   renderPage('snap');
 }
+// 파도스냅 인라인 상세(페이지 내 전체보기)
+function snapDetailHtml(){
+  const s=(DATA.snaps||[]).find(x=>x&&x.ts===snapOpen);
+  if(!s) return '';
+  const i=(DATA.snaps||[]).indexOf(s);
+  const d=s.ts?new Date(s.ts):null;
+  const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
+  const author=s.by?userLabel(s.by):'익명';
+  const canEdit = adminLevel()===1 || (me && s.by===me);
+  return `<div class="snap-detail" id="snapDetail">
+    <div class="snap-detail-top">
+      <button class="qna-send sm snap-detail-back" onclick="closeSnapOverlay()">← 목록으로</button>
+    </div>
+    <div class="snap-detail-head">
+      <div class="snap-detail-title">${esc(s.title||'무제')}</div>
+      <div class="snap-detail-sub">${s.by?(rankEmoji(s.by)||'✍'):'✍'} ${esc(author)} · 📅 ${dateStr} · 👀 ${s.views||0}</div>
+    </div>
+    <div class="snap-detail-body" id="snapDetailBody">${snapViewBody(s.text||'')}</div>
+    ${canEdit?`<div class="snap-detail-admin">
+      <button class="qna-send sm" onclick="editSnap(${s.ts});">수정</button>
+      <button class="qna-send sm" style="background:#c0392b;" onclick="delSnap(${s.ts})">삭제</button>
+    </div>`:''}
+    <div class="snap-detail-react" id="snapReactBox">${reactBox('snaps',i)}</div>
+  </div>`;
+}
+function bindSnapDetailBody(){
+  const bodyEl=document.getElementById('snapDetailBody');
+  if(!bodyEl || bodyEl._snapBound) return;
+  bodyEl._snapBound=true;
+  bodyEl.addEventListener('click', function(e){
+    const im=e.target.closest('img');
+    if(im && im.getAttribute('src') && !im.hasAttribute('data-snapvid') && !im.closest('.dv-embed')){
+      e.stopPropagation();
+      openImgSrc(im.getAttribute('src'));
+    }
+  });
+}
 function pageSnap(){
+  // 인라인 상세가 열려 있으면 상세만 표시
+  if(snapOpen!==null && snapEditing===null){
+    const dh=snapDetailHtml();
+    if(dh) return `<div class="page-h">🌊 파도스냅</div>${dh}`;
+    snapOpen=null; // 대상이 없으면 목록으로
+  }
+  return pageSnapList();
+}
+function pageSnapList(){
   // 재렌더 전에 작성 중인 폼 내용을 임시저장(사진/제목 유실 방지)
   try{ if(snapWriting || snapEditing!==null) snapCaptureDraft(); }catch(e){}
   const a1=adminLevel()===1;
@@ -7797,8 +7854,24 @@ function delSnap(ts){
 // 글 보기용 본문 렌더: 편집 전용 컨트롤(해상도/레이아웃전환/대표·삭제 버튼 등)이 옛 글에 남아있어도 제거
 function snapViewBody(html){
   const d=document.createElement('div'); d.innerHTML=html||'';
-  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge,.snap-mg-newrow,.snap-mg-switch').forEach(n=>n.remove());
+  // 1) 편집용 컨트롤 잔재 클래스 제거
+  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-switch,.snap-mg-rep-badge,.snap-mg-newrow,.snap-res-btn,.snap-mg-tool').forEach(n=>n.remove());
   d.querySelectorAll('.snap-mg-item').forEach(it=>{ it.style.outline=''; it.classList.remove('snap-dragging','snap-drag-over'); it.removeAttribute('draggable'); });
+  // 2) 클래스 없이 저장된 옛 해상도 컨트롤 잔재 방어 제거
+  //    "해상도" 텍스트 + 픽셀 버튼(360px 480px 640px...)이 들어간 블록/텍스트 노드 정리
+  const RES_RE=/해상도[\s\S]{0,120}?\d{3,4}\s*px/;
+  d.querySelectorAll('div,span,p,section').forEach(el=>{
+    if(el.querySelector && el.querySelector('img,iframe,.dv-embed')) return; // 사진/영상 포함 블록은 보존
+    const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(t && RES_RE.test(t) && t.length<=160) el.remove();
+  });
+  // 남은 순수 텍스트 노드 잔재도 제거
+  const walker=document.createTreeWalker(d, NodeFilter.SHOW_TEXT, null);
+  const kill=[]; let tn;
+  while((tn=walker.nextNode())){ if(RES_RE.test(tn.nodeValue||'')) kill.push(tn); }
+  kill.forEach(n=>n.remove());
+  // 3) 편집 속성 정리
+  d.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable'));
   return diaryBodyRender(d.innerHTML);
 }
 // ===== 전체보기 오버레이 =====
@@ -7816,9 +7889,18 @@ function openSnapPost(ts){
     }
   }catch(e){}
   snapOpen=ts;
-  renderSnapOverlay();
+  // 팝업 대신 페이지 내 인라인 상세로 전환 + 페이지 맨 위로 스크롤
+  snapWriting=false; snapEditing=null;
+  renderPage('snap');
+  try{ window.scrollTo({top:0, behavior:'auto'}); }catch(e){ window.scrollTo(0,0); }
+  const c=document.getElementById('centerArea'); if(c){ try{ c.scrollTop=0; }catch(e){} }
 }
-function closeSnapOverlay(){ snapOpen=null; const ov=document.getElementById('snapOverlay'); if(ov) ov.remove(); }
+function closeSnapOverlay(){
+  snapOpen=null;
+  const ov=document.getElementById('snapOverlay'); if(ov) ov.remove();
+  // 인라인 상세에서 목록으로 복귀
+  if(currentPage==='snap'){ renderPage('snap'); try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){} }
+}
 function renderSnapOverlay(){
   const old=document.getElementById('snapOverlay'); if(old) old.remove();
   const s=(DATA.snaps||[]).find(x=>x&&x.ts===snapOpen);
