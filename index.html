@@ -412,7 +412,9 @@
   .fb-card-head{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #d5e6f2;padding-bottom:8px;margin-bottom:10px;}
   .fb-by{font-weight:800;color:#2176a8;font-size:14px;}
   .fb-card .fb-date{font-size:11px;color:#8aa;}
-  .fb-del{font-size:11px;color:#c0392b;cursor:pointer;margin-left:auto;}
+  .fb-head-actions{margin-left:auto;display:flex;gap:12px;align-items:center;flex-shrink:0;}
+  .fb-del{font-size:11px;color:#c0392b;cursor:pointer;}
+  .fb-cmt .fb-del,.fb-reply .fb-del{margin-left:4px;}
   .fb-body{font-size:14px;color:#3a5566;line-height:1.7;}
   .fb-cmt-list{margin-top:12px;}
   .fb-cmt{background:#f2fafe;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;color:#3a5566;}
@@ -703,6 +705,8 @@
   @media(max-width:640px){
     .snap-cards{grid-template-columns:repeat(2,1fr);gap:16px 12px;}
     .snap-meta-title{font-size:14px;}
+    .fb-card-head{flex-wrap:wrap;}
+    .fb-head-actions{margin-left:auto;}
   }
   /* 전체보기 오버레이 */
   .snap-overlay{position:fixed;inset:0;background:rgba(20,30,40,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;}
@@ -5595,10 +5599,12 @@ function pageFeedback(){
         <div style="margin:8px 0;"><button class="qna-send sm" style="background:#7b9cc4;" onclick="fbOpen=null;renderPage('feedback')">← 목록으로</button></div>
         <div class="fb-card fb-detail">
           <div class="fb-card-head">
-            <span class="fb-by">✍️ ${rankEmoji(f.by)}${esc(userLabel(f.by)||f.by||'')}</span>
+            <span class="fb-by">${rankEmoji(f.by)}${esc(userLabel(f.by)||f.by||'')}</span>
             <span class="fb-date">${fbDate(f.ts)} · 조회 ${f.views||0}</span>
-            ${fbCanEdit(f)?`<span class="fb-del" style="color:#2176a8;" onclick="fbEditing='${f.id}';renderPage('feedback')">수정</span>`:''}
-            ${canWrite?`<span class="fb-del" onclick="delFeedback('${jsStr(target)}','${f.id}')">삭제</span>`:''}
+            <span class="fb-head-actions">
+              ${fbCanEdit(f)?`<span class="fb-del" style="color:#2176a8;" onclick="fbEditing='${f.id}';renderPage('feedback')">수정</span>`:''}
+              ${canWrite?`<span class="fb-del" onclick="delFeedback('${jsStr(target)}','${f.id}')">삭제</span>`:''}
+            </span>
           </div>
           ${f.title?`<div class="fb-title-txt">${esc(f.title)}</div>`:''}
           <div class="fb-body">${diaryBodyRender(f.text||'')}</div>
@@ -7526,6 +7532,17 @@ function buildSnapGroup(layout, items){
 // 편집 모드: 각 그룹에 레이아웃 전환 + 대표/삭제 컨트롤(+단일 해상도) 부착
 function snapDecorateGroups(eid){
   const el=document.getElementById(eid); if(!el) return;
+  // 저장된 본문에 남아 있던 옛 편집 컨트롤 잔재를 먼저 제거(중복 해상도 바 방지)
+  el.querySelectorAll('.snap-res-row,.snap-mg-switch,.snap-mg-tools,.snap-mg-newrow,.snap-mg-rep-badge').forEach(n=>n.remove());
+  // 클래스 없이 저장된 옛 해상도 컨트롤 잔재도 제거
+  (function(){
+    const RES_RE=/해상도[\s\S]{0,140}?\d{3,4}\s*px/;
+    el.querySelectorAll('div,span,p,section').forEach(node=>{
+      if(node.querySelector && node.querySelector('img,iframe,.snap-mg-item')) return;
+      const t=(node.textContent||'').replace(/\s+/g,' ').trim();
+      if(t && RES_RE.test(t) && t.length<=200) node.remove();
+    });
+  })();
   el.classList.add('snap-mg-edit');
   el.querySelectorAll('.snap-mg').forEach(group=>{
     const layout=group.getAttribute('data-snapgroup');
@@ -7772,7 +7789,20 @@ function snapCleanBody(html){
   const repItem=d.querySelector('.snap-mg-rep-badge');
   if(repItem){ const im=repItem.parentNode&&repItem.parentNode.querySelector('img'); if(im) rep=im.getAttribute('src')||''; }
   // 편집 전용 요소 제거
-  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge,.snap-mg-newrow,.snap-mg-switch').forEach(n=>n.remove());
+  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge,.snap-mg-newrow,.snap-mg-switch,.snap-res-btn,.snap-mg-tool').forEach(n=>n.remove());
+  // 클래스 없이 저장된 옛 해상도 컨트롤 잔재도 제거
+  (function(){
+    const RES_RE=/해상도[\s\S]{0,140}?\d{3,4}\s*px/;
+    d.querySelectorAll('div,span,p,section').forEach(node=>{
+      if(node.querySelector && node.querySelector('img,iframe,.snap-mg-item')) return;
+      const t=(node.textContent||'').replace(/\s+/g,' ').trim();
+      if(t && RES_RE.test(t) && t.length<=200) node.remove();
+    });
+    const walker=document.createTreeWalker(d, NodeFilter.SHOW_TEXT, null);
+    const kill=[]; let tn;
+    while((tn=walker.nextNode())){ if(RES_RE.test(tn.nodeValue||'')) kill.push(tn); }
+    kill.forEach(n=>n.remove());
+  })();
   // 드래그/하이라이트 흔적 제거
   d.querySelectorAll('.snap-mg-item').forEach(it=>{
     it.style.outline='';
