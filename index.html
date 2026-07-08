@@ -669,6 +669,7 @@
   .snap-lay-ic{font-size:26px;margin-bottom:6px;}
   .snap-lay-nm{font-size:13px;color:#3a5566;font-weight:700;}
   .snap-lay-cancel{display:block;margin:16px auto 0;background:#f0f4f7;border:none;border-radius:8px;padding:8px 20px;font-size:13px;color:#5a7585;cursor:pointer;}
+  .snap-overlay-body .snap-res-row,.snap-overlay-body .snap-mg-switch,.snap-overlay-body .snap-mg-tools,.snap-overlay-body .snap-mg-newrow,.snap-overlay-body .snap-mg-rep-badge{display:none !important;}
   /* 해상도 지정(단일 이미지) */
   .snap-res-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:4px;background:#f5f9fc;border:1px solid #e0ebf2;border-radius:8px;padding:6px 8px;}
   .snap-res-row .snap-res-btn{border:1px solid #cdd6dd;background:#fff;border-radius:6px;font-size:11px;padding:2px 8px;cursor:pointer;}
@@ -3230,7 +3231,7 @@ function buildFeed(){
       const si=snapArr.indexOf(latestSnap);
       items.push({kind:'파도스냅',label:'[파도스냅]',
         title:latestSnap.title||'파도스냅',
-        text:snapPlainText(latestSnap.text)||'사진·영상을 확인해보세요 :)',
+        text:snapPlainText(latestSnap.text)||'WAVE FC의 즐거운 순간을 확인해보세요 📸',
         ts:latestSnap.ts||0,_t:'snap',_i:si,
         _snapTotal:snapArr.length,
         _sort:9500000000000000});
@@ -3337,7 +3338,7 @@ function pageHome(){
   if(!cur) fdBody='';
   else if(cur._t==='notice') fdBody=bodyRender(cur.text);
   else if(cur._t==='diary'){ const pt=plainTextBr(cur.text); const cut=pt.slice(0,100); fdBody=esc(cut).replace(/\n/g,'<br>')+(pt.length>100?'…':''); }
-  else if(cur._t==='snap'){ const pt=String(cur.text||''); const cut=pt.slice(0,100); fdBody=esc(cut)+(pt.length>100?'…':'')||'사진·영상을 확인해보세요 :)'; }
+  else if(cur._t==='snap'){ const pt=String(cur.text||''); const cut=pt.slice(0,100); fdBody=esc(cut)+(pt.length>100?'…':'')||'WAVE FC의 즐거운 순간을 확인해보세요 📸'; }
   else fdBody=esc(cur.text)||'(내용 없음)';
   const detail = cur
     ? `<div class="feed-detail">
@@ -7793,6 +7794,13 @@ function delSnap(ts){
   renderPage('snap');
 }
 
+// 글 보기용 본문 렌더: 편집 전용 컨트롤(해상도/레이아웃전환/대표·삭제 버튼 등)이 옛 글에 남아있어도 제거
+function snapViewBody(html){
+  const d=document.createElement('div'); d.innerHTML=html||'';
+  d.querySelectorAll('.snap-mg-tools,.snap-res-row,.snap-mg-rep-badge,.snap-mg-newrow,.snap-mg-switch').forEach(n=>n.remove());
+  d.querySelectorAll('.snap-mg-item').forEach(it=>{ it.style.outline=''; it.classList.remove('snap-dragging','snap-drag-over'); it.removeAttribute('draggable'); });
+  return diaryBodyRender(d.innerHTML);
+}
 // ===== 전체보기 오버레이 =====
 function openSnapPost(ts){
   if(snapEditing===ts) return; // 편집 중이면 무시
@@ -7827,11 +7835,11 @@ function renderSnapOverlay(){
       <div class="snap-overlay-head">
         <div>
           <div class="snap-overlay-title">${esc(s.title||'무제')}</div>
-          <div class="snap-overlay-sub">✍ ${esc(author)} · 📅 ${dateStr} · 👀 ${s.views||0}</div>
+          <div class="snap-overlay-sub">${s.by?(rankEmoji(s.by)||'✍'):'✍'} ${esc(author)} · 📅 ${dateStr} · 👀 ${s.views||0}</div>
         </div>
         <button class="snap-overlay-x" onclick="closeSnapOverlay()">✕</button>
       </div>
-      <div class="snap-overlay-body">${diaryBodyRender(s.text||'')}</div>
+      <div class="snap-overlay-body">${snapViewBody(s.text||'')}</div>
       ${canEdit?`<div class="snap-overlay-admin">
         <button class="qna-send sm" onclick="closeSnapOverlay();editSnap(${s.ts});">수정</button>
         <button class="qna-send sm" style="background:#c0392b;" onclick="delSnap(${s.ts})">삭제</button>
