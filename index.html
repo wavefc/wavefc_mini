@@ -254,6 +254,8 @@
   .guest .gtxt{line-height:1.5;color:#3a5566;word-break:break-all;padding-top:2px;}
   .guest .gtime{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:9px;color:#9ab;margin-left:6px;}
   .guest .del{margin-left:auto;color:#c0392b;cursor:pointer;font-size:9px;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;flex-shrink:0;}
+  .guest .edit{margin-left:auto;color:#2176a8;cursor:pointer;font-size:9px;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;flex-shrink:0;}
+  .guest .edit + .del{margin-left:6px;}
   .cmt{display:flex;align-items:flex-start;gap:6px;background:rgba(255,255,255,.85);border:1px solid var(--line);padding:6px 8px;font-size:13px;}
   .cmt .face{font-size:20px;flex-shrink:0;line-height:1;}
   .cmt .txt{line-height:1.5;color:#3a5566;word-break:break-all;}
@@ -276,6 +278,8 @@
   .reply .rtxt{line-height:1.45;color:#3a5566;word-break:break-all;padding-top:1px;}
   .reply .rtime{font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:8px;color:#9ab;margin-left:5px;}
   .reply .del{margin-left:auto;color:#c0392b;cursor:pointer;font-size:8px;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;flex-shrink:0;}
+  .reply .edit{margin-left:auto;color:#2176a8;cursor:pointer;font-size:8px;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;flex-shrink:0;}
+  .reply .edit + .del{margin-left:5px;}
   .reply-toggle{margin:4px 0 0 30px;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:9px;color:var(--frame);cursor:pointer;}
   .reply-form{margin:4px 0 0 30px;display:flex;gap:5px;}
   .reply-form input{flex:1;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:10px;padding:4px;border:1px solid #c9d6df;}
@@ -414,6 +418,8 @@
   .fb-card .fb-date{font-size:11px;color:#8aa;}
   .fb-head-actions{margin-left:auto;display:flex;gap:12px;align-items:center;flex-shrink:0;}
   .fb-del{font-size:11px;color:#c0392b;cursor:pointer;}
+  .fb-edit{font-size:11px;color:#2176a8;cursor:pointer;}
+  .fb-edited{font-size:9px;color:#9aa6ae;margin-left:4px;}
   .fb-cmt .fb-del,.fb-reply .fb-del{margin-left:4px;}
   .fb-body{font-size:14px;color:#3a5566;line-height:1.7;}
   .fb-cmt-list{margin-top:12px;}
@@ -518,6 +524,8 @@
   .rc-likedby{font-size:11px;color:#c0563f;background:#fff3f0;border-radius:4px;padding:3px 7px;margin-bottom:4px;line-height:1.4;}
   .rc-date{font-size:10px;color:#aab;margin-left:5px;}
   .rc-del{font-size:10px;color:#c0392b;cursor:pointer;margin-left:6px;}
+  .rc-edit{font-size:10px;color:#2176a8;cursor:pointer;margin-left:6px;}
+  .rc-edited{font-size:9px;color:#9aa6ae;margin-left:4px;}
   .rc-replytoggle{font-size:10px;color:#2176a8;cursor:pointer;margin-left:6px;}
   .rc-reply{margin-left:18px;background:#eef4f8;font-size:12px;}
   .rcr-box{margin:2px 0 4px 18px;}
@@ -540,9 +548,9 @@
   .dv-btn{font-size:11px;font-weight:700;color:#3a5566;background:#eef3f7;border:1px solid #cdd6dd;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.3;}
   .dv-btn:hover{background:#dfe9f0;}
   .dv-btn-add{color:#1f7a33;background:#eafbef;border-color:#bfe3c8;}
-  /* 인스타그램 임베드: 9:16 세로 미리보기, 배경은 흰색 */
-  .dv-ig{width:320px;max-width:100%;}
-  .dv-ig .dv-frame{width:320px;max-width:100%;aspect-ratio:9/16;background:#fff;border:1px solid #e3e8ec;}
+  /* 인스타그램 임베드: 9:16 세로 미리보기(숏츠와 동일 크기), 배경은 흰색 */
+  .dv-ig{width:220px;}
+  .dv-ig .dv-frame{width:220px;aspect-ratio:9/16;background:#fff;border:1px solid #e3e8ec;}
   .dv-btn-ig{color:#b02a6b;background:#fdeef6;border-color:#f3c8dd;}
   /* 방문자 당첨 팝업 */
   .lucky-overlay{position:fixed;inset:0;background:rgba(15,25,35,.66);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -560,8 +568,7 @@
   .dv-row .dv-shorts{flex:0 0 auto;}
   .dv-row .dv-ig{flex:0 0 auto;}
   @media(max-width:760px){
-    .dv-shorts,.dv-shorts .dv-frame{width:100%;max-width:280px;}
-    .dv-ig,.dv-ig .dv-frame{width:100%;max-width:280px;}
+    .dv-shorts,.dv-shorts .dv-frame,.dv-ig,.dv-ig .dv-frame{width:100%;max-width:280px;}
     .dv-row{flex-direction:column;align-items:center;}
     .dv-row .dv-wide,.dv-row .dv-wide .dv-frame{width:100%;}
   }
@@ -3574,7 +3581,7 @@ function pageHome(){
       const rt=r.ts?new Date(r.ts):null;
       const rtstr=rt?`${rt.getMonth()+1}/${rt.getDate()}`:'';
       const rWho=(a1c&&r.by&&DATA.users[r.by])?`<span class="qna-by">✍ ${esc(DATA.users[r.by].name)}</span>`:'';
-      return `<div class="reply"><span class="rface">↳</span><span class="rtxt">${esc(r.text)}<span class="rtime">${rtstr}</span></span>${rWho}${rCanDel?`<span class="del" onclick="delReply('${pid}',${r.ts})">삭제</span>`:''}</div>`;
+      return `<div class="reply"><span class="rface">↳</span><span class="rtxt">${esc(r.text)}${r.edited?'<span class="rc-edited">(수정됨)</span>':''}<span class="rtime">${rtstr}</span></span>${rWho}${canEditOwn(r.by)?`<span class="edit" onclick="editReply('${pid}',${r.ts})">수정</span>`:''}${rCanDel?`<span class="del" onclick="delReply('${pid}',${r.ts})">삭제</span>`:''}</div>`;
     }).join('');
     const replyBlock = replyList?`<div class="reply-wrap">${replyList}</div>`:'';
     const replyUI = isApproved()
@@ -3584,7 +3591,7 @@ function pageHome(){
            <button onclick="addReply('${pid}')">확인</button>
          </div>`
       : (replyList?'':'');
-    return `<div class="guest"><span class="gface">${c.face}</span><span class="gtxt">${esc(c.text)}<span class="gtime">${tstr}</span></span>${who}${canDel?`<span class="del" onclick="delComment(${i})">삭제</span>`:''}</div>${replyBlock}${replyUI}`;
+    return `<div class="guest"><span class="gface">${c.face}</span><span class="gtxt">${esc(c.text)}${c.edited?'<span class="rc-edited">(수정됨)</span>':''}<span class="gtime">${tstr}</span></span>${who}${canEditOwn(c.by)?`<span class="edit" onclick="editComment(${i})">수정</span>`:''}${canDel?`<span class="del" onclick="delComment(${i})">삭제</span>`:''}</div>${replyBlock}${replyUI}`;
   }).join('') || '<div style="font-size:11px;color:#8aa;text-align:center;padding:14px;">아직 일촌평이 없어요. 첫 댓글을 남겨보세요!</div>';
   // 일촌평 페이지네이션 버튼
   let cmtPager='';
@@ -3686,10 +3693,25 @@ function addComment(){
 }
 // 댓글/일촌평 삭제 권한: 작성자 본인 또는 관리자1 모드
 function canDelOwn(by){ return isApproved() && ((by&&by===me) || adminLevel()===1); }
+// 댓글 수정은 '본인이 쓴 글'만 가능 (관리자도 남의 댓글 내용은 고치지 않음)
+function canEditOwn(by){ return isApproved() && !!by && by===me; }
 function delComment(i){
   const c=DATA.comments[i]; if(!c) return;
   if(!canDelOwn(c.by)) return;
   const arr=DATA.comments.slice();arr.splice(i,1);
+  DATA.comments=arr;
+  ROOT.child('comments').set(arr);
+  renderPage(currentPage);
+}
+// 내 일촌평 수정
+function editComment(i){
+  const c=DATA.comments[i]; if(!c) return;
+  if(!canEditOwn(c.by)) return alert('본인이 쓴 일촌평만 수정할 수 있어요.');
+  const nv=prompt('일촌평을 수정하세요:', c.text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  const arr=DATA.comments.slice();
+  arr[i]=Object.assign({}, c, {text:txt.slice(0,40), edited:Date.now()});
   DATA.comments=arr;
   ROOT.child('comments').set(arr);
   renderPage(currentPage);
@@ -3722,6 +3744,20 @@ function delReply(pid, ts){
   if(idx<0) return;
   if(!canDelOwn(arr[idx].by)) return;
   arr.splice(idx,1);
+  DATA.replies=arr;
+  ROOT.child('replies').set(arr);
+  renderPage(currentPage);
+}
+// 내 일촌평 답글 수정
+function editReply(pid, ts){
+  const arr=(DATA.replies||[]).slice();
+  const idx=arr.findIndex(r=>r&&String(r.pid)===String(pid)&&r.ts===ts);
+  if(idx<0) return;
+  if(!canEditOwn(arr[idx].by)) return alert('본인이 쓴 답글만 수정할 수 있어요.');
+  const nv=prompt('답글을 수정하세요:', arr[idx].text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  arr[idx]=Object.assign({}, arr[idx], {text:txt.slice(0,40), edited:Date.now()});
   DATA.replies=arr;
   ROOT.child('replies').set(arr);
   renderPage(currentPage);
@@ -3997,6 +4033,20 @@ function delReactComment(node,idx,ci){
   item.comments.splice(ci,1);
   _reactSave(node,arr);
 }
+// 내 댓글 수정
+function editReactComment(node,idx,ci){
+  const cur=_reactArr(node)[idx];
+  const c=cur&&cur.comments&&cur.comments[ci]; if(!c) return;
+  if(!canEditOwn(c.by)) return alert('본인이 쓴 댓글만 수정할 수 있어요.');
+  const nv=prompt('댓글을 수정하세요:', c.text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  const arr=JSON.parse(JSON.stringify(_reactArr(node)));
+  const item=arr[idx]; if(!item||!item.comments||!item.comments[ci]) return;
+  item.comments[ci].text=txt.slice(0,200);
+  item.comments[ci].edited=Date.now();
+  _reactSave(node,arr);
+}
 // 댓글에 답글(대댓글) 추가
 function addReactReply(node,idx,ci){
   if(!isApproved()) return;
@@ -4016,6 +4066,21 @@ function delReactReply(node,idx,ci,ri){
   const rep=item.comments[ci].replies[ri]; if(!rep) return;
   if(!canDelOwn(rep.by)) return;
   item.comments[ci].replies.splice(ri,1);
+  _reactSave(node,arr);
+}
+// 내 답글 수정
+function editReactReply(node,idx,ci,ri){
+  const cur=_reactArr(node)[idx];
+  const r=cur&&cur.comments&&cur.comments[ci]&&cur.comments[ci].replies&&cur.comments[ci].replies[ri];
+  if(!r) return;
+  if(!canEditOwn(r.by)) return alert('본인이 쓴 답글만 수정할 수 있어요.');
+  const nv=prompt('답글을 수정하세요:', r.text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  const arr=JSON.parse(JSON.stringify(_reactArr(node)));
+  const item=arr[idx]; if(!item||!item.comments||!item.comments[ci]||!item.comments[ci].replies) return;
+  item.comments[ci].replies[ri].text=txt.slice(0,200);
+  item.comments[ci].replies[ri].edited=Date.now();
   _reactSave(node,arr);
 }
 function toggleReactReply(node,idx,ci){
@@ -4052,16 +4117,18 @@ function reactBox(node,idx,opts){
       const rt=r.ts?new Date(r.ts):null;
       const rdd=rt?`${String(rt.getMonth()+1).padStart(2,'0')}.${String(rt.getDate()).padStart(2,'0')}`:'';
       const rname=(a1&&r.by)?`<span class="rc-who">✍ ${esc(userLabel(r.by))}</span>`:`<span class="rc-anon">익명</span>`;
-      return `<div class="rc-row rc-reply">↳ ${rname} ${esc(r.text)}
+      return `<div class="rc-row rc-reply">↳ ${rname} ${esc(r.text)}${r.edited?'<span class="rc-edited">(수정됨)</span>':''}
         <span class="rc-date">${rdd}</span>
+        ${canEditOwn(r.by)?`<span class="rc-edit" onclick="editReactReply('${node}',${idx},${ci},${ri})">수정</span>`:''}
         ${canDelOwn(r.by)?`<span class="rc-del" onclick="delReactReply('${node}',${idx},${ci},${ri})">삭제</span>`:''}</div>`;
     }).join('');
     const replyInput = isApproved()
       ? `<div class="rcr-input"><input id="rcr_${node}_${idx}_${ci}" maxlength="200" placeholder="답글 달기…" onkeydown="if(event.key==='Enter')addReactReply('${node}',${idx},${ci})"><button onclick="addReactReply('${node}',${idx},${ci})">확인</button></div>`
       : '';
-    return `<div class="rc-row">${nameTag} ${bodyHtml}
+    return `<div class="rc-row">${nameTag} ${bodyHtml}${(c.edited && (!c.secret || canSeeSecret))?'<span class="rc-edited">(수정됨)</span>':''}
       <span class="rc-date">${dd}</span>
       ${isApproved()?`<span class="rc-replytoggle" onclick="toggleReactReply('${node}',${idx},${ci})">답글${reps.length?'('+reps.length+')':''}</span>`:''}
+      ${canEditOwn(c.by)?`<span class="rc-edit" onclick="editReactComment('${node}',${idx},${ci})">수정</span>`:''}
       ${canDelOwn(c.by)?`<span class="rc-del" onclick="delReactComment('${node}',${idx},${ci})">삭제</span>`:''}</div>
       ${repRows}
       <div class="rcr-box" id="rcrbox_${node}_${idx}_${ci}" style="display:none;">${replyInput}</div>`;
@@ -5769,9 +5836,9 @@ function pageFeedback(){
       const cmts=Array.isArray(f.comments)?f.comments:[];
       const cmtHtml=cmts.map((c,ci)=>{
         const reps=Array.isArray(c.replies)?c.replies:[];
-        const repHtml=reps.map((r,ri)=>`<div class="fb-reply"><b>${rankEmoji(r.by)}${esc(userLabel(r.by)||r.by||'')}</b> ${esc(r.text)} <span class="fb-date">${fbDate(r.ts)}</span>${fbCanDelComment(target,r.by)?` <span class="fb-del" onclick="delFbReply('${jsStr(target)}','${f.id}',${ci},${ri})">삭제</span>`:''}</div>`).join('');
+        const repHtml=reps.map((r,ri)=>`<div class="fb-reply"><b>${rankEmoji(r.by)}${esc(userLabel(r.by)||r.by||'')}</b> ${esc(r.text)}${r.edited?'<span class="fb-edited">(수정됨)</span>':''} <span class="fb-date">${fbDate(r.ts)}</span>${fbCanEditComment(target,r.by)?` <span class="fb-edit" onclick="editFbReply('${jsStr(target)}','${f.id}',${ci},${ri})">수정</span>`:''}${fbCanDelComment(target,r.by)?` <span class="fb-del" onclick="delFbReply('${jsStr(target)}','${f.id}',${ci},${ri})">삭제</span>`:''}</div>`).join('');
         return `<div class="fb-cmt">
-          <div><b>${rankEmoji(c.by)}${esc(userLabel(c.by)||c.by||'')}</b> ${esc(c.text)} <span class="fb-date">${fbDate(c.ts)}</span>${fbCanDelComment(target,c.by)?` <span class="fb-del" onclick="delFbComment('${jsStr(target)}','${f.id}',${ci})">삭제</span>`:''}</div>
+          <div><b>${rankEmoji(c.by)}${esc(userLabel(c.by)||c.by||'')}</b> ${esc(c.text)}${c.edited?'<span class="fb-edited">(수정됨)</span>':''} <span class="fb-date">${fbDate(c.ts)}</span>${fbCanEditComment(target,c.by)?` <span class="fb-edit" onclick="editFbComment('${jsStr(target)}','${f.id}',${ci})">수정</span>`:''}${fbCanDelComment(target,c.by)?` <span class="fb-del" onclick="delFbComment('${jsStr(target)}','${f.id}',${ci})">삭제</span>`:''}</div>
           ${repHtml}
           ${fbCanComment(target)?`<div class="fb-reply-input"><input id="fbrep_${f.id}_${ci}" maxlength="300" placeholder="답글 달기…" onkeydown="if(event.key==='Enter')addFbReply('${jsStr(target)}','${f.id}',${ci})"><button onclick="addFbReply('${jsStr(target)}','${f.id}',${ci})">확인</button></div>`:''}
         </div>`;
@@ -5927,6 +5994,40 @@ function saveFeedbackEdit(fid){
 }
 function fbDate(ts){ if(!ts) return ''; const d=new Date(ts); return `${String(d.getFullYear()).slice(2)}.${d.getMonth()+1}.${d.getDate()}`; }
 function fbCanDelComment(target,by){ return (adminLevel()===1)||(by&&by===me); }
+// 성장일지 댓글/답글 수정은 본인만
+function fbCanEditComment(target,by){ return isApproved() && !!by && by===me; }
+function editFbComment(target,fid,ci){
+  const f0=((DATA.feedbacks||{})[target]||[]).find(x=>x.id===fid);
+  const c=f0&&f0.comments&&f0.comments[ci]; if(!c) return;
+  if(!fbCanEditComment(target, c.by)) return alert('본인이 쓴 댓글만 수정할 수 있어요.');
+  const nv=prompt('댓글을 수정하세요:', c.text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f||!f.comments||!f.comments[ci]) return;
+  f.comments[ci].text=txt.slice(0,300);
+  f.comments[ci].edited=Date.now();
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
+function editFbReply(target,fid,ci,ri){
+  const f0=((DATA.feedbacks||{})[target]||[]).find(x=>x.id===fid);
+  const r=f0&&f0.comments&&f0.comments[ci]&&f0.comments[ci].replies&&f0.comments[ci].replies[ri];
+  if(!r) return;
+  if(!fbCanEditComment(target, r.by)) return alert('본인이 쓴 답글만 수정할 수 있어요.');
+  const nv=prompt('답글을 수정하세요:', r.text||'');
+  if(nv===null) return;
+  const txt=nv.trim(); if(!txt) return alert('내용을 입력해주세요.');
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  const f=(fb[target]||[]).find(x=>x.id===fid); if(!f||!f.comments||!f.comments[ci]) return;
+  const reps=f.comments[ci].replies||[]; if(!reps[ri]) return;
+  reps[ri].text=txt.slice(0,300);
+  reps[ri].edited=Date.now();
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
+  renderPage('feedback');
+}
 let fbWriting=false;
 function addFeedback(){
   const target=feedbackTarget;
@@ -7339,6 +7440,28 @@ function diaryBodyRender(s){
     if(last<txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
     node.replaceWith(frag);
   });
+  // 3.5) 임베드가 홀로 든 블록 래퍼(div/p)를 벗겨서 형제로 만들기
+  //      (에디터가 링크를 각각 <div>로 감싸면 연속 임베드로 인식되지 않아 1열 묶기가 안 됨)
+  for(let pass=0; pass<3; pass++){
+    let changed=false;
+    [...root.querySelectorAll('div,p')].forEach(w=>{
+      if(!w.parentNode) return;
+      // 래퍼 안에 임베드가 있고, 그 외에는 <br>/공백뿐이면 래퍼를 벗긴다
+      const kids=[...w.childNodes];
+      const embedsIn=kids.filter(n=>n.nodeType===1 && n.classList && n.classList.contains('dv-embed'));
+      if(!embedsIn.length) return;
+      const onlyFluff=kids.every(n=>
+        (n.nodeType===1 && n.classList && n.classList.contains('dv-embed')) ||
+        (n.nodeType===1 && n.tagName==='BR') ||
+        (n.nodeType===3 && !n.nodeValue.trim())
+      );
+      if(!onlyFluff) return;
+      embedsIn.forEach(e=>w.parentNode.insertBefore(e, w));
+      w.remove();
+      changed=true;
+    });
+    if(!changed) break;
+  }
   // 4) 연속된 임베드(사이에 <br>·공백만)를 가로 한 줄로 묶기
   const embeds=[...root.querySelectorAll('.dv-embed')];
   embeds.forEach(em=>{
@@ -8005,8 +8128,6 @@ function snapInsertVideo(eid){
       const a=document.createElement('a');
       const link='https://www.instagram.com/reel/'+ig+'/';
       a.href=link; a.textContent=link;
-      a.style.display='block';
-      a.style.margin='6px 0';
       el.appendChild(a);
     }
     el.appendChild(document.createElement('br'));
