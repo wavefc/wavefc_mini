@@ -540,15 +540,28 @@
   .dv-btn{font-size:11px;font-weight:700;color:#3a5566;background:#eef3f7;border:1px solid #cdd6dd;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.3;}
   .dv-btn:hover{background:#dfe9f0;}
   .dv-btn-add{color:#1f7a33;background:#eafbef;border-color:#bfe3c8;}
-  /* 인스타그램 임베드: 16:9 미리보기, 배경은 흰색 */
-  .dv-ig .dv-frame{background:#fff;border:1px solid #e3e8ec;}
+  /* 인스타그램 임베드: 9:16 세로 미리보기, 배경은 흰색 */
+  .dv-ig{width:320px;max-width:100%;}
+  .dv-ig .dv-frame{width:320px;max-width:100%;aspect-ratio:9/16;background:#fff;border:1px solid #e3e8ec;}
   .dv-btn-ig{color:#b02a6b;background:#fdeef6;border-color:#f3c8dd;}
+  /* 방문자 당첨 팝업 */
+  .lucky-overlay{position:fixed;inset:0;background:rgba(15,25,35,.66);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .lucky-box{background:linear-gradient(160deg,#fffdf5,#fff5e6);border:3px solid #f0b429;border-radius:18px;max-width:360px;width:100%;padding:26px 22px 22px;text-align:center;box-shadow:0 16px 50px rgba(0,0,0,.4);cursor:default;}
+  .lucky-confetti{font-size:42px;line-height:1;margin-bottom:8px;}
+  .lucky-l1{font-size:30px;font-weight:900;color:#d9480f;letter-spacing:6px;margin-bottom:10px;}
+  .lucky-l2{font-size:20px;font-weight:800;color:#2176a8;margin-bottom:6px;}
+  .lucky-l3{font-size:17px;font-weight:700;color:#3a5566;margin-bottom:14px;}
+  .lucky-l4{font-size:13px;color:#5a7585;line-height:1.7;background:#fff;border:1px dashed #e3c07a;border-radius:10px;padding:10px 12px;margin-bottom:16px;}
+  .lucky-close{background:linear-gradient(135deg,#ffd166,#f0b429);color:#5a3d00;border:none;border-radius:12px;padding:10px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(240,180,41,.45);}
+  @media(max-width:640px){ .lucky-l1{font-size:26px;letter-spacing:4px;} .lucky-l2{font-size:18px;} }
   .dv-row .dv-embed{margin:0;}
   .dv-row .dv-wide{flex:1 1 280px;max-width:none;}
   .dv-row .dv-wide .dv-frame{max-width:none;}
   .dv-row .dv-shorts{flex:0 0 auto;}
+  .dv-row .dv-ig{flex:0 0 auto;}
   @media(max-width:760px){
     .dv-shorts,.dv-shorts .dv-frame{width:100%;max-width:280px;}
+    .dv-ig,.dv-ig .dv-frame{width:100%;max-width:280px;}
     .dv-row{flex-direction:column;align-items:center;}
     .dv-row .dv-wide,.dv-row .dv-wide .dv-frame{width:100%;}
   }
@@ -978,6 +991,19 @@
     <textarea id="praiseEditor" rows="6" placeholder="예) 뜨거운 관심 완전 좋아요💙 WAVE를 사랑해주셔서 감사합니다."></textarea>
     <button onclick="savePraises()">칭찬 메시지 저장</button>
     <button onclick="resetPraises()" style="background:#c0392b;">기본값으로</button>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>🎉 방문자 당첨 설정</b></div>
+    <div style="font-size:10px;color:#5a7585;margin:2px 0;">당첨 번호는 쉼표로 구분. 문구에서 <b>{n}</b> 은 당첨 번호로 바뀝니다.</div>
+    <input id="luckyNums" placeholder="예: 1111,1333,2000,2222" inputmode="numeric">
+    <input id="luckyL1" placeholder="1줄 (예: 축 당 첨)">
+    <input id="luckyL2" placeholder="2줄 (예: {n}번째 방문자)">
+    <input id="luckyL3" placeholder="3줄 (예: 축하드립니다)">
+    <textarea id="luckyL4" rows="3" placeholder="4줄 안내문 (줄바꿈 가능)"></textarea>
+    <button onclick="saveLucky()">당첨 설정 저장</button>
+    <button onclick="previewLucky()" style="background:#5a9bd4;">미리보기</button>
+    <div style="margin-top:6px;"><b>🏆 당첨자 기록</b></div>
+    <div id="luckyWinners" style="font-size:10px;">없음</div>
+    <button onclick="resetLuckyWinners()" style="background:#c0392b;">당첨 기록 초기화</button>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🔑 관리자1 비밀번호 변경</b> (대표·전체권한)</div>
     <input id="newAdminPw" placeholder="새 관리자1 비밀번호"><button onclick="changeAdminPw(1)">변경</button>
@@ -2328,7 +2354,14 @@ function toggleQuizResult(i){
   }
   ROOT.child('activity_log').set(log);
 }
-// ===== 참고영상 (유튜브 임베드) =====
+// ===== 참고영상 (유튜브 / 인스타그램 임베드) =====
+// 인스타그램 게시물/릴스 주소 → shortcode 추출
+// 지원: /reel/, /reels/, /p/, /tv/  (쿼리스트링 ?igsh=... 등 허용)
+const IG_RE=/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reels?|p|tv)\/([A-Za-z0-9_-]+)\/?[^\s]*/;
+function igCode(url){
+  const m=String(url||'').match(IG_RE);
+  return m?m[1]:'';
+}
 // 다양한 유튜브 URL에서 영상 ID 추출
 function ytId(url){
   const s=String(url||'').trim();
@@ -2341,6 +2374,15 @@ function ytId(url){
   return '';
 }
 function ytIsShort(url){ return /youtube\.com\/shorts\//.test(String(url||'')); }
+// 참고영상 주소 종류 판별: 'yt' | 'ig' | ''
+function vidKind(url){
+  const s=String(url||'').trim();
+  if(ytId(s)) return 'yt';
+  if(typeof igCode==='function' && igCode(s)) return 'ig';
+  return '';
+}
+// 인스타(세로) 또는 유튜브 숏츠면 세로 영역
+function vidIsPortrait(url){ return ytIsShort(url) || vidKind(url)==='ig'; }
 function pageVideo(){
   const isExec=(rankOf(me)==='exec'||adminLevel()===1); // 임원 또는 관리자1
   const cats=DATA.videoCats||DEFAULT.videoCats;
@@ -2354,7 +2396,7 @@ function pageVideo(){
   const addBox = (isExec && videoWriting) ? `
     <div class="qna-ask" style="margin-bottom:14px;">
       <div class="qna-ask-h">🎬 참고영상 추가</div>
-      <input id="vdUrl" class="qna-input" style="margin-bottom:6px;" placeholder="유튜브 주소 붙여넣기 (일반영상/숏츠 모두 가능)">
+      <input id="vdUrl" class="qna-input" style="margin-bottom:6px;" placeholder="유튜브 / 인스타그램 주소 붙여넣기 (일반영상·숏츠·릴스 모두 가능)">
       <input id="vdTitle" class="qna-input" style="margin-bottom:6px;" placeholder="영상 제목 (검색에 사용돼요. 예: 수비 기본기)">
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
         <span style="font-size:12px;color:#5a7585;">카테고리</span>
@@ -2362,7 +2404,7 @@ function pageVideo(){
         <input id="vdNewCat" class="qna-input" style="width:auto;flex:1;" placeholder="또는 새 카테고리 직접 입력">
       </div>
       <button class="qna-send" onclick="addVideo()">영상 등록</button>
-      <div style="font-size:11px;color:#8aa;margin-top:4px;">※ 숏츠 주소(youtube.com/shorts/…)는 자동으로 숏츠 영역에 들어가요.</div>
+      <div style="font-size:11px;color:#8aa;margin-top:4px;">※ 숏츠(youtube.com/shorts/…)와 인스타 릴스는 자동으로 세로 영역에 들어가요.</div>
     </div>` : '';
 
   // 검색 + 카테고리 필터 바
@@ -2393,13 +2435,13 @@ function pageVideo(){
     if(ap!==bp) return bp-ap;       // 우선순위(pin) 영상이 맨 앞
     return (b.ts||0)-(a.ts||0);     // 그다음 최신순
   });
-  const shorts=filtered.filter(v=>ytIsShort(v.url));
-  const normals=filtered.filter(v=>!ytIsShort(v.url));
+  const shorts=filtered.filter(v=>vidIsPortrait(v.url));
+  const normals=filtered.filter(v=>!vidIsPortrait(v.url));
 
   // 카드 렌더러
   function card(v, shortStyle){
-    const id=ytId(v.url);
-    if(!id){
+    const kind=vidKind(v.url);
+    if(!kind){
       return `<div class="video-card"><div style="padding:14px;color:#c0392b;font-size:13px;">⚠ 주소 인식 실패: ${esc(v.url||'')}
         ${isExec?`<span class="quiz-del" style="color:#2176a8;" onclick="editVideo(${v._i})">수정</span>`:''}
         ${isExec?`<span class="quiz-del" onclick="delVideo(${v._i})">삭제</span>`:''}</div></div>`;
@@ -2412,17 +2454,29 @@ function pageVideo(){
     const pinBtn = isExec
       ? `<span class="quiz-del" style="color:${v.pin?'#e0a93b':'#9aa6ae'};" onclick="toggleVideoPin(${v._i})" title="우선순위(꼭 봐야 할 영상)">${v.pin?'⭐ 우선':'☆ 우선'}</span>`
       : '';
-    return `<div class="video-card${shortStyle?' short':''}${v.pin?' pinned':''}">
-      <div class="video-frame${shortStyle?' short':''}">
-        <iframe class="yt-player" data-vi="${v._i}" data-vid="${id}"
+    let frameHtml='', openLink='';
+    if(kind==='ig'){
+      const code=igCode(v.url);
+      frameHtml=`<iframe src="https://www.instagram.com/p/${code}/embed/" title="${esc(v.title||'참고영상')}"
+          frameborder="0" scrolling="no" allowtransparency="true"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      openLink=`<a class="video-link" href="https://www.instagram.com/reel/${code}/" target="_blank" rel="noopener" onclick="playVideo(${v._i}, false)">📷 인스타에서 보기</a>`;
+    } else {
+      const id=ytId(v.url);
+      frameHtml=`<iframe class="yt-player" data-vi="${v._i}" data-vid="${id}"
           src="https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1"
           title="${esc(v.title||'참고영상')}" frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      openLink=`<a class="video-link" href="https://www.youtube.com/${ytIsShort(v.url)?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, false)">▶ 유튜브에서 보기</a>`;
+    }
+    return `<div class="video-card${shortStyle?' short':''}${v.pin?' pinned':''}">
+      <div class="video-frame${shortStyle?' short':''}">
+        ${frameHtml}
       </div>
       <div class="video-meta">
         <span class="video-title">${v.pin?'⭐ ':''}${catBadge}${esc(v.title||'WAVE FC 참고영상')}</span>
         <div class="video-actions">
-          <a class="video-link" href="https://www.youtube.com/${shortStyle?'shorts/':'watch?v='}${id}" target="_blank" rel="noopener" onclick="playVideo(${v._i}, false)">▶ 유튜브에서 보기</a>
+          ${openLink}
           <span class="video-plays" id="vp_${v._i}">▶ ${plays.toLocaleString()}회</span>
           ${pinBtn}
           ${moveSel}
@@ -2516,8 +2570,8 @@ function addVideo(){
   const title=document.getElementById('vdTitle').value.trim();
   let cat=document.getElementById('vdCat').value;
   const newCat=document.getElementById('vdNewCat').value.trim();
-  if(!url) return alert('유튜브 주소를 입력하세요.');
-  if(!ytId(url)) return alert('유튜브 주소를 인식하지 못했어요.\n예: https://youtu.be/abc123  또는 숏츠 https://youtube.com/shorts/abc123');
+  if(!url) return alert('유튜브 또는 인스타그램 주소를 입력하세요.');
+  if(!vidKind(url)) return alert('주소를 인식하지 못했어요.\n예: https://youtu.be/abc123\n     https://youtube.com/shorts/abc123\n     https://www.instagram.com/reel/AbCdEf/');
   // 새 카테고리 입력 시 추가
   if(newCat){
     cat=newCat;
@@ -2550,9 +2604,9 @@ function editVideo(i){
   const cats=(DATA.videoCats||DEFAULT.videoCats);
   const newCat=prompt('카테고리를 수정하세요.\n('+cats.join(' / ')+')', v.cat||'기본');
   if(newCat===null) return;
-  const newUrl=prompt('유튜브 주소를 수정하세요.\n(그대로 두려면 확인을 누르세요)', v.url||'');
+  const newUrl=prompt('유튜브 또는 인스타그램 주소를 수정하세요.\n(그대로 두려면 확인을 누르세요)', v.url||'');
   if(newUrl===null) return;
-  if(newUrl.trim() && !ytId(newUrl.trim())) return alert('유튜브 주소를 인식하지 못했어요. 수정을 취소합니다.');
+  if(newUrl.trim() && !vidKind(newUrl.trim())) return alert('주소를 인식하지 못했어요. 수정을 취소합니다.');
   const catTrim=newCat.trim()||'기본';
   // 새 카테고리면 목록에 추가
   const catsArr=(DATA.videoCats||DEFAULT.videoCats).slice();
@@ -2678,6 +2732,14 @@ const DEFAULT={
   bubble:"WAVE FC 미니홈피에 오신 걸 환영합니다!",
   visits:1,
   daily_visits:{},
+  lucky:{
+    numbers:[1111,1333,2000,2222],
+    l1:"축 당 첨",
+    l2:"{n}번째 방문자",
+    l3:"축하드립니다",
+    l4:"회장님에게 이 화면을 캡쳐해서 톡보내시면\n소정의 상품을 드립니다."
+  },
+  lucky_winners:[],
   mood:"오늘도 즐겁게 뛰어보자…⚽",
   intro:"매주 화요일 저녁 8시<br>WAVE FC 입니다.<br>함께 뛰고, 함께 웃고…<br>다 같이 무브무브!",
   ruleHtml:"<h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul><h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul><h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>",
@@ -2782,6 +2844,10 @@ ROOT.on('value',snap=>{
     intro:(v.intro!==undefined?v.intro:DEFAULT.intro),
     visits:v.visits||1,mood:v.mood||DEFAULT.mood,
     daily_visits:(v.daily_visits||{}),
+    lucky:Object.assign({}, DEFAULT.lucky, (v.lucky||{}), {
+      numbers:(Array.isArray(v.lucky&&v.lucky.numbers)&&v.lucky.numbers.length)?v.lucky.numbers.map(Number).filter(n=>n>0):DEFAULT.lucky.numbers
+    }),
+    lucky_winners:(Array.isArray(v.lucky_winners)?v.lucky_winners:[]),
     qna_kb:v.qna_kb||DEFAULT.qna_kb,
     qna_threads:v.qna_threads||[],
     bgImages:v.bgImages||[],
@@ -2850,10 +2916,102 @@ window.addEventListener('scroll',function(){
   else nav.classList.remove('show');
 });
 function countVisit(){
-  ROOT.child('visits').transaction(c=>(c||0)+1);
+  ROOT.child('visits').transaction(c=>(c||0)+1, function(err, committed, snap){
+    if(err || !committed || !snap) return;
+    const n = snap.val();
+    // 당첨 번호는 DATA 로드 후에 알 수 있으므로 잠시 대기 후 확인
+    _pendingVisitNo = n;
+    setTimeout(()=>checkLuckyVisitor(n), 1500);
+  });
   // TODAY: KST 날짜별 방문수 (날짜가 바뀌면 새 키 → 자동 리셋), 모두에게 연동/누적
   const today=_dayKey(Date.now());
   ROOT.child('daily_visits/'+today).transaction(c=>(c||0)+1);
+}
+var _pendingVisitNo=0;
+var _luckyShown=false;
+// 이번 방문이 당첨 번호인지 확인하고, 맞으면 팝업 + 기록
+function checkLuckyVisitor(n){
+  if(_luckyShown || !n) return;
+  const cfg = (DATA && DATA.lucky) ? DATA.lucky : DEFAULT.lucky;
+  const nums = Array.isArray(cfg.numbers)?cfg.numbers:[];
+  if(nums.indexOf(Number(n))<0) return;
+  // 이미 이 번호로 당첨 기록이 있으면 중복 표시 안 함
+  const wins = Array.isArray(DATA.lucky_winners)?DATA.lucky_winners:[];
+  if(wins.some(w=>w && Number(w.n)===Number(n))) return;
+  _luckyShown=true;
+  // 당첨 기록 저장
+  const rec={ n:Number(n), user:(me||''), name:(me?(userLabel(me)||me):'비회원'), ts:Date.now() };
+  const arr=wins.slice(); arr.push(rec);
+  DATA.lucky_winners=arr;
+  try{ ROOT.child('lucky_winners').set(arr); }catch(e){}
+  showLuckyOverlay(n, cfg);
+}
+function _luckyLine(txt, n){ return esc(String(txt||'')).replace(/\{n\}/g, String(n)).replace(/\n/g,'<br>'); }
+function showLuckyOverlay(n, cfg){
+  const old=document.getElementById('luckyOverlay'); if(old) old.remove();
+  const ov=document.createElement('div');
+  ov.id='luckyOverlay';
+  ov.className='lucky-overlay';
+  ov.innerHTML=`<div class="lucky-box" onclick="event.stopPropagation()">
+      <div class="lucky-confetti">🎉</div>
+      <div class="lucky-l1">${_luckyLine(cfg.l1, n)}</div>
+      <div class="lucky-l2">${_luckyLine(cfg.l2, n)}</div>
+      <div class="lucky-l3">${_luckyLine(cfg.l3, n)}</div>
+      <div class="lucky-l4">${_luckyLine(cfg.l4, n)}</div>
+      <button class="lucky-close" onclick="closeLuckyOverlay()">확인</button>
+    </div>`;
+  ov.addEventListener('click', closeLuckyOverlay);
+  document.body.appendChild(ov);
+}
+function closeLuckyOverlay(){ const ov=document.getElementById('luckyOverlay'); if(ov) ov.remove(); }
+// ===== 관리자: 방문자 당첨 설정 =====
+function renderLuckyAdmin(){
+  const cfg=(DATA && DATA.lucky)?DATA.lucky:DEFAULT.lucky;
+  const setV=(id,v)=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value=v; };
+  setV('luckyNums', (cfg.numbers||[]).join(','));
+  setV('luckyL1', cfg.l1||'');
+  setV('luckyL2', cfg.l2||'');
+  setV('luckyL3', cfg.l3||'');
+  setV('luckyL4', cfg.l4||'');
+  const box=document.getElementById('luckyWinners');
+  if(box){
+    const wins=(Array.isArray(DATA.lucky_winners)?DATA.lucky_winners:[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+    box.innerHTML = wins.length
+      ? wins.map(w=>{
+          const d=w.ts?new Date(w.ts):null;
+          const ds=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
+          return `<div style="padding:2px 0;border-bottom:1px dotted #e3d3a0;">🏆 <b>${w.n}</b>번째 · ${esc(w.name||'비회원')} <span style="color:#8aa;">${ds}</span></div>`;
+        }).join('')
+      : '없음';
+  }
+}
+function saveLucky(){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const raw=(document.getElementById('luckyNums').value||'');
+  const nums=raw.split(',').map(s=>parseInt(String(s).trim(),10)).filter(n=>Number.isFinite(n)&&n>0);
+  if(!nums.length) return alert('당첨 번호를 하나 이상 입력하세요. (예: 1111,1333)');
+  const cfg={
+    numbers:nums,
+    l1:(document.getElementById('luckyL1').value||'').trim(),
+    l2:(document.getElementById('luckyL2').value||'').trim(),
+    l3:(document.getElementById('luckyL3').value||'').trim(),
+    l4:(document.getElementById('luckyL4').value||'')
+  };
+  DATA.lucky=cfg;
+  ROOT.child('lucky').set(cfg);
+  alert('당첨 설정을 저장했어요.');
+}
+function previewLucky(){
+  const cfg=(DATA && DATA.lucky)?DATA.lucky:DEFAULT.lucky;
+  const n=(cfg.numbers&&cfg.numbers[0])||1111;
+  showLuckyOverlay(n, cfg);
+}
+function resetLuckyWinners(){
+  if(adminLevel()!==1) return alert('관리자1만 초기화할 수 있어요.');
+  if(!confirm('당첨 기록을 모두 지울까요? (되돌릴 수 없어요)')) return;
+  DATA.lucky_winners=[];
+  ROOT.child('lucky_winners').set([]);
+  renderLuckyAdmin();
 }
 countVisit();
 
@@ -2988,6 +3146,9 @@ function renderAll(){
   const editable=(adminLevel()===1);
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
   startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderDiaryHomeAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
+  try{ renderLuckyAdmin(); }catch(e){}
+  // 방문 번호가 이미 확정됐는데 아직 확인 못한 경우(데이터 늦게 로드) 다시 확인
+  try{ if(_pendingVisitNo && !_luckyShown) checkLuckyVisitor(_pendingVisitNo); }catch(e){}
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
   if(currentPage==='video' && document.querySelector('iframe.yt-player')){
     refreshVideoPlayCounts();
@@ -5424,7 +5585,7 @@ function showGrowthNotifyCard(note){
     '<div style="position:relative;max-width:300px;width:82%;background:linear-gradient(160deg,#f7fbfe,#eaf4fb);border:3px solid #6ab8e8;border-radius:18px;padding:26px 20px 20px;text-align:center;box-shadow:0 16px 44px rgba(30,90,140,.32);font-family:\'Escoredream\',\'Pretendard\',\'Malgun Gothic\',sans-serif;animation:lvRewardPop .35s cubic-bezier(.2,1.3,.5,1);">'
     + '<div style="font-size:50px;line-height:1;margin-bottom:8px;">'+emoji+'</div>'
     + '<div style="font-size:15px;color:#2176a8;font-weight:800;line-height:1.7;white-space:pre-wrap;margin:6px 0 18px;">'+note.msg+'</div>'
-    + '<button onclick="dismissGrowthNotify(\''+note.kind+'\','+note.ts+')" style="background:linear-gradient(135deg,#9ec5ff,#5a9bd4);color:#fff;border:none;border-radius:13px;padding:10px 26px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(90,155,212,.4);font-family:inherit;">확인했어요 😊</button>'
+    + '<button onclick="dismissGrowthNotify(\''+note.kind+'\','+note.ts+')" style="background:linear-gradient(135deg,#9ec5ff,#5a9bd4);color:#fff;border:none;border-radius:13px;padding:10px 26px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(90,155,212,.4);font-family:inherit;">확인하러 ㄱㄱ 😊</button>'
     + '</div>';
   document.body.appendChild(ov);
 }
@@ -7107,14 +7268,7 @@ function extractYouTubeIds(text){
   while((m=re.exec(text))!==null){ if(ids.indexOf(m[1])<0) ids.push(m[1]); }
   return ids;
 }
-// 인스타그램 게시물/릴스 주소 → shortcode 추출
-// 지원: /reel/, /reels/, /p/, /tv/  (쿼리스트링 ?igsh=... 등 허용)
-const IG_RE=/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reels?|p|tv)\/([A-Za-z0-9_-]+)\/?[^\s]*/;
-function igCode(url){
-  const m=String(url||'').match(IG_RE);
-  return m?m[1]:'';
-}
-// 훈련일지 본문: 유튜브 주소를 그 자리에서 플레이어로 (숏츠 9:16 / 일반 16:9). 글 텍스트는 100% 보존.
+// 훈련일지 본문: 유튜브/인스타 주소를 그 자리에서 플레이어로. 글 텍스트는 100% 보존.
 function diaryBodyRender(s){
   s=s||'';
   // 1) 안전 렌더된 HTML을 DOM으로 파싱
@@ -7136,7 +7290,7 @@ function diaryBodyRender(s){
   // 인스타그램 임베드(16:9 미리보기 + 페이지 내 재생 + 인스타에서 보기)
   const makeIgEmbed=(code)=>{
     const span=document.createElement('span');
-    span.className='dv-embed dv-wide dv-ig';
+    span.className='dv-embed dv-ig';
     const url='https://www.instagram.com/reel/'+code+'/';
     span.innerHTML=`<span class="dv-frame"><iframe src="https://www.instagram.com/p/${code}/embed/" title="Instagram" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen allowtransparency="true"></iframe></span>
       <span class="dv-tools">
