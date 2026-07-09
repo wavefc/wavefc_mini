@@ -540,6 +540,9 @@
   .dv-btn{font-size:11px;font-weight:700;color:#3a5566;background:#eef3f7;border:1px solid #cdd6dd;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.3;}
   .dv-btn:hover{background:#dfe9f0;}
   .dv-btn-add{color:#1f7a33;background:#eafbef;border-color:#bfe3c8;}
+  /* 인스타그램 임베드: 16:9 미리보기, 배경은 흰색 */
+  .dv-ig .dv-frame{background:#fff;border:1px solid #e3e8ec;}
+  .dv-btn-ig{color:#b02a6b;background:#fdeef6;border-color:#f3c8dd;}
   .dv-row .dv-embed{margin:0;}
   .dv-row .dv-wide{flex:1 1 280px;max-width:none;}
   .dv-row .dv-wide .dv-frame{max-width:none;}
@@ -3043,7 +3046,7 @@ function refreshDiaryMeta(){
   const logs=DATA.logs||[];
   logs.forEach((l,i)=>{
     const likeCnt=l.likes||0;
-    const cmtCnt=(l.comments&&l.comments.length)?l.comments.length:0;
+    const cmtCnt=cmtTotal(l.comments);
     const likeEl=document.getElementById('dlike_'+i);
     const cmtEl=document.getElementById('dcmt_'+i);
     if(likeEl){ likeEl.textContent='❤️'+likeCnt; likeEl.style.display=likeCnt?'':'none'; }
@@ -3154,6 +3157,7 @@ function go(page,btn){
     currentPage=page;
     document.getElementById('urlAddr').textContent='http://www.cyworld.com/wave_fc/'+page;
     document.getElementById('centerArea').innerHTML=lockedView();
+    scrollToPageTop();
     return;
   }
   currentPage=page;
@@ -3175,6 +3179,19 @@ function go(page,btn){
   renderPage(page);
   markPageSeen(page);   // 이 게시판을 본 것으로 기록
   refreshTabBadges();   // N 배지 갱신
+  // 페이지 이동 시 상단으로 스크롤(모바일에서 매번 내려서 보는 불편 해소)
+  scrollToPageTop();
+}
+// 모바일: 메뉴(탭)줄이 화면 맨 위에 오도록, 데스크톱: 콘텐츠 상단으로
+function scrollToPageTop(){
+  try{
+    const isMobile = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
+    const menu = document.querySelector('.right');
+    const center = document.getElementById('centerArea');
+    const target = (isMobile && menu) ? menu : center;
+    if(target && target.scrollIntoView){ target.scrollIntoView({behavior:'auto', block:'start'}); }
+    else { window.scrollTo(0,0); }
+  }catch(e){ try{ window.scrollTo(0,0); }catch(_){} }
 }
 function renderPage(page){
   const c=document.getElementById('centerArea');
@@ -3465,7 +3482,7 @@ function pageHome(){
         ${qnaHomeHtml}
       </div>
     </div>
-    <div class="guest-h">📝 일촌평 (${DATA.comments.length})</div>
+    <div class="guest-h">📝 일촌평 (${(DATA.comments||[]).length + (DATA.replies||[]).length})</div>
     ${form}
     <div class="guest-list" style="margin-top:8px;">${list}</div>
     ${cmtPager}`;
@@ -3735,6 +3752,17 @@ var noticeEditing=null;   // 인라인 편집 중인 공지 인덱스
 var noticeWriting=false;  // 글쓰기 폼 펼침 여부
 var noticeOpen=null;      // 목록에서 펼쳐 본 공지 인덱스(_i)
 // ===== 익명 하트 & 댓글 (공지·훈련일지 공통) =====
+// 댓글 수 = 최상위 댓글 + 모든 대댓글(답글) 합산
+function cmtTotal(comments){
+  if(!Array.isArray(comments)) return 0;
+  let n=0;
+  comments.forEach(c=>{
+    if(!c) return;
+    n++;
+    if(Array.isArray(c.replies)) n+=c.replies.length;
+  });
+  return n;
+}
 // node: 'notices' | 'logs', idx: 배열 인덱스. 글의 ts를 좋아요 중복방지 키로 사용
 function _reactArr(node){
   if(node==='logs') return DATA.logs||[];
@@ -3885,7 +3913,7 @@ function reactBox(node,idx,opts){
   return `<div class="react-box">
     <div class="react-bar">
       <button class="heart-btn ${liked?'on':''}" onclick="toggleLike('${node}',${idx})">${liked?'❤️':'🤍'} <b>${likes}</b></button>
-      ${likeOnly?'':`<span class="react-cc">💬 ${cmts.length}</span>`}
+      ${likeOnly?'':`<span class="react-cc">💬 ${cmtTotal(cmts)}</span>`}
     </div>
     ${likedByRow}
     ${likeOnly?'':`<div class="rc-list">${cmtRows}</div>
@@ -4103,7 +4131,7 @@ function pageDiary(){
           <button class="qna-send sm" style="background:#c0392b;" onclick="delDiary(${l._i})">삭제</button>
         </div>`:''}
       </div>` : '';
-    const cmtCnt=(l.comments&&l.comments.length)?l.comments.length:0;
+    const cmtCnt=cmtTotal(l.comments);
     const likeCnt=l.likes||0;
     return `
       <div class="diary-item">
@@ -5608,7 +5636,7 @@ function pageFeedback(){
           </div>
           ${f.title?`<div class="fb-title-txt">${esc(f.title)}</div>`:''}
           <div class="fb-body">${diaryBodyRender(f.text||'')}</div>
-          <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmts.length}</span></div>
+          <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmtTotal(cmts)}</span></div>
           ${likedByRow}
           <div class="fb-cmt-list">${cmtHtml}</div>
           ${commentInput}
@@ -5650,7 +5678,7 @@ function pageFeedback(){
       <div class="fb-gcard-title">${f.title?esc(f.title):'<span style=\"color:#aab8c2;\">(제목 없음)</span>'}${newBadge(f.ts)}</div>
       <div class="fb-gcard-prev">${esc(preview)}${preview.length>=30?'…':''}</div>
       <div class="fb-gcard-foot">
-        <span>❤️ ${likes}</span><span>💬 ${cmts.length}</span><span>👀 ${f.views||0}</span>
+        <span>❤️ ${likes}</span><span>💬 ${cmtTotal(cmts)}</span><span>👀 ${f.views||0}</span>
       </div>
       <div class="fb-gcard-by">✍️ ${esc(userLabel(f.by)||f.by||'')} · ${fbDate(f.ts)}</div>
     </div>`;
@@ -7033,6 +7061,7 @@ function rteSanitize(html){
   d.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach(n=>n.remove());
   d.querySelectorAll('*').forEach(n=>{
     const isImg=(n.tagName==='IMG');
+    const isA=(n.tagName==='A');
     [...n.attributes].forEach(a=>{
       const an=a.name.toLowerCase();
       if(an==='style') return;             // 색·크기 등 인라인 스타일 유지
@@ -7044,6 +7073,11 @@ function rteSanitize(html){
       }
       if(an==='data-snapgroup') return;    // 그룹 레이아웃 마커
       if(an==='contenteditable') return;   // 그룹 블록 편집 잠금
+      // 링크의 href는 http(s)만 유지 (유튜브·인스타 임베드 인식용). javascript: 등은 제거.
+      if(isA && an==='href'){
+        const v=(a.value||'').trim().toLowerCase();
+        if(v.startsWith('https://')||v.startsWith('http://')) return;
+      }
       // 이미지의 src는 유지 (파도스냅 본문 내 사진). data:/http(s) 만 허용.
       if(isImg && an==='src'){
         const v=(a.value||'').trim().toLowerCase();
@@ -7073,6 +7107,13 @@ function extractYouTubeIds(text){
   while((m=re.exec(text))!==null){ if(ids.indexOf(m[1])<0) ids.push(m[1]); }
   return ids;
 }
+// 인스타그램 게시물/릴스 주소 → shortcode 추출
+// 지원: /reel/, /reels/, /p/, /tv/  (쿼리스트링 ?igsh=... 등 허용)
+const IG_RE=/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reels?|p|tv)\/([A-Za-z0-9_-]+)\/?[^\s]*/;
+function igCode(url){
+  const m=String(url||'').match(IG_RE);
+  return m?m[1]:'';
+}
 // 훈련일지 본문: 유튜브 주소를 그 자리에서 플레이어로 (숏츠 9:16 / 일반 16:9). 글 텍스트는 100% 보존.
 function diaryBodyRender(s){
   s=s||'';
@@ -7092,22 +7133,36 @@ function diaryBodyRender(s){
       </span>`;
     return span;
   };
+  // 인스타그램 임베드(16:9 미리보기 + 페이지 내 재생 + 인스타에서 보기)
+  const makeIgEmbed=(code)=>{
+    const span=document.createElement('span');
+    span.className='dv-embed dv-wide dv-ig';
+    const url='https://www.instagram.com/reel/'+code+'/';
+    span.innerHTML=`<span class="dv-frame"><iframe src="https://www.instagram.com/p/${code}/embed/" title="Instagram" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen allowtransparency="true"></iframe></span>
+      <span class="dv-tools">
+        <button type="button" class="dv-btn dv-btn-ig" title="인스타그램에서 보기" onclick="window.open('${url}','_blank')">📷 인스타에서 보기</button>
+      </span>`;
+    return span;
+  };
   // 1.5) 파도스냅 영상 마커(img[data-snapvid])를 임베드로 교체
   root.querySelectorAll('img[data-snapvid]').forEach(im=>{
     const id=im.getAttribute('data-snapvid');
     if(id) im.replaceWith(makeEmbed(id, false));
   });
-  // 2) <a href=유튜브> 링크를 임베드로 교체
+  // 2) <a href=유튜브/인스타> 링크를 임베드로 교체
   root.querySelectorAll('a').forEach(a=>{
     const href=a.getAttribute('href')||a.textContent||'';
     const m=href.match(YT);
-    if(m){ a.replaceWith(makeEmbed(m[1], /shorts\//.test(href))); }
+    if(m){ a.replaceWith(makeEmbed(m[1], /shorts\//.test(href))); return; }
+    const ig=href.match(IG_RE);
+    if(ig){ a.replaceWith(makeIgEmbed(ig[1])); }
   });
-  // 3) 텍스트 노드 안의 평문 유튜브 URL을 임베드로 교체 (텍스트는 그대로 유지)
+  // 3) 텍스트 노드 안의 평문 유튜브/인스타 URL을 임베드로 교체 (텍스트는 그대로 유지)
   const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
   const textNodes=[]; let tn;
   while((tn=walker.nextNode())) textNodes.push(tn);
-  const reG=new RegExp(YT.source,'g');
+  // 유튜브 또는 인스타를 한 번에 잡는 통합 정규식
+  const reG=new RegExp('('+YT.source+')|('+IG_RE.source+')','g');
   textNodes.forEach(node=>{
     const txt=node.nodeValue;
     if(!reG.test(txt)) return;
@@ -7116,8 +7171,16 @@ function diaryBodyRender(s){
     let last=0, m;
     while((m=reG.exec(txt))!==null){
       if(m.index>last) frag.appendChild(document.createTextNode(txt.slice(last,m.index)));
-      frag.appendChild(makeEmbed(m[1], /shorts\//.test(m[0])));
-      last=m.index+m[0].length;
+      const hit=m[0];
+      const yt=hit.match(YT);
+      if(yt){
+        frag.appendChild(makeEmbed(yt[1], /shorts\//.test(hit)));
+      } else {
+        const ig=hit.match(IG_RE);
+        if(ig) frag.appendChild(makeIgEmbed(ig[1]));
+        else frag.appendChild(document.createTextNode(hit));
+      }
+      last=m.index+hit.length;
     }
     if(last<txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
     node.replaceWith(frag);
@@ -7161,7 +7224,12 @@ function snapYtId(url){
 // 본문 HTML에서 미디어 개수(이미지 + 영상 마커) 세기
 function snapCountMedia(html){
   const d=document.createElement('div'); d.innerHTML=html||'';
-  return d.querySelectorAll('img').length + d.querySelectorAll('[data-snapvid]').length;
+  let igCount=0;
+  d.querySelectorAll('a').forEach(a=>{
+    const href=a.getAttribute('href')||'';
+    if(typeof igCode==='function' && igCode(href)) igCount++;
+  });
+  return d.querySelectorAll('img').length + d.querySelectorAll('[data-snapvid]').length + igCount;
 }
 // 본문에서 대표 이미지(첫 이미지) 추출
 function snapFirstImg(html){
@@ -7303,7 +7371,7 @@ function pageSnapList(){
     const emoji=s.by?rankEmoji(s.by):'';
     const cnt=snapCountMedia(s.text||'');
     const likeCnt=(Array.isArray(s.likedBy)?s.likedBy.length:0)||s.likes||0;
-    const cmtCnt=(s.comments&&s.comments.length)?s.comments.length:0;
+    const cmtCnt=cmtTotal(s.comments);
     const viewCnt=s.views||0;
     // 제목 약 30자: 29자까지 표기, 넘으면 …
     let ttl=(s.title||'무제');
@@ -7384,7 +7452,7 @@ function snapWriteForm(editTs){
         <input type="file" id="${eid}_files" accept="image/*" multiple onchange="onSnapAttach(event,'${eid}')" style="display:none;">
       </div>
       <div style="display:flex;gap:4px;margin:4px 0;">
-        <input id="${eid}_vurl" class="qna-input" style="margin:0;flex:1;" placeholder="🎬 유튜브 영상 주소 (선택)" onkeydown="if(event.key==='Enter'){snapInsertVideo('${eid}');return false;}">
+        <input id="${eid}_vurl" class="qna-input" style="margin:0;flex:1;" placeholder="🎬 유튜브 · 인스타그램 주소 (선택)" onkeydown="if(event.key==='Enter'){snapInsertVideo('${eid}');return false;}">
         <button class="qna-send sm" type="button" onclick="snapInsertVideo('${eid}')">영상 넣기</button>
       </div>
       <div style="font-size:10px;color:#8aa;margin:2px 0 8px;">📎 사진을 고르면 <b>개별사진·콜라주·슬라이드</b> 중에 골라 넣을 수 있어요. 넣은 뒤에도 <b>레이아웃 전환</b> 버튼으로 언제든 바꿀 수 있고, <b>개별사진</b>은 사진을 끌어 한 줄에 2~3장까지 배치할 수 있어요. 영상은 1열로 들어갑니다.</div>
@@ -7756,26 +7824,37 @@ function snapSetRep(eid, src){
     }
   });
 }
-// 유튜브 영상을 본문에 1열 전용 블록으로 삽입
+// 유튜브/인스타그램 영상을 본문에 1열 전용 블록으로 삽입
 function snapInsertVideo(eid){
   const inp=document.getElementById(eid+'_vurl');
   if(!inp)return;
   const url=inp.value.trim(); if(!url)return;
-  const id=snapYtId(url);
-  if(!id){ alert('유튜브 링크를 확인해주세요 (youtu.be 또는 youtube.com).'); return; }
   const el=document.getElementById(eid);
   if(el && snapCountMedia(el.innerHTML)>=SNAP_MAX){ alert('사진과 영상 합쳐 최대 '+SNAP_MAX+'개까지예요.'); return; }
+  const id=snapYtId(url);
+  const ig=(typeof igCode==='function')?igCode(url):'';
+  if(!id && !ig){ alert('유튜브 또는 인스타그램 링크를 확인해주세요.\n예: https://youtu.be/abc123\n     https://www.instagram.com/reel/AbCdEf/'); return; }
   if(el){
-    // 영상은 항상 1열(한 줄) — data-snapvid 마커
-    const marker=document.createElement('img');
-    marker.setAttribute('data-snapvid', id);
-    marker.src='https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
-    marker.style.width='100%';
-    marker.style.borderRadius='8px';
-    marker.style.display='block';
-    marker.style.margin='6px 0';
-    marker.style.outline='2px solid #ff6b6b';
-    el.appendChild(marker);
+    if(id){
+      // 유튜브: 썸네일 마커(data-snapvid) — 항상 1열(한 줄)
+      const marker=document.createElement('img');
+      marker.setAttribute('data-snapvid', id);
+      marker.src='https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
+      marker.style.width='100%';
+      marker.style.borderRadius='8px';
+      marker.style.display='block';
+      marker.style.margin='6px 0';
+      marker.style.outline='2px solid #ff6b6b';
+      el.appendChild(marker);
+    } else {
+      // 인스타그램: 링크 한 줄로 삽입 → 보기 화면에서 임베드로 변환
+      const a=document.createElement('a');
+      const link='https://www.instagram.com/reel/'+ig+'/';
+      a.href=link; a.textContent=link;
+      a.style.display='block';
+      a.style.margin='6px 0';
+      el.appendChild(a);
+    }
     el.appendChild(document.createElement('br'));
   }
   inp.value='';
