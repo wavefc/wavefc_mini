@@ -552,16 +552,18 @@
   .dv-ig{width:220px;}
   .dv-ig .dv-frame{width:220px;aspect-ratio:9/16;background:#fff;border:1px solid #e3e8ec;}
   .dv-btn-ig{color:#b02a6b;background:#fdeef6;border-color:#f3c8dd;}
-  /* 방문자 당첨 팝업 */
-  .lucky-overlay{position:fixed;inset:0;background:rgba(15,25,35,.66);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .lucky-box{background:linear-gradient(160deg,#fffdf5,#fff5e6);border:3px solid #f0b429;border-radius:18px;max-width:360px;width:100%;padding:26px 22px 22px;text-align:center;box-shadow:0 16px 50px rgba(0,0,0,.4);cursor:default;}
-  .lucky-confetti{font-size:42px;line-height:1;margin-bottom:8px;}
-  .lucky-l1{font-size:30px;font-weight:900;color:#d9480f;letter-spacing:6px;margin-bottom:10px;}
-  .lucky-l2{font-size:20px;font-weight:800;color:#2176a8;margin-bottom:6px;}
-  .lucky-l3{font-size:17px;font-weight:700;color:#3a5566;margin-bottom:14px;}
-  .lucky-l4{font-size:13px;color:#5a7585;line-height:1.7;background:#fff;border:1px dashed #e3c07a;border-radius:10px;padding:10px 12px;margin-bottom:16px;}
-  .lucky-close{background:linear-gradient(135deg,#ffd166,#f0b429);color:#5a3d00;border:none;border-radius:12px;padding:10px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(240,180,41,.45);}
-  @media(max-width:640px){ .lucky-l1{font-size:26px;letter-spacing:4px;} .lucky-l2{font-size:18px;} }
+  /* 방문자 당첨 팝업 (파란 그라디언트 말풍선 톤) */
+  .lucky-overlay{position:fixed;inset:0;background:rgba(15,25,35,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .lucky-box{background:linear-gradient(#3aa0d8,#2176a8);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;border-radius:16px;max-width:340px;width:100%;padding:24px 24px 20px;text-align:center;box-shadow:0 10px 34px rgba(0,0,0,.35);cursor:default;animation:luckyPop .35s ease-out;}
+  @keyframes luckyPop{from{opacity:0;transform:translateY(16px) scale(.96);}to{opacity:1;transform:none;}}
+  .lucky-confetti{font-size:38px;line-height:1;margin-bottom:10px;}
+  .lucky-l1{font-size:26px;font-weight:800;color:#fff;letter-spacing:5px;margin-bottom:10px;}
+  .lucky-l2{font-size:19px;font-weight:800;color:#fff;margin-bottom:5px;}
+  .lucky-l3{font-size:16px;font-weight:600;color:#e4f2fb;margin-bottom:14px;}
+  .lucky-l4{font-size:13px;color:#fff;line-height:1.65;background:rgba(255,255,255,.14);border-radius:10px;padding:11px 13px;margin-bottom:16px;}
+  .lucky-close{background:#fff;color:#2176a8;border:none;border-radius:12px;padding:10px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .lucky-close:hover{background:#eaf4fb;}
+  @media(max-width:640px){ .lucky-l1{font-size:23px;letter-spacing:4px;} .lucky-l2{font-size:17px;} }
   .dv-row .dv-embed{margin:0;}
   .dv-row .dv-wide{flex:1 1 280px;max-width:none;}
   .dv-row .dv-wide .dv-frame{max-width:none;}
@@ -3369,7 +3371,10 @@ function renderPage(page){
      || (page==='attend'&&!canViewAttend())){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
   else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; } }
-  else if(page==='notice')c.innerHTML=pageNotice();
+  else if(page==='notice'){ c.innerHTML=pageNotice();
+    try{ if(document.getElementById('ntText')) snapDecorateGroups('ntText',{noRep:true});
+         if(document.getElementById('ntEditText')) snapDecorateGroups('ntEditText',{noRep:true}); }catch(e){}
+  }
   else if(page==='diary')c.innerHTML=pageDiary();
   else if(page==='cal')c.innerHTML=pageCalendar();
   else if(page==='attend')c.innerHTML=pageAttend();
@@ -4168,6 +4173,11 @@ function pageNotice(){
       <div class="qna-ask-h">✏ 새 공지 작성</div>
       <input id="ntTitle" class="qna-input" style="margin-bottom:6px;" placeholder="공지 제목">
       ${rteBox('ntText','','공지 내용')}
+      <div style="margin:8px 0 4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="document.getElementById('ntText_files').click()">📎 사진 첨부 (최대 ${SNAP_MAX}개)</button>
+        <input type="file" id="ntText_files" accept="image/*" multiple onchange="onSnapAttach(event,'ntText')" style="display:none;">
+      </div>
+      <div style="font-size:10px;color:#8aa;margin:2px 0 8px;">📎 사진을 고르면 <b>개별사진·콜라주·슬라이드</b> 중에 골라 넣을 수 있어요. 넣은 뒤에도 <b>레이아웃 전환</b> 버튼으로 언제든 바꿀 수 있고, <b>개별사진</b>은 사진을 끌어 한 줄에 2~3장까지 배치할 수 있어요.</div>
       <label style="display:block;font-size:12px;margin:8px 0;"><input type="checkbox" id="ntPin"> 상단 고정</label>
       <label style="display:block;font-size:12px;margin:8px 0;color:#c0392b;"><input type="checkbox" id="ntSecret"> 🔒 비공개 (관리자만 볼 수 있어요)</label>
       <button class="qna-send" onclick="addNoticeBoard()">공지 등록</button>
@@ -4179,6 +4189,11 @@ function pageNotice(){
       <div class="qna-thread editing" style="margin-bottom:10px;border:2px solid var(--frame);">
         <input id="ntEditTitle" class="qna-input" style="margin-bottom:6px;" value="${esc(n.title||'')}" placeholder="공지 제목">
         ${rteBox('ntEditText',(/<[a-z][\s\S]*>/i.test(n.text||'')?(n.text||''):esc(n.text||'').replace(/\n/g,'<br>')),'공지 내용')}
+        <div style="margin:8px 0 4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="document.getElementById('ntEditText_files').click()">📎 사진 첨부 (최대 ${SNAP_MAX}개)</button>
+          <input type="file" id="ntEditText_files" accept="image/*" multiple onchange="onSnapAttach(event,'ntEditText')" style="display:none;">
+        </div>
+        <div style="font-size:10px;color:#8aa;margin:2px 0 6px;">📎 <b>개별사진</b>은 사진을 끌어 한 줄에 2~3장까지 배치할 수 있어요.</div>
         <div style="margin-top:8px;">
           <button class="qna-send sm" onclick="saveNotice(${n._i})">저장</button>
           <button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelNotice()">취소</button>
@@ -4208,7 +4223,7 @@ function pageNotice(){
           ${n.secret?'🔒 ':''}${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}${newBadge(n.ts)}
           <span class="qna-src" style="float:right;">${dstr(n)}</span>
         </div>
-        ${opened?`<div class="qna-a" style="margin-top:8px;">${bodyRender(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
+        ${opened?`<div class="qna-a" style="margin-top:8px;">${snapViewBody(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
       </div>`;
   }).join('') : '<div style="color:#8aa;padding:16px;">등록된 공지가 없어요.</div>';
 
@@ -4241,7 +4256,7 @@ function gotoSnapPost(ts){
 function addNoticeBoard(){
   if(!canManage()) return alert('임원 또는 관리자만 공지를 작성할 수 있어요.');
   const title=document.getElementById('ntTitle').value.trim();
-  const text=rteGetHtml('ntText');
+  const text=snapCleanBody(rteGetHtml('ntText')).html;
   const pin=document.getElementById('ntPin').checked;
   const secret=document.getElementById('ntSecret')?document.getElementById('ntSecret').checked:false;
   if(!title&&rteIsEmpty('ntText')) return alert('제목이나 내용을 입력하세요.');
@@ -4271,7 +4286,7 @@ function saveNotice(i){
   const a=JSON.parse(JSON.stringify(DATA.notices));
   if(!a[i])return;
   const nt=document.getElementById('ntEditTitle').value.trim();
-  const tx=rteGetHtml('ntEditText');
+  const tx=snapCleanBody(rteGetHtml('ntEditText')).html;
   a[i].title=nt||document.getElementById('ntEditText').textContent.trim().slice(0,20);
   a[i].text=tx;
   noticeEditing=null;
@@ -7832,10 +7847,11 @@ function chooseSnapLayout(layout){
   _snapAttachBuf=[];
   if(!imgs.length) return;
   const el=document.getElementById(eid); if(!el) return;
+  const isSnap=(eid==='snapText'||eid==='snapEditText');
   const group=buildSnapGroup(layout, imgs);
   snapAppendToEditor(eid, group);
-  snapDecorateGroups(eid);
-  snapCaptureDraft(); // 삽입 직후 임시저장(재렌더 유실 방지)
+  snapDecorateGroups(eid, {noRep:!isSnap});
+  if(isSnap) snapCaptureDraft(); // 삽입 직후 임시저장(재렌더 유실 방지) — 파도스냅 전용
 }
 // 미디어 그룹 DOM 생성 (contenteditable=false 블록)
 // items: [{src,w,h}] 또는 [src] 문자열 배열 모두 허용
@@ -7875,7 +7891,9 @@ function buildSnapGroup(layout, items){
   return wrap;
 }
 // 편집 모드: 각 그룹에 레이아웃 전환 + 대표/삭제 컨트롤(+단일 해상도) 부착
-function snapDecorateGroups(eid){
+function snapDecorateGroups(eid, opts){
+  opts=opts||{};
+  const noRep=!!opts.noRep;   // 대표사진 개념이 없는 게시판(공지 등)에서는 '대표' 버튼 숨김
   const el=document.getElementById(eid); if(!el) return;
   // 저장된 본문에 남아 있던 옛 편집 컨트롤 잔재를 먼저 제거(중복 해상도 바 방지)
   el.querySelectorAll('.snap-res-row,.snap-mg-switch,.snap-mg-tools,.snap-mg-newrow,.snap-mg-rep-badge').forEach(n=>n.remove());
@@ -7919,7 +7937,8 @@ function snapDecorateGroups(eid){
       delBtn.type='button'; delBtn.className='snap-mg-tool';
       delBtn.textContent='🗑';
       delBtn.onclick=(e)=>{ e.stopPropagation(); snapDeleteItem(eid, item); };
-      tools.appendChild(repBtn); tools.appendChild(delBtn);
+      if(!noRep) tools.appendChild(repBtn);
+      tools.appendChild(delBtn);
       item.appendChild(tools);
     });
     // 단일 이미지: 해상도(가로폭) 지정
@@ -8059,7 +8078,8 @@ function snapSwitchLayout(eid, group, newLayout){
   if(!imgs.length) return;
   const fresh=buildSnapGroup(newLayout, imgs);
   group.parentNode.replaceChild(fresh, group);
-  snapDecorateGroups(eid);
+  const isSnap=(eid==='snapText'||eid==='snapEditText');
+  snapDecorateGroups(eid, {noRep:!isSnap});
   snapCaptureDraft();
 }
 function snapSetImgWidth(img, w){
