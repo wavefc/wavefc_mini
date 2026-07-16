@@ -422,6 +422,7 @@
   .fb-edited{font-size:9px;color:#9aa6ae;margin-left:4px;}
   .fb-cmt .fb-del,.fb-reply .fb-del{margin-left:4px;}
   .fb-body{font-size:14px;color:#3a5566;line-height:1.7;}
+  .fb-body img{max-width:100%;height:auto;border-radius:8px;cursor:zoom-in;}
   .fb-cmt-list{margin-top:12px;}
   .fb-cmt{background:#f2fafe;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;color:#3a5566;}
   .fb-reply{margin:5px 0 0 16px;padding-left:8px;border-left:2px solid #bfe0f5;font-size:12px;color:#4a5f6d;}
@@ -3384,7 +3385,10 @@ function renderPage(page){
   else if(page==='quiz')c.innerHTML=pageQuiz();
   else if(page==='video'){resetVideoCountLocks();c.innerHTML=pageVideo();bindVideoPlayers();}
   else if(page==='snap'){ try{ c.innerHTML=pageSnap(); }catch(e){ c.innerHTML='<div class="page-h">🌊 파도스냅</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } try{ if(document.getElementById('snapText')) snapDecorateGroups('snapText'); if(document.getElementById('snapEditText')){ snapDecorateGroups('snapEditText'); const _s=(DATA.snaps||[]).find(x=>x&&x.ts===snapEditing); if(_s&&_s.rep&&!(_snapDraft&&_snapDraft.mode==='edit')) snapSetRep('snapEditText',_s.rep); } }catch(e){} try{ bindSnapDetailBody(); }catch(e){} }
-  else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#c0392b;">기록 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; } }
+  else if(page==='feedback'){ try{ c.innerHTML=pageFeedback(); }catch(e){ c.innerHTML='<div class="page-h">📋 성장 기록 일지</div><div style="padding:16px;color:#c0392b;">기록 페이지를 표시하는 중 오류가 발생했어요.<br><span style="font-size:11px;color:#999;">'+esc(String(e&&e.message||e))+'</span></div>'; }
+    try{ if(document.getElementById('fbText')) snapDecorateGroups('fbText',{noRep:true}); }catch(e){}
+    try{ bindFbDetailBody(); }catch(e){}
+  }
   if(page==='home'){bindCommentForm(); if(quizEditing&&document.getElementById('qzType'))renderQuizAddForm();}
 }
 function lockedView(){
@@ -5844,7 +5848,12 @@ function pageFeedback(){
           <div class="fb-write">
             <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련이 궁금해요)" value="${esc(f.title||'')}">
             ${rteBox('fbText',(/<[a-z][\s\S]*>/i.test(f.text||'')?(f.text||''):esc(f.text||'').replace(/\n/g,'<br>')),'기록 내용을 적어주세요')}
-            <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 참고 영상 유튜브 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
+            <div style="margin:8px 0 4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="document.getElementById('fbText_files').click()">📎 사진 첨부 (최대 ${SNAP_MAX}개)</button>
+              <input type="file" id="fbText_files" accept="image/*" multiple onchange="onSnapAttach(event,'fbText')" style="display:none;">
+            </div>
+            <div style="font-size:10px;color:#8aa;margin:2px 0 6px;">📎 사진을 고르면 <b>개별사진·콜라주·슬라이드</b> 중에 골라 넣을 수 있어요. 넣은 뒤에도 <b>레이아웃 전환</b> 버튼으로 바꿀 수 있고, <b>개별사진</b>은 사진을 끌어 한 줄에 2~3장까지 배치할 수 있어요.</div>
+            <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 유튜브·인스타그램 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
             <button class="qna-send sm" onclick="saveFeedbackEdit('${f.id}')">수정 완료</button>
           </div>`;
       }
@@ -5878,7 +5887,7 @@ function pageFeedback(){
             </span>
           </div>
           ${f.title?`<div class="fb-title-txt">${esc(f.title)}</div>`:''}
-          <div class="fb-body">${diaryBodyRender(f.text||'')}</div>
+          <div class="fb-body">${snapViewBody(f.text||'')}</div>
           <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmtTotal(cmts)}</span></div>
           ${likedByRow}
           <div class="fb-cmt-list">${cmtHtml}</div>
@@ -5893,7 +5902,12 @@ function pageFeedback(){
     <div class="fb-write">
       <input id="fbTitle" class="qna-input" style="margin-bottom:6px;" placeholder="제목 (예: 드리블 훈련이 궁금해요)">
       ${rteBox('fbText','','배우고 싶은 것, 하고 싶은 훈련, 궁금한 점을 자유롭게 적어보세요! (예: 드리블이 약한데 어떤 연습이 좋을까요?)')}
-      <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 참고 영상 유튜브 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
+      <div style="margin:8px 0 4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="document.getElementById('fbText_files').click()">📎 사진 첨부 (최대 ${SNAP_MAX}개)</button>
+        <input type="file" id="fbText_files" accept="image/*" multiple onchange="onSnapAttach(event,'fbText')" style="display:none;">
+      </div>
+      <div style="font-size:10px;color:#8aa;margin:2px 0 6px;">📎 사진을 고르면 <b>개별사진·콜라주·슬라이드</b> 중에 골라 넣을 수 있어요. 넣은 뒤에도 <b>레이아웃 전환</b> 버튼으로 바꿀 수 있고, <b>개별사진</b>은 사진을 끌어 한 줄에 2~3장까지 배치할 수 있어요.</div>
+      <div style="font-size:11px;color:#5a7585;margin:4px 0;">▶ 유튜브·인스타그램 주소를 본문에 붙여넣으면 영상이 그대로 재생돼요.</div>
       <div style="display:flex;gap:6px;margin-top:6px;">
         <button class="qna-send sm" style="margin:0;" onclick="addFeedback()">기록 남기기</button>
         <button class="qna-send sm" style="margin:0;background:#9aa6ae;" onclick="fbWriting=false;renderPage('feedback')">취소</button>
@@ -5999,8 +6013,9 @@ function saveFeedbackEdit(fid){
   const f=(fb[target]||[]).find(x=>x.id===fid); if(!f) return;
   if(!fbCanEdit(f)) return alert('작성자 본인 또는 관리자1만 수정할 수 있어요.');
   const title=(document.getElementById('fbTitle')||{}).value||'';
-  const tx=rteGetHtml('fbText');
-  if(rteIsEmpty('fbText')) return alert('내용을 입력하세요.');
+  const tx=snapCleanBody(rteGetHtml('fbText')).html;
+  // 사진만 넣은 기록도 허용 (글이 비어도 사진이 있으면 통과)
+  if(rteIsEmpty('fbText') && snapCountMedia(tx)===0) return alert('내용을 입력하세요.');
   f.title=title.trim(); f.text=tx; f.edited=Date.now();
   DATA.feedbacks=fb;
   ROOT.child('feedbacks').set(fb);
@@ -6049,8 +6064,9 @@ function addFeedback(){
   if(!fbCanWrite()) return alert('임원 또는 관리자1만 작성할 수 있어요.');
   if(!target) return;
   const title=(document.getElementById('fbTitle')||{}).value||'';
-  const tx=rteGetHtml('fbText');
-  if(rteIsEmpty('fbText')) return alert('내용을 입력하세요.');
+  const tx=snapCleanBody(rteGetHtml('fbText')).html;
+  // 사진만 넣은 기록도 허용 (글이 비어도 사진이 있으면 통과)
+  if(rteIsEmpty('fbText') && snapCountMedia(tx)===0) return alert('내용을 입력하세요.');
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[target]=fb[target]||[];
   fb[target].push({id:'f'+Date.now(), title:title.trim(), text:tx, ts:Date.now(), by:me, comments:[], likedBy:[], views:0});
@@ -7616,6 +7632,20 @@ function bindSnapDetailBody(){
       e.stopPropagation();
       openImgSrc(im.getAttribute('src'));
     }
+  });
+}
+// 성장일지 본문 사진도 클릭하면 크게 보기
+function bindFbDetailBody(){
+  document.querySelectorAll('.fb-body').forEach(bodyEl=>{
+    if(bodyEl._fbBound) return;
+    bodyEl._fbBound=true;
+    bodyEl.addEventListener('click', function(e){
+      const im=e.target.closest('img');
+      if(im && im.getAttribute('src') && !im.hasAttribute('data-snapvid') && !im.closest('.dv-embed')){
+        e.stopPropagation();
+        openImgSrc(im.getAttribute('src'));
+      }
+    });
   });
 }
 function pageSnap(){
