@@ -1005,6 +1005,20 @@
     <div id="rosterListAdmin" style="font-size:10px;margin-top:6px;"></div>
     <div class="admin-a1only">
     <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>💾 데이터 백업 · 복구</b> <span style="font-size:10px;color:#c0392b;">(중요! 가끔 백업해두세요)</span></div>
+    <div style="font-size:10px;color:#5a7585;margin:2px 0 6px;line-height:1.6;">
+      <b>지금 백업</b>을 누르면 현재 전체 데이터가 JSON 파일로 저장돼요. 문제가 생기면 그 파일을 <b>백업으로 복구</b>에서 골라 되돌릴 수 있어요.<br>
+      💡 정기적으로(예: 매주) 백업 파일을 받아 안전한 곳에 보관하세요.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button onclick="downloadBackup()" style="background:#2e8b3d;">📥 지금 백업 (JSON 내려받기)</button>
+      <span id="lastBackupInfo" style="font-size:10px;color:#8aa;"></span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+      <button onclick="document.getElementById('restoreFile').click()" style="background:#c0392b;">📤 백업 파일로 복구</button>
+      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none;" onchange="onRestoreFile(event)">
+    </div>
+    <div id="restoreStatus" style="font-size:10px;color:#5a7585;margin-top:4px;"></div>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>💙 전체 구경 칭찬 메시지</b> (멤버 카드 다 보면 랜덤 표시)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0;">한 줄에 하나씩. 줄바꿈은 메시지 안에서 \\n 으로(또는 그냥 한 메시지로). 비우면 기본 문구 사용.</div>
     <textarea id="praiseEditor" rows="6" placeholder="예) 뜨거운 관심 완전 좋아요💙 WAVE를 사랑해주셔서 감사합니다."></textarea>
@@ -2852,6 +2866,80 @@ function seedDefault(confirmText){
     ROOT.set(DEFAULT); console.log('DEFAULT 시드 완료.');
   });
 }
+// ===== 데이터 백업 · 복구 (무료 요금제용 수동 백업) =====
+function _bkTs(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+}
+// 현재 DB 전체를 JSON 파일로 내려받기 (원본 스냅샷 그대로 — 손실 없음)
+function downloadBackup(){
+  if(adminLevel()!==1) return alert('관리자1만 백업할 수 있어요.');
+  const info=document.getElementById('lastBackupInfo');
+  if(info) info.textContent='백업 준비 중…';
+  ROOT.once('value').then(snap=>{
+    const raw=snap.val();
+    if(!raw){ alert('백업할 데이터가 없어요.'); if(info) info.textContent=''; return; }
+    const payload={ _wave_backup:true, _savedAt:new Date().toISOString(), node:'wavefc_site', data:raw };
+    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=`wave_backup_${_bkTs()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    try{ localStorage.setItem('wave_lastBackup', new Date().toISOString()); }catch(e){}
+    if(info) info.textContent='✅ 방금 백업함';
+  }).catch(err=>{
+    alert('백업 중 오류: '+(err&&err.message||err));
+    if(info) info.textContent='';
+  });
+}
+// 백업 파일을 읽어 DB로 복구
+function onRestoreFile(ev){
+  if(adminLevel()!==1){ ev.target.value=''; return alert('관리자1만 복구할 수 있어요.'); }
+  const file=ev.target.files&&ev.target.files[0];
+  ev.target.value=''; // 같은 파일 다시 선택 가능하게
+  if(!file) return;
+  const st=document.getElementById('restoreStatus');
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let parsed;
+    try{ parsed=JSON.parse(reader.result); }
+    catch(e){ if(st) st.textContent='❌ JSON 파일을 읽지 못했어요.'; return; }
+    // 우리 백업 형식({data:...}) 또는 순수 DB JSON 둘 다 허용
+    const data = (parsed && parsed._wave_backup && parsed.data) ? parsed.data
+               : (parsed && (parsed.notices||parsed.users||parsed.activity_log||parsed.feedbacks)) ? parsed
+               : null;
+    if(!data){ if(st) st.textContent='❌ WAVE 백업 파일이 아닌 것 같아요.'; return; }
+    // 요약 정보
+    const cntN=Array.isArray(data.notices)?data.notices.length:(data.notices?Object.keys(data.notices).length:0);
+    const cntU=data.users?Object.keys(data.users).length:0;
+    const savedAt=(parsed && parsed._savedAt)?('\n백업 시각: '+new Date(parsed._savedAt).toLocaleString()):'';
+    if(!confirm(`이 백업으로 되돌릴까요?\n\n공지 ${cntN}개 · 회원 ${cntU}명${savedAt}\n\n⚠ 현재 데이터는 이 백업으로 완전히 대체됩니다.`)) return;
+    if(!confirm('정말 복구할까요? 이 작업은 되돌릴 수 없어요.\n(만약을 위해 지금 상태를 먼저 백업해두는 걸 권장해요)')) return;
+    if(st) st.textContent='복구 중…';
+    ROOT.set(data).then(()=>{
+      if(st) st.textContent='✅ 복구 완료! 화면을 새로고침하세요.';
+      alert('복구가 완료됐어요. Ctrl+Shift+R 로 새로고침해주세요.');
+    }).catch(err=>{
+      if(st) st.textContent='❌ 복구 실패: '+(err&&err.message||err);
+    });
+  };
+  reader.onerror=()=>{ if(st) st.textContent='❌ 파일을 읽지 못했어요.'; };
+  reader.readAsText(file);
+}
+// 마지막 백업 시각 표시
+function renderBackupInfo(){
+  const info=document.getElementById('lastBackupInfo');
+  if(!info) return;
+  let last=''; try{ last=localStorage.getItem('wave_lastBackup')||''; }catch(e){}
+  if(last){
+    const d=new Date(last);
+    info.textContent='마지막 백업: '+d.toLocaleString();
+  } else {
+    info.textContent='아직 백업한 적 없어요';
+  }
+}
 ROOT.on('value',snap=>{
   const v=snap.val();
   if(!v){
@@ -3187,6 +3275,7 @@ function renderAll(){
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
   startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderDiaryHomeAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
   try{ renderLuckyAdmin(); }catch(e){}
+  try{ renderBackupInfo(); }catch(e){}
   // 방문 번호가 이미 확정됐는데 아직 확인 못한 경우(데이터 늦게 로드) 다시 확인
   try{ if(_pendingVisitNo && !_luckyShown) checkLuckyVisitor(_pendingVisitNo); }catch(e){}
   // 참고영상 페이지를 보는 중이면 전체 재렌더 금지(재생 중 끊김/중복카운트 방지). 재생 숫자만 갱신.
