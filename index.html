@@ -2866,16 +2866,16 @@ const DEFAULT={
     ],
     // 총점 max 이하이면 이 레벨. 오름차순. cardTs=추천 카드 ts(0이면 미지정)
     bands:[
-      {max:4,  lv:1,  label:"병아리",       cardTs:0},
-      {max:7,  lv:2,  label:"새싹",         cardTs:0},
-      {max:11, lv:3,  label:"루키",         cardTs:0},
-      {max:14, lv:4,  label:"꿈나무",       cardTs:0},
-      {max:18, lv:5,  label:"후보선수",     cardTs:0},
-      {max:22, lv:6,  label:"주전선수",     cardTs:0},
-      {max:25, lv:7,  label:"은둔고수",     cardTs:0},
-      {max:29, lv:8,  label:"에이스",       cardTs:0},
-      {max:32, lv:9,  label:"플레이메이커", cardTs:0},
-      {max:36, lv:10, label:"마스터",       cardTs:0}
+      {min:0,  max:4,  lv:1,  label:"병아리",       cardTs:0},
+      {min:5,  max:7,  lv:2,  label:"새싹",         cardTs:0},
+      {min:8,  max:11, lv:3,  label:"루키",         cardTs:0},
+      {min:12, max:14, lv:4,  label:"꿈나무",       cardTs:0},
+      {min:15, max:18, lv:5,  label:"후보선수",     cardTs:0},
+      {min:19, max:22, lv:6,  label:"주전선수",     cardTs:0},
+      {min:23, max:25, lv:7,  label:"은둔고수",     cardTs:0},
+      {min:26, max:29, lv:8,  label:"에이스",       cardTs:0},
+      {min:30, max:32, lv:9,  label:"플레이메이커", cardTs:0},
+      {min:33, max:36, lv:10, label:"마스터",       cardTs:0}
     ]
   },
   futsal_diag:{},
@@ -3085,7 +3085,13 @@ ROOT.on('value',snap=>{
       return {
         scaleLabels:(Array.isArray(q.scaleLabels)&&q.scaleLabels.length===5)?q.scaleLabels:d.scaleLabels,
         questions:(Array.isArray(q.questions)&&q.questions.length)?q.questions:d.questions,
-        bands:(Array.isArray(q.bands)&&q.bands.length)?q.bands:d.bands
+        bands:(function(){
+          let bs=(Array.isArray(q.bands)&&q.bands.length)?q.bands:d.bands;
+          // 옛 기록(min 없음) 자동 보정: 앞 구간 상한+1
+          return bs.map((b,i)=>Object.assign({}, b, {
+            min:(typeof b.min==='number')?b.min:(i===0?0:((bs[i-1].max||0)+1))
+          }));
+        })()
       };
     })(),
     futsal_diag:(v.futsal_diag&&typeof v.futsal_diag==='object'?v.futsal_diag:{}),
@@ -3237,12 +3243,13 @@ function renderDiagAdmin(){
     const cards=(DATA.rulecards||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
     const cardOpts=(sel)=>`<option value="0">(미지정)</option>`+cards.map(c=>`<option value="${c.ts}" ${sel===c.ts?'selected':''}>${esc((c.cat?'['+c.cat+'] ':'')+(c.title||'무제'))}</option>`).join('');
     box.innerHTML=bands.map((b,i)=>{
-      const lo=i===0?0:(bands[i-1].max+1);
+      const lo=(typeof b.min==='number')?b.min:(i===0?0:(bands[i-1].max+1));
       return `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px dotted #e3d3a0;flex-wrap:wrap;">
         <span style="min-width:78px;font-weight:700;">Lv.${b.lv} ${esc(b.label)}</span>
-        <span style="font-size:10px;color:#8aa;">${lo}~</span>
+        <input type="number" id="diagMin_${i}" value="${lo}" style="width:46px;" title="이 레벨의 시작 점수">
+        <span style="font-size:10px;color:#8aa;">~</span>
         <input type="number" id="diagMax_${i}" value="${b.max}" style="width:46px;" title="이 레벨의 상한 점수">
-        <span style="font-size:10px;color:#8aa;">점 이하</span>
+        <span style="font-size:10px;color:#8aa;">점</span>
         <select id="diagCard_${i}" style="flex:1;min-width:120px;">${cardOpts(b.cardTs||0)}</select>
       </div>`;
     }).join('');
@@ -3314,12 +3321,25 @@ function saveDiagBands(){
   const q=JSON.parse(JSON.stringify(futsalQuiz()));
   const bands=q.bands||[];
   for(let i=0;i<bands.length;i++){
-    const mx=document.getElementById('diagMax_'+i), cd=document.getElementById('diagCard_'+i);
+    const mn=document.getElementById('diagMin_'+i), mx=document.getElementById('diagMax_'+i), cd=document.getElementById('diagCard_'+i);
+    if(mn){ const v=parseInt(mn.value,10); if(Number.isFinite(v)) bands[i].min=v; }
     if(mx){ const v=parseInt(mx.value,10); if(Number.isFinite(v)) bands[i].max=v; }
     if(cd){ bands[i].cardTs=parseInt(cd.value,10)||0; }
   }
-  // 상한이 오름차순인지 검증
-  for(let i=1;i<bands.length;i++){ if(bands[i].max<bands[i-1].max){ return alert(`구간 상한이 오름차순이 아니에요. (Lv.${bands[i].lv}이 Lv.${bands[i-1].lv}보다 작음)`); } }
+  // 각 구간: 시작 ≤ 상한
+  for(let i=0;i<bands.length;i++){
+    if(typeof bands[i].min==='number' && bands[i].min>bands[i].max){
+      return alert(`Lv.${bands[i].lv} 구간의 시작 점수가 상한보다 커요.`);
+    }
+  }
+  // 구간 순서(오름차순) 및 겹침/구멍 안내
+  for(let i=1;i<bands.length;i++){
+    if(bands[i].max<bands[i-1].max){ return alert(`구간 상한이 오름차순이 아니에요. (Lv.${bands[i].lv}이 Lv.${bands[i-1].lv}보다 작음)`); }
+    if(typeof bands[i].min==='number' && typeof bands[i-1].max==='number'){
+      if(bands[i].min<=bands[i-1].max) return alert(`Lv.${bands[i].lv} 시작(${bands[i].min})이 Lv.${bands[i-1].lv} 상한(${bands[i-1].max})과 겹쳐요. 시작 점수를 ${bands[i-1].max+1} 이상으로 해주세요.`);
+      if(bands[i].min>bands[i-1].max+1){ if(!confirm(`Lv.${bands[i-1].lv} 상한(${bands[i-1].max})과 Lv.${bands[i].lv} 시작(${bands[i].min}) 사이에 빈 점수가 있어요. 그래도 저장할까요?`)) return; }
+    }
+  }
   q.bands=bands;
   DATA.futsal_quiz=q;
   ROOT.child('futsal_quiz').set(q);
@@ -4366,6 +4386,16 @@ function myDiag(){ return (me && DATA.futsal_diag && DATA.futsal_diag[me])?DATA.
 // 총점 → band(레벨/칭호/추천카드)
 function scoreToBand(score){
   const bands=futsalQuiz().bands||DEFAULT.futsal_quiz.bands;
+  // min이 있으면 min~max 범위로, 없으면 옛 방식(max 이하 순차)으로 판정
+  for(let i=0;i<bands.length;i++){
+    const b=bands[i];
+    if(typeof b.min==='number'){
+      if(score>=b.min && score<=b.max) return b;
+    } else {
+      if(score<=b.max) return b;
+    }
+  }
+  // 어느 구간에도 안 맞으면(구멍) 가장 가까운 상한 기준으로
   for(let i=0;i<bands.length;i++){ if(score<=bands[i].max) return bands[i]; }
   return bands[bands.length-1];
 }
