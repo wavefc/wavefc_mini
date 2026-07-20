@@ -727,6 +727,13 @@
   .snap-res-row input{width:64px;border:1px solid #cdd6dd;border-radius:6px;padding:2px 6px;font-size:11px;}
   /* 목록: 참고 이미지처럼 테두리 없이, 정사각 1:1 이미지 */
   .snap-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 16px;align-items:start;}
+  /* 풋살 규칙 카드형 게시판 */
+  .rule-intro{text-align:center;font-size:13px;color:#5a7585;margin:2px 0 12px;}
+  .rule-filter{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;}
+  .rule-fbtn{border:1px solid #cdd6dd;background:#fff;border-radius:16px;font-size:12px;padding:5px 13px;cursor:pointer;color:#5a7585;font-family:inherit;transition:all .15s;}
+  .rule-fbtn:hover{border-color:#5aa9e6;color:#2176a8;}
+  .rule-fbtn.on{background:#2176a8;border-color:#2176a8;color:#fff;font-weight:700;}
+  .rule-cat-badge{color:#2e8b3d;font-weight:800;font-size:12px;margin-right:3px;}
   .snap-card2{background:transparent;cursor:pointer;display:flex;flex-direction:column;overflow:visible;box-sizing:border-box;}
   .snap-card2:hover .snap-thumb1 img{filter:brightness(1.03);}
   .snap-thumb1{position:relative;width:100%;aspect-ratio:1/1;background:#f0f4f7;border-radius:0;overflow:hidden;}
@@ -2790,6 +2797,10 @@ const DEFAULT={
     {title:"풋살 기본 규칙",html:"<h4>① 경기 기본</h4><ul><li>한 팀 5명 (필드 4 + 골키퍼 1)</li><li>전·후반 각 20분 (러닝타임은 팀 합의)</li><li>교체 인원 제한 없음 / 자유 교체</li></ul><h4>② 반칙 & 카드</h4><ul><li>슬라이딩 태클 금지 (부상 위험)</li><li>한 팀 누적 6반칙부터 10m 직접 프리킥</li><li>경고 2회 = 퇴장, 다음 경기 제한</li></ul><h4>③ 킥인 & 골</h4><ul><li>라인아웃은 스로인이 아닌 킥인</li><li>골키퍼는 손으로 4초 안에 처리</li><li>킥오프·킥인에서 바로 득점 불가</li></ul>",ts:0}
   ],
   tacticImgs:[],
+  rulecards:[
+    {ts:1, title:"풋살 기본 룰 설명", cat:"기본", text:"<p>풋살의 기본 규칙을 정리한 카드예요. 관리자가 내용을 채워주세요.</p>", rep:"", by:"", likes:0, likedBy:[], comments:[], views:0}
+  ],
+  ruleCats:["기초","기본","응용","경기","추가"],
   quizzes:[],
   quiz_records:[],
   replies:[],
@@ -2983,6 +2994,8 @@ ROOT.on('value',snap=>{
     tacticImg:(v.tacticImg!==undefined?v.tacticImg:''),
     guidePosts:migrateGuides(v),
     tacticImgs:migrateTactics(v),
+    rulecards:(Array.isArray(v.rulecards)?v.rulecards:DEFAULT.rulecards),
+    ruleCats:(Array.isArray(v.ruleCats)&&v.ruleCats.length?v.ruleCats:DEFAULT.ruleCats),
     quizzes:(Array.isArray(v.quizzes)?v.quizzes:DEFAULT.quizzes),
     quiz_records:(Array.isArray(v.quiz_records)?v.quiz_records:[]),
     replies:(Array.isArray(v.replies)?v.replies:[]),
@@ -3407,7 +3420,7 @@ function latestActivityTs(p){
   if(p==='notice') maxTs(DATA.notices, n=>n.ts||0);
   else if(p==='diary'){ maxTs(DATA.logs, l=>l.ts||0); maxTs(DATA.logs, l=>{ let m=0; (l.comments||[]).forEach(c=>{ if((c.ts||0)>m)m=c.ts; }); return m; }); }
   else if(p==='cal') maxTs(DATA.calendar, e=>e.ts||0);
-  else if(p==='rule') maxTs(DATA.guidePosts, g=>g.ts||0);
+  else if(p==='rule'){ maxTs(DATA.rulecards, c=>c.ts||0); maxTs(DATA.rulecards, c=>{ let m=0; (c.comments||[]).forEach(cm=>{ if((cm.ts||0)>m)m=cm.ts; }); return m; }); }
   else if(p==='video') maxTs(DATA.videos, v=>v.ts||0);
   else if(p==='snap'){ maxTs(DATA.snaps, s=>s.ts||0); maxTs(DATA.snaps, s=>{ let m=0; (s.comments||[]).forEach(c=>{ if((c.ts||0)>m)m=c.ts; }); return m; }); }
   else if(p==='member'){ // 누군가 스탯 입력 → member_stats 변경 시각 근사(저장된 _ts 사용)
@@ -3490,7 +3503,10 @@ function renderPage(page){
      || (page==='activity'&&!isApproved())
      || (page==='attend'&&!canViewAttend())){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
-  else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; } }
+  else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; }
+    try{ if(document.getElementById('ruleText')) snapDecorateGroups('ruleText',{noRep:true}); if(document.getElementById('ruleEditText')) snapDecorateGroups('ruleEditText',{noRep:true}); }catch(e){}
+    try{ bindRuleDetailBody(); }catch(e){}
+  }
   else if(page==='notice'){ c.innerHTML=pageNotice();
     try{ if(document.getElementById('ntText')) snapDecorateGroups('ntText',{noRep:true});
          if(document.getElementById('ntEditText')) snapDecorateGroups('ntEditText',{noRep:true}); }catch(e){}
@@ -3893,7 +3909,221 @@ function editReply(pid, ts){
 
 var _tacticSrc='';
 var qnaEditing=null, qnaAnsEditing=null;
+// ===== 풋살 규칙 게시판 (카드형, 파도스냅 엔진 재사용) =====
+var ruleOpen=null;       // 인라인 상세로 열린 카드 ts
+var ruleWriting=false;   // 새 글 작성 폼 열림
+var ruleEditing=null;    // 수정 중인 카드 ts
+var ruleFilter='전체';   // 말머리 필터
+var _ruleDraft=null;     // 작성 중 임시저장
+function ruleCatList(){ return (Array.isArray(DATA.ruleCats)&&DATA.ruleCats.length)?DATA.ruleCats:DEFAULT.ruleCats; }
+function ruleCanWrite(){ return canManage(); } // 임원·관리자만 작성
+function ruleCanEdit(c){ return adminLevel()===1 || (c && me && c.by===me); }
 function pageRule(){
+  if(ruleOpen!==null && ruleEditing===null){
+    const dh=ruleDetailHtml();
+    if(dh) return `<div class="page-h">📖 풋살 규칙</div>${dh}`;
+    ruleOpen=null;
+  }
+  return pageRuleList();
+}
+function pageRuleList(){
+  try{ if(ruleWriting || ruleEditing!==null) ruleCaptureDraft(); }catch(e){}
+  const canWrite=ruleCanWrite();
+  const writeToggle = (canWrite && ruleEditing===null)
+    ? `<div style="text-align:right;margin-bottom:10px;">
+         <button class="qna-send sm" onclick="toggleRuleWrite()">${ruleWriting?'✕ 작성 닫기':'✏ 글 작성'}</button>
+       </div>` : '';
+  const writeBox = (ruleEditing!==null) ? ruleWriteForm(ruleEditing)
+                 : ((canWrite && ruleWriting) ? ruleWriteForm(null) : '');
+  // 말머리 필터 바
+  const cats=ruleCatList();
+  const filterBtns=['전체',...cats].map(c=>
+    `<button class="rule-fbtn${ruleFilter===c?' on':''}" onclick="setRuleFilter('${jsStr(c)}')">${c==='전체'?'전체':'['+esc(c)+']'}</button>`
+  ).join('');
+  // 카드 목록
+  let list=(DATA.rulecards||[]).map((c,i)=>Object.assign({},c,{_i:i}))
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(ruleFilter!=='전체') list=list.filter(c=>(c.cat||'')===ruleFilter);
+  const cards=list.map(c=>{
+    const rep=snapRepImg(c);
+    const d=c.ts?new Date(c.ts):null;
+    const dateStr=d?`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`:'';
+    const author=c.by?(userLabel(c.by)||'익명'):'익명';
+    const emoji=c.by?rankEmoji(c.by):'';
+    const cnt=snapCountMedia(c.text||'');
+    const likeCnt=(Array.isArray(c.likedBy)?c.likedBy.length:0)||c.likes||0;
+    const cmtCnt=cmtTotal(c.comments);
+    const viewCnt=c.views||0;
+    let ttl=(c.title||'무제'); if(ttl.length>30) ttl=ttl.slice(0,29)+'…';
+    const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span>`:'';
+    return `<div class="snap-card2" onclick="openRulePost(${c.ts})">
+      <div class="snap-thumb1">
+        ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">📖</div>'}
+        ${cnt>1?`<span class="snap-more-badge">📷 ${cnt}</span>`:''}
+      </div>
+      <div class="snap-meta">
+        <div class="snap-meta-title">${catBadge}${esc(ttl)}${newBadge(c.ts)}</div>
+        <div class="snap-meta-sub">${emoji} ${esc(author)} · ${dateStr}</div>
+        <div class="snap-meta-react"><span>❤️ ${likeCnt}</span><span>💬 ${cmtCnt}</span><span>👀 ${viewCnt}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="page-h">📖 풋살 규칙</div>
+    <div class="rule-intro">챕터별로 풋살을 배워봐요. 카드를 누르면 자세한 내용이 열려요 📚</div>
+    <div class="rule-filter">${filterBtns}</div>
+    ${writeToggle}
+    ${writeBox}
+    <div class="snap-cards">${cards||'<div style="color:#8aa;padding:16px;text-align:center;">아직 등록된 카드가 없어요.'+(canWrite?' 첫 카드를 작성해보세요 :)':'')+'</div>'}</div>`;
+}
+function setRuleFilter(c){ ruleFilter=c; renderPage('rule'); }
+function ruleDetailHtml(){
+  const c=(DATA.rulecards||[]).find(x=>x&&x.ts===ruleOpen);
+  if(!c) return '';
+  const i=(DATA.rulecards||[]).indexOf(c);
+  const d=c.ts?new Date(c.ts):null;
+  const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
+  const author=c.by?userLabel(c.by):'익명';
+  const canEdit=ruleCanEdit(c);
+  const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span> `:'';
+  return `<div class="snap-detail" id="ruleDetail">
+    <div class="snap-detail-top">
+      <button class="qna-send sm snap-detail-back" onclick="closeRulePost()">← 목록으로</button>
+    </div>
+    <div class="snap-detail-head">
+      <div class="snap-detail-title">${catBadge}${esc(c.title||'무제')}</div>
+      <div class="snap-detail-sub">${c.by?(rankEmoji(c.by)||'✍'):'✍'} ${esc(author)} · 📅 ${dateStr} · 👀 ${c.views||0}</div>
+    </div>
+    <div class="snap-detail-body" id="ruleDetailBody">${snapViewBody(c.text||'')}</div>
+    ${canEdit?`<div class="snap-detail-admin">
+      <button class="qna-send sm" onclick="editRule(${c.ts});">수정</button>
+      <button class="qna-send sm" style="background:#c0392b;" onclick="delRule(${c.ts})">삭제</button>
+    </div>`:''}
+    <div class="snap-detail-react" id="ruleReactBox">${reactBox('rulecards',i)}</div>
+  </div>`;
+}
+function bindRuleDetailBody(){
+  const bodyEl=document.getElementById('ruleDetailBody');
+  if(!bodyEl || bodyEl._ruleBound) return;
+  bodyEl._ruleBound=true;
+  bodyEl.addEventListener('click', function(e){
+    const im=e.target.closest('img');
+    if(im && im.getAttribute('src') && !im.hasAttribute('data-snapvid') && !im.closest('.dv-embed')){
+      e.stopPropagation();
+      openImgSrc(im.getAttribute('src'));
+    }
+  });
+}
+function ruleWriteForm(editTs){
+  const isEdit = editTs!==null && editTs!==undefined;
+  let title='', body='', cat=ruleCatList()[0]||'기초';
+  if(isEdit){
+    const c=(DATA.rulecards||[]).find(x=>x&&x.ts===editTs);
+    if(c){ title=c.title||''; body=c.text||''; cat=c.cat||cat; }
+    if(_ruleDraft && _ruleDraft.mode==='edit' && _ruleDraft.ts===editTs){ title=_ruleDraft.title; body=_ruleDraft.body; cat=_ruleDraft.cat; }
+  } else {
+    if(_ruleDraft && _ruleDraft.mode==='new'){ title=_ruleDraft.title; body=_ruleDraft.body; cat=_ruleDraft.cat; }
+  }
+  const eid = isEdit?'ruleEditText':'ruleText';
+  const tid = isEdit?'ruleEditTitle':'ruleTitle';
+  const cid = isEdit?'ruleEditCat':'ruleCat';
+  const catOpts=ruleCatList().map(c=>`<option value="${esc(c)}" ${c===cat?'selected':''}>[${esc(c)}]</option>`).join('');
+  return `<div class="qna-ask" style="margin-bottom:14px;">
+      <div class="qna-ask-h">${isEdit?'✏ 카드 수정':'✏ 새 카드 작성'}</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+        <select id="${cid}" class="qna-input" style="margin:0;flex:0 0 auto;width:auto;" onchange="ruleCaptureTitle()">${catOpts}</select>
+        <input id="${tid}" class="qna-input" style="margin:0;flex:1;min-width:160px;" value="${esc(title)}" placeholder="제목 (예: '픽소'에 대해 알아보자)" oninput="ruleCaptureTitle()">
+      </div>
+      ${rteBox(eid, body, '내용을 자유롭게 작성하세요. 사진·유튜브·인스타 링크도 넣을 수 있어요.')}
+      <div style="margin:8px 0 4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="qna-send sm" style="background:#5a9bd4;" onclick="document.getElementById('${eid}_files').click()">📎 사진 첨부 (최대 ${SNAP_MAX}개)</button>
+        <input type="file" id="${eid}_files" accept="image/*" multiple onchange="onSnapAttach(event,'${eid}')" style="display:none;">
+      </div>
+      <div style="display:flex;gap:4px;margin:4px 0;">
+        <input id="${eid}_vurl" class="qna-input" style="margin:0;flex:1;" placeholder="🎬 유튜브 · 인스타그램 주소 (선택)" onkeydown="if(event.key==='Enter'){snapInsertVideo('${eid}');return false;}">
+        <button class="qna-send sm" type="button" onclick="snapInsertVideo('${eid}')">영상 넣기</button>
+      </div>
+      <div style="font-size:10px;color:#8aa;margin:2px 0 8px;">📎 사진은 개별사진·콜라주·슬라이드 배치가 가능하고, 유튜브·인스타 링크는 본문에서 바로 재생돼요.</div>
+      <div style="text-align:right;">
+        ${isEdit?`<button class="qna-send sm" style="background:#9aa6ae;" onclick="cancelRuleEdit()">취소</button>`:''}
+        <button class="qna-send" onclick="${isEdit?`saveRule(${editTs})`:'addRule()'}">${isEdit?'저장':'카드 등록'}</button>
+      </div>
+    </div>`;
+}
+function toggleRuleWrite(){ ruleWriting=!ruleWriting; ruleEditing=null; _ruleDraft=null; renderPage('rule'); }
+function ruleCaptureTitle(){
+  const nt=document.getElementById('ruleTitle'), et=document.getElementById('ruleEditTitle');
+  if(nt){ if(!_ruleDraft||_ruleDraft.mode!=='new') ruleCaptureDraft(); if(_ruleDraft){ _ruleDraft.title=nt.value; const cc=document.getElementById('ruleCat'); if(cc)_ruleDraft.cat=cc.value; } return; }
+  if(et && ruleEditing!==null){ if(!_ruleDraft||_ruleDraft.mode!=='edit'||_ruleDraft.ts!==ruleEditing) ruleCaptureDraft(); if(_ruleDraft){ _ruleDraft.title=et.value; const cc=document.getElementById('ruleEditCat'); if(cc)_ruleDraft.cat=cc.value; } }
+}
+function ruleCaptureDraft(){
+  const nt=document.getElementById('ruleTitle'), nb=document.getElementById('ruleText'), nc=document.getElementById('ruleCat');
+  if(nb){ _ruleDraft={mode:'new',ts:null,title:(nt?nt.value:''),cat:(nc?nc.value:''),body:snapCleanBody(nb.innerHTML).html}; return; }
+  const et=document.getElementById('ruleEditTitle'), eb=document.getElementById('ruleEditText'), ec=document.getElementById('ruleEditCat');
+  if(eb && ruleEditing!==null){ _ruleDraft={mode:'edit',ts:ruleEditing,title:(et?et.value:''),cat:(ec?ec.value:''),body:snapCleanBody(eb.innerHTML).html}; }
+}
+function addRule(){
+  if(!ruleCanWrite()) return alert('임원·관리자만 카드를 작성할 수 있어요.');
+  const t=(document.getElementById('ruleTitle')?document.getElementById('ruleTitle').value:'').trim();
+  const cat=(document.getElementById('ruleCat')?document.getElementById('ruleCat').value:'')||ruleCatList()[0];
+  const raw=rteGetHtml('ruleText');
+  if(!raw || (snapCountMedia(raw)===0 && snapPlainText(raw)==='' && !t)){ alert('제목이나 내용을 입력해주세요.'); return; }
+  const cleaned=snapCleanBody(raw);
+  const arr=Array.isArray(DATA.rulecards)?JSON.parse(JSON.stringify(DATA.rulecards)):[];
+  arr.push({ ts:Date.now(), title:t||'무제', cat:cat, text:cleaned.html, rep:cleaned.rep||'', by:me||'', likes:0, likedBy:[], comments:[], views:0 });
+  ruleWriting=false; _ruleDraft=null;
+  DATA.rulecards=arr;
+  ROOT.child('rulecards').set(arr);
+  renderPage('rule');
+}
+function editRule(ts){
+  const c=(DATA.rulecards||[]).find(x=>x&&x.ts===ts);
+  if(!c || !ruleCanEdit(c)) return;
+  ruleEditing=ts; ruleOpen=null; ruleWriting=false; _ruleDraft=null;
+  renderPage('rule');
+  setTimeout(()=>{ snapDecorateGroups('ruleEditText',{noRep:true}); }, 40);
+}
+function cancelRuleEdit(){ ruleEditing=null; _ruleDraft=null; renderPage('rule'); }
+function saveRule(ts){
+  const c0=(DATA.rulecards||[]).find(x=>x&&x.ts===ts);
+  if(!c0 || !ruleCanEdit(c0)) return;
+  const t=(document.getElementById('ruleEditTitle')?document.getElementById('ruleEditTitle').value:'').trim();
+  const cat=(document.getElementById('ruleEditCat')?document.getElementById('ruleEditCat').value:'')||c0.cat;
+  const cleaned=snapCleanBody(rteGetHtml('ruleEditText'));
+  const arr=JSON.parse(JSON.stringify(DATA.rulecards||[]));
+  const c=arr.find(x=>x&&x.ts===ts); if(!c)return;
+  c.title=t||'무제'; c.cat=cat; c.text=cleaned.html; c.rep=cleaned.rep||'';
+  ruleEditing=null; _ruleDraft=null;
+  DATA.rulecards=arr;
+  ROOT.child('rulecards').set(arr);
+  renderPage('rule');
+}
+function delRule(ts){
+  const c=(DATA.rulecards||[]).find(x=>x&&x.ts===ts);
+  if(!c || !ruleCanEdit(c)) return;
+  if(!confirm('이 카드를 삭제할까요? 되돌릴 수 없어요.'))return;
+  const arr=(Array.isArray(DATA.rulecards)?DATA.rulecards:[]).filter(x=>x&&x.ts!==ts);
+  DATA.rulecards=arr;
+  ROOT.child('rulecards').set(arr);
+  ruleOpen=null;
+  renderPage('rule');
+}
+function openRulePost(ts){
+  if(ruleEditing===ts) return;
+  try{
+    const seenKey='wavefc_ruleview_'+ts, today=_dayKey(Date.now());
+    if(localStorage.getItem(seenKey)!==today){
+      localStorage.setItem(seenKey, today);
+      const arr=JSON.parse(JSON.stringify(DATA.rulecards||[]));
+      const c=arr.find(x=>x&&x.ts===ts);
+      if(c){ c.views=(c.views||0)+1; DATA.rulecards=arr; ROOT.child('rulecards').set(arr); }
+    }
+  }catch(e){}
+  ruleOpen=ts; ruleWriting=false; ruleEditing=null;
+  renderPage('rule');
+  try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){ window.scrollTo(0,0); }
+}
+function closeRulePost(){ ruleOpen=null; renderPage('rule'); try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){} }
+function pageRule_OLD(){
   const a1=adminLevel()===1;
   // guidePosts가 비정상(객체 아님/문자열 등)이어도 안전하게 정규화
   let rawGuides = Array.isArray(DATA.guidePosts) ? DATA.guidePosts : [];
@@ -4093,6 +4323,7 @@ function _reactArr(node){
   if(node==='logs') return DATA.logs||[];
   if(node==='notices') return DATA.notices||[];
   if(node==='snaps') return DATA.snaps||[];
+  if(node==='rulecards') return DATA.rulecards||[];
   // calendar/rule: 단일 반응 박스를 배열[0]으로 다룸 (board_react/{node})
   const br=DATA.board_react||{};
   const obj=br[node]||{ts:_boardReactTs(node)};
@@ -4103,10 +4334,10 @@ function _boardReactTs(node){ return node==='calendar'?100001:(node==='rule'?100
 // calendar/rule 저장은 board_react/{node} 경로에
 function _reactSave(node, arr){
   // 낙관적 반영(즉시 화면 갱신용)
-  if(node==='logs'||node==='notices'||node==='snaps'){ DATA[node]=arr; }
+  if(node==='logs'||node==='notices'||node==='snaps'||node==='rulecards'){ DATA[node]=arr; }
   else { DATA.board_react=DATA.board_react||{}; DATA.board_react[node]=arr[0]||{}; }
   // DB 저장
-  if(node==='logs'||node==='notices'||node==='snaps'){ ROOT.child(node).set(arr); }
+  if(node==='logs'||node==='notices'||node==='snaps'||node==='rulecards'){ ROOT.child(node).set(arr); }
   else { ROOT.child('board_react/'+node).set(arr[0]||{}); }
   // 화면 즉시 갱신 (파도스냅 인라인 상세도 renderPage로 함께 갱신됨)
   try{ renderPage(currentPage); }catch(e){}
