@@ -734,6 +734,42 @@
   .rule-fbtn:hover{border-color:#5aa9e6;color:#2176a8;}
   .rule-fbtn.on{background:#2176a8;border-color:#2176a8;color:#fff;font-weight:700;}
   .rule-cat-badge{color:#2e8b3d;font-weight:800;font-size:12px;margin-right:3px;}
+  /* 풋살 실력 진단 배너 */
+  .diag-banner{background:linear-gradient(135deg,#3aa0d8,#2176a8);color:#fff;border-radius:14px;padding:18px 20px;margin-bottom:14px;text-align:center;box-shadow:0 6px 18px rgba(33,118,168,.25);}
+  .diag-b-title{font-size:17px;font-weight:800;margin-bottom:6px;}
+  .diag-b-sub{font-size:13px;line-height:1.6;color:#eaf4fb;margin-bottom:12px;}
+  .diag-b-btn{background:#fff;color:#2176a8;border:none;border-radius:20px;padding:9px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 3px 8px rgba(0,0,0,.15);}
+  .diag-b-btn:hover{background:#eaf4fb;}
+  /* 진단 모달 */
+  .diag-overlay{position:fixed;inset:0;background:rgba(15,25,35,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .diag-box{background:#fff;border-radius:18px;max-width:380px;width:100%;padding:24px 22px 18px;box-shadow:0 16px 44px rgba(0,0,0,.35);cursor:default;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;}
+  .diag-progress{height:7px;background:#e8eff4;border-radius:4px;overflow:hidden;margin-bottom:14px;}
+  .diag-progress-in{height:100%;background:linear-gradient(90deg,#5aa9e6,#2176a8);border-radius:4px;transition:width .3s;}
+  .diag-qnum{font-size:12px;color:#5aa9e6;font-weight:800;margin-bottom:6px;}
+  .diag-qtext{font-size:16px;font-weight:700;color:#28414f;line-height:1.5;margin-bottom:16px;min-height:48px;}
+  .diag-opts{display:flex;flex-direction:column;gap:7px;}
+  .diag-opt{display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid #dbe8f2;background:#f7fbfe;border-radius:11px;padding:11px 14px;font-size:14px;color:#3a5566;cursor:pointer;font-family:inherit;transition:all .12s;}
+  .diag-opt:hover{border-color:#2176a8;background:#eaf4fb;transform:translateX(2px);}
+  .diag-opt-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#cfe3f2;color:#2176a8;font-weight:800;font-size:12px;flex-shrink:0;}
+  .diag-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+  .diag-prev{background:none;border:none;color:#5a7585;font-size:13px;cursor:pointer;font-family:inherit;}
+  .diag-close{background:none;border:none;color:#b5c4d0;font-size:12px;cursor:pointer;font-family:inherit;}
+  /* 진단 결과 */
+  .diag-result{text-align:center;}
+  .diag-r-emoji{font-size:44px;margin-bottom:4px;}
+  .diag-r-lv{font-size:40px;font-weight:900;color:#2176a8;line-height:1;}
+  .diag-r-label{font-size:22px;font-weight:800;color:#28414f;margin:6px 0 2px;}
+  .diag-r-score{font-size:13px;color:#8aa;margin-bottom:12px;}
+  .diag-change{font-size:13px;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-weight:700;}
+  .diag-change.up{background:#eafbef;color:#1f9d4d;}
+  .diag-change.down{background:#fdeef0;color:#c0392b;}
+  .diag-change.same{background:#eef4f8;color:#5a7585;}
+  .diag-rec{background:#f6fbff;border:1px dashed #bcd9ee;border-radius:12px;padding:12px;margin-bottom:14px;}
+  .diag-rec-label{font-size:13px;color:#3a5566;margin-bottom:8px;font-weight:700;}
+  .diag-rec-btn{background:#2e8b3d;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
+  .diag-rec-btn:hover{background:#267532;}
+  .diag-close-btn{background:linear-gradient(135deg,#5aa9e6,#2176a8);color:#fff;border:none;border-radius:12px;padding:11px 34px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+  @media(max-width:640px){ .diag-qtext{font-size:15px;} .diag-r-lv{font-size:34px;} }
   .snap-card2{background:transparent;cursor:pointer;display:flex;flex-direction:column;overflow:visible;box-sizing:border-box;}
   .snap-card2:hover .snap-thumb1 img{filter:brightness(1.03);}
   .snap-thumb1{position:relative;width:100%;aspect-ratio:1/1;background:#f0f4f7;border-radius:0;overflow:hidden;}
@@ -1044,6 +1080,14 @@
     <div style="margin-top:6px;"><b>🏆 당첨자 기록</b></div>
     <div id="luckyWinners" style="font-size:10px;">없음</div>
     <button onclick="resetLuckyWinners()" style="background:#c0392b;">당첨 기록 초기화</button>
+    <hr style="border:none;border-top:1px dashed #d9b34b;">
+    <div><b>⚽ 풋살력 테스트 설정</b></div>
+    <div style="font-size:10px;color:#5a7585;margin:2px 0 6px;">레벨별 <b>추천 카드</b>를 지정하고, 점수 <b>구간(상한)</b>도 조정할 수 있어요.</div>
+    <div id="diagBandsAdmin"></div>
+    <button onclick="saveDiagBands()" style="background:#2e8b3d;">테스트 설정 저장</button>
+    <div style="margin-top:8px;"><b>📋 회원별 테스트 기록</b></div>
+    <div id="diagRecordsAdmin" style="font-size:10px;">없음</div>
+    <button onclick="resetDiagRecords()" style="background:#c0392b;">테스트 기록 초기화</button>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>🔑 관리자1 비밀번호 변경</b> (대표·전체권한)</div>
     <input id="newAdminPw" placeholder="새 관리자1 비밀번호"><button onclick="changeAdminPw(1)">변경</button>
@@ -2800,7 +2844,35 @@ const DEFAULT={
   rulecards:[
     {ts:1, title:"풋살 기본 룰 설명", cat:"기본", text:"<p>풋살의 기본 규칙을 정리한 카드예요. 관리자가 내용을 채워주세요.</p>", rep:"", by:"", likes:0, likedBy:[], comments:[], views:0}
   ],
-  ruleCats:["기초","기본","응용","경기","추가"],
+  ruleCats:["기초","기본","심화","응용","경기","매너"],
+  futsal_quiz:{
+    scaleLabels:["전혀 아니다","아니다","보통","그렇다","매우 그렇다"],
+    questions:[
+      "풋살 경기의 기본 규칙(인원, 골라인 아웃 시 룰, 코너킥 등)을 알고 있다",
+      "인사이드 패스를 원하는 곳으로 정확히 보낼 수 있다",
+      "트래핑(볼 멈추기)으로 공을 안정적으로 잡을 수 있다",
+      "상대가 앞에 있어도 드리블로 제칠 시도를 할 수 있다",
+      "슛을 할 때 골대 구석을 노려 찰 수 있다",
+      "수비 시 상대와 골대 사이에 자리를 잡을 줄 안다",
+      "'파라패스', '피보' 같은 풋살 용어와 포지션을 이해한다",
+      "경기 중 팀원과 소통하며 위치를 조율할 수 있다",
+      "상황에 따라 공격·수비 전환을 빠르게 판단할 수 있다"
+    ],
+    // 총점 max 이하이면 이 레벨. 오름차순. cardTs=추천 카드 ts(0이면 미지정)
+    bands:[
+      {max:4,  lv:1,  label:"병아리",       cardTs:0},
+      {max:7,  lv:2,  label:"새싹",         cardTs:0},
+      {max:11, lv:3,  label:"루키",         cardTs:0},
+      {max:14, lv:4,  label:"꿈나무",       cardTs:0},
+      {max:18, lv:5,  label:"후보선수",     cardTs:0},
+      {max:22, lv:6,  label:"주전선수",     cardTs:0},
+      {max:25, lv:7,  label:"은둔고수",     cardTs:0},
+      {max:29, lv:8,  label:"에이스",       cardTs:0},
+      {max:32, lv:9,  label:"플레이메이커", cardTs:0},
+      {max:36, lv:10, label:"마스터",       cardTs:0}
+    ]
+  },
+  futsal_diag:{},
   quizzes:[],
   quiz_records:[],
   replies:[],
@@ -2995,7 +3067,22 @@ ROOT.on('value',snap=>{
     guidePosts:migrateGuides(v),
     tacticImgs:migrateTactics(v),
     rulecards:(Array.isArray(v.rulecards)?v.rulecards:DEFAULT.rulecards),
-    ruleCats:(Array.isArray(v.ruleCats)&&v.ruleCats.length?v.ruleCats:DEFAULT.ruleCats),
+    ruleCats:(function(){
+      const OLD=["기초","기본","응용","경기","추가"];
+      const cur=Array.isArray(v.ruleCats)?v.ruleCats:null;
+      if(!cur || !cur.length || JSON.stringify(cur)===JSON.stringify(OLD)) return DEFAULT.ruleCats;
+      return cur;
+    })(),
+    futsal_quiz:(function(){
+      const d=DEFAULT.futsal_quiz, q=v.futsal_quiz;
+      if(!q||typeof q!=='object') return JSON.parse(JSON.stringify(d));
+      return {
+        scaleLabels:(Array.isArray(q.scaleLabels)&&q.scaleLabels.length===5)?q.scaleLabels:d.scaleLabels,
+        questions:(Array.isArray(q.questions)&&q.questions.length)?q.questions:d.questions,
+        bands:(Array.isArray(q.bands)&&q.bands.length)?q.bands:d.bands
+      };
+    })(),
+    futsal_diag:(v.futsal_diag&&typeof v.futsal_diag==='object'?v.futsal_diag:{}),
     quizzes:(Array.isArray(v.quizzes)?v.quizzes:DEFAULT.quizzes),
     quiz_records:(Array.isArray(v.quiz_records)?v.quiz_records:[]),
     replies:(Array.isArray(v.replies)?v.replies:[]),
@@ -3105,6 +3192,60 @@ function showLuckyOverlay(n, cfg){
   document.body.appendChild(ov);
 }
 function closeLuckyOverlay(){ const ov=document.getElementById('luckyOverlay'); if(ov) ov.remove(); }
+// ===== 관리자: 풋살 진단 설정 =====
+function renderDiagAdmin(){
+  const box=document.getElementById('diagBandsAdmin');
+  if(box){
+    const q=futsalQuiz();
+    const bands=q.bands||DEFAULT.futsal_quiz.bands;
+    const cards=(DATA.rulecards||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+    const cardOpts=(sel)=>`<option value="0">(미지정)</option>`+cards.map(c=>`<option value="${c.ts}" ${sel===c.ts?'selected':''}>${esc((c.cat?'['+c.cat+'] ':'')+(c.title||'무제'))}</option>`).join('');
+    box.innerHTML=bands.map((b,i)=>{
+      const lo=i===0?0:(bands[i-1].max+1);
+      return `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px dotted #e3d3a0;flex-wrap:wrap;">
+        <span style="min-width:78px;font-weight:700;">Lv.${b.lv} ${esc(b.label)}</span>
+        <span style="font-size:10px;color:#8aa;">${lo}~</span>
+        <input type="number" id="diagMax_${i}" value="${b.max}" style="width:46px;" title="이 레벨의 상한 점수">
+        <span style="font-size:10px;color:#8aa;">점 이하</span>
+        <select id="diagCard_${i}" style="flex:1;min-width:120px;">${cardOpts(b.cardTs||0)}</select>
+      </div>`;
+    }).join('');
+  }
+  const rec=document.getElementById('diagRecordsAdmin');
+  if(rec){
+    const diag=DATA.futsal_diag||{};
+    const keys=Object.keys(diag).sort((a,b)=>(diag[b].ts||0)-(diag[a].ts||0));
+    rec.innerHTML=keys.length? keys.map(k=>{
+      const r=diag[k]; const d=r.ts?new Date(r.ts):null;
+      const ds=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`:'';
+      const chg=(r.prevLv!=null)?` <span style="color:#8aa;">(이전 Lv.${r.prevLv})</span>`:'';
+      return `<div style="padding:2px 0;border-bottom:1px dotted #e3d3a0;">⚽ ${esc(userLabel(k))} · <b>Lv.${r.lv} ${esc(r.label||'')}</b> · ${r.score}점${chg} <span style="color:#8aa;">${ds}</span></div>`;
+    }).join('') : '아직 테스트한 회원이 없어요.';
+  }
+}
+function saveDiagBands(){
+  if(adminLevel()!==1) return alert('관리자1만 변경할 수 있어요.');
+  const q=JSON.parse(JSON.stringify(futsalQuiz()));
+  const bands=q.bands||[];
+  for(let i=0;i<bands.length;i++){
+    const mx=document.getElementById('diagMax_'+i), cd=document.getElementById('diagCard_'+i);
+    if(mx){ const v=parseInt(mx.value,10); if(Number.isFinite(v)) bands[i].max=v; }
+    if(cd){ bands[i].cardTs=parseInt(cd.value,10)||0; }
+  }
+  // 상한이 오름차순인지 검증
+  for(let i=1;i<bands.length;i++){ if(bands[i].max<bands[i-1].max){ return alert(`구간 상한이 오름차순이 아니에요. (Lv.${bands[i].lv}이 Lv.${bands[i-1].lv}보다 작음)`); } }
+  q.bands=bands;
+  DATA.futsal_quiz=q;
+  ROOT.child('futsal_quiz').set(q);
+  alert('풋살력 테스트 설정을 저장했어요.');
+}
+function resetDiagRecords(){
+  if(adminLevel()!==1) return alert('관리자1만 초기화할 수 있어요.');
+  if(!confirm('회원들의 테스트 기록을 모두 지울까요? 되돌릴 수 없어요.')) return;
+  DATA.futsal_diag={};
+  ROOT.child('futsal_diag').set({});
+  renderDiagAdmin();
+}
 // ===== 관리자: 방문자 당첨 설정 =====
 function renderLuckyAdmin(){
   const cfg=(DATA && DATA.lucky)?DATA.lucky:DEFAULT.lucky;
@@ -3288,6 +3429,7 @@ function renderAll(){
   [mb,it].forEach(el=>{ if(el){ el.style.cursor=editable?'pointer':'default'; el.title=editable?'클릭하면 수정':''; if(editable) el.classList.add('editable-text'); else el.classList.remove('editable-text'); }});
   startSlideshow();renderImgAdmin();renderProfileAdmin();renderPending();renderNoticeAdmin();renderNoticeOrderAdmin();renderDiaryHomeAdmin();renderPraiseEditor();renderRosterAdmin();renderKbAdmin();renderQuizAdmin();renderLoginBox();updateLocks();applyAdminLevel();renderBgButtons();
   try{ renderLuckyAdmin(); }catch(e){}
+  try{ renderDiagAdmin(); }catch(e){}
   try{ renderBackupInfo(); }catch(e){}
   // 방문 번호가 이미 확정됐는데 아직 확인 못한 경우(데이터 늦게 로드) 다시 확인
   try{ if(_pendingVisitNo && !_luckyShown) checkLuckyVisitor(_pendingVisitNo); }catch(e){}
@@ -3970,6 +4112,7 @@ function pageRuleList(){
   }).join('');
   return `<div class="page-h">📖 풋살 규칙</div>
     <div class="rule-intro">챕터별로 풋살을 배워봐요. 카드를 누르면 자세한 내용이 열려요 📚</div>
+    ${diagBannerHtml()}
     <div class="rule-filter">${filterBtns}</div>
     ${writeToggle}
     ${writeBox}
@@ -4123,6 +4266,129 @@ function openRulePost(ts){
   try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){ window.scrollTo(0,0); }
 }
 function closeRulePost(){ ruleOpen=null; renderPage('rule'); try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){} }
+
+// ===== 풋살 실력 진단 설문 =====
+var _diagAnswers=[];   // 각 문항 점수(0~4)
+var _diagStep=0;       // 현재 문항 인덱스
+function futsalQuiz(){ return (DATA.futsal_quiz&&DATA.futsal_quiz.questions)?DATA.futsal_quiz:DEFAULT.futsal_quiz; }
+function myDiag(){ return (me && DATA.futsal_diag && DATA.futsal_diag[me])?DATA.futsal_diag[me]:null; }
+// 총점 → band(레벨/칭호/추천카드)
+function scoreToBand(score){
+  const bands=futsalQuiz().bands||DEFAULT.futsal_quiz.bands;
+  for(let i=0;i<bands.length;i++){ if(score<=bands[i].max) return bands[i]; }
+  return bands[bands.length-1];
+}
+// 대문 자리 진단 배너
+function diagBannerHtml(){
+  if(!isApproved()){
+    return `<div class="diag-banner">
+      <div class="diag-b-title">⚽ 나의 풋살력 테스트</div>
+      <div class="diag-b-sub">로그인하면 9문항으로 내 풋살력 레벨을 확인할 수 있어요.</div>
+    </div>`;
+  }
+  const prev=myDiag();
+  if(prev){
+    return `<div class="diag-banner">
+      <div class="diag-b-title">⚽ 나의 풋살력 테스트</div>
+      <div class="diag-b-sub">지난번 결과는 <b>Lv.${prev.lv} ${esc(prev.label)}</b> 였어요. 실력이 늘었는지 다시 확인해볼까요?</div>
+      <button class="diag-b-btn" onclick="startDiag()">다시 테스트하기 →</button>
+    </div>`;
+  }
+  return `<div class="diag-banner">
+    <div class="diag-b-title">⚽ 나의 풋살력 테스트</div>
+    <div class="diag-b-sub">9개 질문에 답하면 내 풋살력을 Lv.1~10으로 알려드려요! 뭐부터 보면 좋을지도 추천해드릴게요.</div>
+    <button class="diag-b-btn" onclick="startDiag()">테스트 시작하기 →</button>
+  </div>`;
+}
+function startDiag(){
+  if(!isApproved()){ alert('로그인 후 테스트할 수 있어요 :)'); return; }
+  _diagAnswers=[]; _diagStep=0;
+  renderDiagModal();
+}
+function closeDiag(){ const ov=document.getElementById('diagOverlay'); if(ov) ov.remove(); }
+function renderDiagModal(){
+  const q=futsalQuiz();
+  const qs=q.questions||[], labels=q.scaleLabels||DEFAULT.futsal_quiz.scaleLabels;
+  const total=qs.length;
+  const i=_diagStep;
+  let old=document.getElementById('diagOverlay'); if(old) old.remove();
+  const ov=document.createElement('div');
+  ov.id='diagOverlay'; ov.className='diag-overlay';
+  const pct=Math.round((i/total)*100);
+  const scaleBtns=labels.map((lb,si)=>
+    `<button class="diag-opt" onclick="answerDiag(${si})"><span class="diag-opt-num">${si}</span>${esc(lb)}</button>`
+  ).join('');
+  ov.innerHTML=`<div class="diag-box" onclick="event.stopPropagation()">
+    <div class="diag-progress"><div class="diag-progress-in" style="width:${pct}%;"></div></div>
+    <div class="diag-qnum">Q${i+1} / ${total}</div>
+    <div class="diag-qtext">${esc(qs[i]||'')}</div>
+    <div class="diag-opts">${scaleBtns}</div>
+    <div class="diag-foot">
+      ${i>0?`<button class="diag-prev" onclick="prevDiag()">← 이전</button>`:'<span></span>'}
+      <button class="diag-close" onclick="closeDiag()">그만하기</button>
+    </div>
+  </div>`;
+  ov.addEventListener('click', closeDiag);
+  document.body.appendChild(ov);
+}
+function answerDiag(score){
+  _diagAnswers[_diagStep]=score;
+  const total=(futsalQuiz().questions||[]).length;
+  if(_diagStep < total-1){ _diagStep++; renderDiagModal(); }
+  else { finishDiag(); }
+}
+function prevDiag(){ if(_diagStep>0){ _diagStep--; renderDiagModal(); } }
+function finishDiag(){
+  const total=_diagAnswers.reduce((s,x)=>s+(typeof x==='number'?x:0),0);
+  const band=scoreToBand(total);
+  const prev=myDiag();
+  const prevLv=prev?prev.lv:null;
+  // 저장
+  if(me){
+    const map=Object.assign({}, DATA.futsal_diag||{});
+    map[me]={ lv:band.lv, label:band.label, score:total, ts:Date.now(), prevLv:prevLv };
+    DATA.futsal_diag=map;
+    ROOT.child('futsal_diag').set(map);
+  }
+  renderDiagResult(total, band, prevLv);
+}
+function renderDiagResult(total, band, prevLv){
+  let old=document.getElementById('diagOverlay'); if(old) old.remove();
+  const maxScore=((futsalQuiz().questions||[]).length)*4;
+  // 추천 카드
+  let recHtml='';
+  if(band.cardTs){
+    const card=(DATA.rulecards||[]).find(c=>c&&c.ts===band.cardTs);
+    if(card){
+      recHtml=`<div class="diag-rec">
+        <div class="diag-rec-label">📖 이 카드부터 보는 걸 추천해요!</div>
+        <button class="diag-rec-btn" onclick="closeDiag();openRulePost(${card.ts})">${card.cat?('['+esc(card.cat)+'] '):''}${esc(card.title||'추천 카드')} →</button>
+      </div>`;
+    }
+  }
+  if(!recHtml){
+    recHtml=`<div class="diag-rec"><div class="diag-rec-label" style="color:#8aa;">추천 카드는 곧 준비될 예정이에요. 카드들을 둘러보세요!</div></div>`;
+  }
+  let changeHtml='';
+  if(prevLv!==null && prevLv!==undefined){
+    if(band.lv>prevLv) changeHtml=`<div class="diag-change up">📈 지난번 Lv.${prevLv} → <b>Lv.${band.lv}</b> 실력이 늘었어요!</div>`;
+    else if(band.lv<prevLv) changeHtml=`<div class="diag-change down">지난번 Lv.${prevLv} → Lv.${band.lv}</div>`;
+    else changeHtml=`<div class="diag-change same">지난번과 같은 Lv.${band.lv} 유지 중!</div>`;
+  }
+  const ov=document.createElement('div');
+  ov.id='diagOverlay'; ov.className='diag-overlay';
+  ov.innerHTML=`<div class="diag-box diag-result" onclick="event.stopPropagation()">
+    <div class="diag-r-emoji">⚽</div>
+    <div class="diag-r-lv">Lv.${band.lv}</div>
+    <div class="diag-r-label">${esc(band.label)}</div>
+    <div class="diag-r-score">${total} / ${maxScore}점</div>
+    ${changeHtml}
+    ${recHtml}
+    <button class="diag-close-btn" onclick="closeDiag()">확인</button>
+  </div>`;
+  ov.addEventListener('click', closeDiag);
+  document.body.appendChild(ov);
+}
 function pageRule_OLD(){
   const a1=adminLevel()===1;
   // guidePosts가 비정상(객체 아님/문자열 등)이어도 안전하게 정규화
