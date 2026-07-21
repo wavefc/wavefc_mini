@@ -2870,12 +2870,12 @@ const DEFAULT={
       {min:5,  max:7,  lv:2,  label:"새싹",         cardTs:0},
       {min:8,  max:11, lv:3,  label:"루키",         cardTs:0},
       {min:12, max:14, lv:4,  label:"꿈나무",       cardTs:0},
-      {min:15, max:18, lv:5,  label:"후보선수",     cardTs:0},
-      {min:19, max:22, lv:6,  label:"주전선수",     cardTs:0},
-      {min:23, max:25, lv:7,  label:"은둔고수",     cardTs:0},
-      {min:26, max:29, lv:8,  label:"에이스",       cardTs:0},
+      {min:15, max:18, lv:5,  label:"잠재력Max",   cardTs:0},
+      {min:19, max:22, lv:6,  label:"성장멤버",     cardTs:0},
+      {min:23, max:25, lv:7,  label:"팀플레이어",   cardTs:0},
+      {min:26, max:29, lv:8,  label:"키플레이어",   cardTs:0},
       {min:30, max:32, lv:9,  label:"플레이메이커", cardTs:0},
-      {min:33, max:36, lv:10, label:"마스터",       cardTs:0}
+      {min:33, max:36, lv:10, label:"풋살마스터",   cardTs:0}
     ]
   },
   futsal_diag:{},
@@ -4169,6 +4169,10 @@ var ruleEditing=null;    // 수정 중인 카드 ts
 var ruleFilter='전체';   // 말머리 필터
 var _ruleDraft=null;     // 작성 중 임시저장
 function ruleCatList(){ return (Array.isArray(DATA.ruleCats)&&DATA.ruleCats.length)?DATA.ruleCats:DEFAULT.ruleCats; }
+function ruleCatColor(cat){
+  const M={'기초':'#e8b400','기본':'#5a9a3d','심화':'#7a3fa0','응용':'#e08a00','경기':'#e6157e','매너':'#2176d8'};
+  return M[cat]||'#2e8b3d';
+}
 function ruleCanWrite(){ return canManage(); } // 임원·관리자만 작성
 function ruleCanEdit(c){ return adminLevel()===1 || (c && me && c.by===me); }
 function pageRule(){
@@ -4208,7 +4212,7 @@ function pageRuleList(){
     const cmtCnt=cmtTotal(c.comments);
     const viewCnt=c.views||0;
     let ttl=(c.title||'무제'); if(ttl.length>30) ttl=ttl.slice(0,29)+'…';
-    const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span>`:'';
+    const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span>`:'';
     return `<div class="snap-card2" onclick="openRulePost(${c.ts})">
       <div class="snap-thumb1">
         ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">📖</div>'}
@@ -4238,7 +4242,7 @@ function ruleDetailHtml(){
   const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
   const author=c.by?userLabel(c.by):'익명';
   const canEdit=ruleCanEdit(c);
-  const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span> `:'';
+  const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span> `:'';
   return `<div class="snap-detail" id="ruleDetail">
     <div class="snap-detail-top">
       <button class="qna-send sm snap-detail-back" onclick="closeRulePost()">← 목록으로</button>
