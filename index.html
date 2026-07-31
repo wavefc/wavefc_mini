@@ -1061,6 +1061,12 @@
       <input type="file" id="restoreFile" accept="application/json,.json" style="display:none;" onchange="onRestoreFile(event)">
     </div>
     <div id="restoreStatus" style="font-size:10px;color:#5a7585;margin-top:4px;"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+      <button onclick="document.getElementById('restoreRuleFile').click()" style="background:#2176a8;">📖 규칙 카드만 복구 (다른 데이터 안 건드림)</button>
+      <input type="file" id="restoreRuleFile" accept="application/json,.json" style="display:none;" onchange="onRestoreRuleCards(event)">
+    </div>
+    <div style="font-size:10px;color:#5a7585;margin-top:2px;line-height:1.5;">백업 파일에서 <b>풋살 규칙 카드만</b> 골라 현재 카드에 더해요. 회원 점수·다른 글엔 영향 없어요.</div>
+    <div id="restoreRuleStatus" style="font-size:10px;color:#5a7585;margin-top:4px;"></div>
     <hr style="border:none;border-top:1px dashed #d9b34b;">
     <div><b>💙 전체 구경 칭찬 메시지</b> (멤버 카드 다 보면 랜덤 표시)</div>
     <div style="font-size:10px;color:#5a7585;margin:2px 0;">한 줄에 하나씩. 줄바꿈은 메시지 안에서 \\n 으로(또는 그냥 한 메시지로). 비우면 기본 문구 사용.</div>
@@ -2870,12 +2876,12 @@ const DEFAULT={
       {min:5,  max:7,  lv:2,  label:"새싹",         cardTs:0},
       {min:8,  max:11, lv:3,  label:"루키",         cardTs:0},
       {min:12, max:14, lv:4,  label:"꿈나무",       cardTs:0},
-      {min:15, max:18, lv:5,  label:"잠재력Max",   cardTs:0},
-      {min:19, max:22, lv:6,  label:"성장멤버",     cardTs:0},
-      {min:23, max:25, lv:7,  label:"팀플레이어",   cardTs:0},
-      {min:26, max:29, lv:8,  label:"키플레이어",   cardTs:0},
+      {min:15, max:18, lv:5,  label:"후보선수",     cardTs:0},
+      {min:19, max:22, lv:6,  label:"주전선수",     cardTs:0},
+      {min:23, max:25, lv:7,  label:"은둔고수",     cardTs:0},
+      {min:26, max:29, lv:8,  label:"에이스",       cardTs:0},
       {min:30, max:32, lv:9,  label:"플레이메이커", cardTs:0},
-      {min:33, max:36, lv:10, label:"풋살마스터",   cardTs:0}
+      {min:33, max:36, lv:10, label:"마스터",       cardTs:0}
     ]
   },
   futsal_diag:{},
@@ -3017,7 +3023,52 @@ function onRestoreFile(ev){
   reader.onerror=()=>{ if(st) st.textContent='❌ 파일을 읽지 못했어요.'; };
   reader.readAsText(file);
 }
-// 마지막 백업 시각 표시
+// 백업 파일에서 '규칙 카드'만 뽑아 현재 카드에 병합 (다른 데이터는 절대 안 건드림)
+function onRestoreRuleCards(ev){
+  if(adminLevel()!==1){ ev.target.value=''; return alert('관리자1만 복구할 수 있어요.'); }
+  const file=ev.target.files&&ev.target.files[0];
+  ev.target.value='';
+  if(!file) return;
+  const st=document.getElementById('restoreRuleStatus');
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let parsed;
+    try{ parsed=JSON.parse(reader.result); }
+    catch(e){ if(st) st.textContent='❌ JSON 파일을 읽지 못했어요.'; return; }
+    const data = (parsed && parsed.data) ? parsed.data : parsed;
+    // 백업 안의 rulecards를 배열로 정규화 (Firebase 객체형도 처리)
+    let bcards=[];
+    const rc=data && data.rulecards;
+    if(Array.isArray(rc)) bcards=rc.filter(Boolean);
+    else if(rc && typeof rc==='object'){
+      const keys=Object.keys(rc).filter(k=>/^\d+$/.test(k)).sort((a,b)=>a-b);
+      bcards=(keys.length?keys.map(k=>rc[k]):Object.values(rc)).filter(x=>x&&typeof x==='object');
+    }
+    if(!bcards.length){ if(st) st.textContent='❌ 이 백업엔 규칙 카드가 없어요.'; return; }
+    // 현재 카드
+    const cur=Array.isArray(DATA.rulecards)?JSON.parse(JSON.stringify(DATA.rulecards)):[];
+    const curTs=new Set(cur.map(c=>c&&c.ts));
+    // 중복(ts 같은) 카드는 건너뜀 → 없는 것만 추가
+    const toAdd=bcards.filter(c=>!curTs.has(c.ts));
+    if(!toAdd.length){
+      if(st) st.textContent='ℹ️ 백업의 카드가 이미 모두 있어요. (추가할 것 없음)';
+      return;
+    }
+    const titles=toAdd.map(c=>'· '+(c.cat?('['+c.cat+'] '):'')+(c.title||'무제')).join('\n');
+    if(!confirm('아래 규칙 카드 '+toAdd.length+'개를 복구할까요?\n(회원 점수·다른 글엔 영향 없어요)\n\n'+titles)) return;
+    const merged=cur.concat(toAdd).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    if(st) st.textContent='복구 중…';
+    DATA.rulecards=merged;
+    ROOT.child('rulecards').set(merged).then(()=>{
+      if(st) st.textContent='✅ 카드 '+toAdd.length+'개 복구 완료! 풋살 규칙 탭에서 확인하세요.';
+      try{ renderPage('rule'); }catch(e){}
+    }).catch(err=>{
+      if(st) st.textContent='❌ 복구 실패: '+(err&&err.message||err);
+    });
+  };
+  reader.onerror=()=>{ if(st) st.textContent='❌ 파일을 읽지 못했어요.'; };
+  reader.readAsText(file);
+}
 function renderBackupInfo(){
   const info=document.getElementById('lastBackupInfo');
   if(!info) return;
@@ -3072,7 +3123,20 @@ ROOT.on('value',snap=>{
     tacticImg:(v.tacticImg!==undefined?v.tacticImg:''),
     guidePosts:migrateGuides(v),
     tacticImgs:migrateTactics(v),
-    rulecards:(Array.isArray(v.rulecards)?v.rulecards:DEFAULT.rulecards),
+    rulecards:(function(){
+      const rc=v.rulecards;
+      if(Array.isArray(rc)) return rc;
+      // Firebase가 배열을 객체(숫자키)로 저장한 경우 → 배열로 복원 (데이터 보존)
+      if(rc && typeof rc==='object'){
+        const keys=Object.keys(rc).filter(k=>/^\d+$/.test(k)).sort((a,b)=>a-b);
+        if(keys.length) return keys.map(k=>rc[k]);
+        // 숫자키가 아니어도 값이 카드 형태면 배열화
+        const vals=Object.values(rc).filter(x=>x && typeof x==='object');
+        if(vals.length) return vals;
+      }
+      // rulecards 키 자체가 아예 없을 때만(진짜 최초) DEFAULT. 그 외엔 빈 배열로 두어 덮어쓰기 방지.
+      return (rc===undefined) ? DEFAULT.rulecards : [];
+    })(),
     ruleCats:(function(){
       const OLD=["기초","기본","응용","경기","추가"];
       const cur=Array.isArray(v.ruleCats)?v.ruleCats:null;
@@ -4169,10 +4233,6 @@ var ruleEditing=null;    // 수정 중인 카드 ts
 var ruleFilter='전체';   // 말머리 필터
 var _ruleDraft=null;     // 작성 중 임시저장
 function ruleCatList(){ return (Array.isArray(DATA.ruleCats)&&DATA.ruleCats.length)?DATA.ruleCats:DEFAULT.ruleCats; }
-function ruleCatColor(cat){
-  const M={'기초':'#e8b400','기본':'#5a9a3d','심화':'#7a3fa0','응용':'#e08a00','경기':'#e6157e','매너':'#2176d8'};
-  return M[cat]||'#2e8b3d';
-}
 function ruleCanWrite(){ return canManage(); } // 임원·관리자만 작성
 function ruleCanEdit(c){ return adminLevel()===1 || (c && me && c.by===me); }
 function pageRule(){
@@ -4212,7 +4272,7 @@ function pageRuleList(){
     const cmtCnt=cmtTotal(c.comments);
     const viewCnt=c.views||0;
     let ttl=(c.title||'무제'); if(ttl.length>30) ttl=ttl.slice(0,29)+'…';
-    const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span>`:'';
+    const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span>`:'';
     return `<div class="snap-card2" onclick="openRulePost(${c.ts})">
       <div class="snap-thumb1">
         ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">📖</div>'}
@@ -4242,7 +4302,7 @@ function ruleDetailHtml(){
   const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
   const author=c.by?userLabel(c.by):'익명';
   const canEdit=ruleCanEdit(c);
-  const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span> `:'';
+  const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span> `:'';
   return `<div class="snap-detail" id="ruleDetail">
     <div class="snap-detail-top">
       <button class="qna-send sm snap-detail-back" onclick="closeRulePost()">← 목록으로</button>
@@ -4372,8 +4432,13 @@ function openRulePost(ts){
     if(localStorage.getItem(seenKey)!==today){
       localStorage.setItem(seenKey, today);
       const arr=JSON.parse(JSON.stringify(DATA.rulecards||[]));
-      const c=arr.find(x=>x&&x.ts===ts);
-      if(c){ c.views=(c.views||0)+1; DATA.rulecards=arr; ROOT.child('rulecards').set(arr); }
+      const idx=arr.findIndex(x=>x&&x.ts===ts);
+      if(idx>=0){
+        arr[idx].views=(arr[idx].views||0)+1;
+        DATA.rulecards=arr;
+        // 전체 배열이 아니라 해당 카드의 조회수만 저장(전체 덮어쓰기 방지)
+        ROOT.child('rulecards/'+idx+'/views').set(arr[idx].views);
+      }
     }
   }catch(e){}
   ruleOpen=ts; ruleWriting=false; ruleEditing=null;
@@ -6708,8 +6773,13 @@ function fbPlainText(html){ const t=document.createElement('div'); t.innerHTML=h
 function openFbPost(target,fid){
   // 조회수 +1 (본인 글 조회는 세지 않음: 작성자가 아닌 사람이 볼 때만)
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
-  const f=(fb[target]||[]).find(x=>x.id===fid);
-  if(f){ f.views=(f.views||0)+1; DATA.feedbacks=fb; ROOT.child('feedbacks').set(fb); }
+  const list=fb[target]||[];
+  const idx=list.findIndex(x=>x.id===fid);
+  if(idx>=0){
+    list[idx].views=(list[idx].views||0)+1;
+    DATA.feedbacks=fb;
+    ROOT.child('feedbacks/'+target+'/'+idx+'/views').set(list[idx].views);
+  }
   fbOpen=fid; fbEditing=null;
   renderPage('feedback');
 }
@@ -9107,8 +9177,12 @@ function openSnapPost(ts){
     if(localStorage.getItem(seenKey)!==today){
       localStorage.setItem(seenKey, today);
       const arr=JSON.parse(JSON.stringify(DATA.snaps||[]));
-      const s=arr.find(x=>x&&x.ts===ts);
-      if(s){ s.views=(s.views||0)+1; DATA.snaps=arr; ROOT.child('snaps').set(arr); }
+      const idx=arr.findIndex(x=>x&&x.ts===ts);
+      if(idx>=0){
+        arr[idx].views=(arr[idx].views||0)+1;
+        DATA.snaps=arr;
+        ROOT.child('snaps/'+idx+'/views').set(arr[idx].views);
+      }
     }
   }catch(e){}
   snapOpen=ts;
