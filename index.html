@@ -4233,6 +4233,11 @@ var ruleEditing=null;    // 수정 중인 카드 ts
 var ruleFilter='전체';   // 말머리 필터
 var _ruleDraft=null;     // 작성 중 임시저장
 function ruleCatList(){ return (Array.isArray(DATA.ruleCats)&&DATA.ruleCats.length)?DATA.ruleCats:DEFAULT.ruleCats; }
+// 카테고리별 배지 색상
+function ruleCatColor(cat){
+  const M={'기초':'#e8b400','기본':'#5a9a3d','심화':'#7a3fa0','응용':'#e08a00','경기':'#e6157e','매너':'#2176d8'};
+  return M[cat]||'#2e8b3d';
+}
 function ruleCanWrite(){ return canManage(); } // 임원·관리자만 작성
 function ruleCanEdit(c){ return adminLevel()===1 || (c && me && c.by===me); }
 function pageRule(){
@@ -4272,7 +4277,7 @@ function pageRuleList(){
     const cmtCnt=cmtTotal(c.comments);
     const viewCnt=c.views||0;
     let ttl=(c.title||'무제'); if(ttl.length>30) ttl=ttl.slice(0,29)+'…';
-    const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span>`:'';
+    const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span>`:'';
     return `<div class="snap-card2" onclick="openRulePost(${c.ts})">
       <div class="snap-thumb1">
         ${rep?`<img src="${rep}">`:'<div class="snap-thumb1-empty">📖</div>'}
@@ -4302,7 +4307,7 @@ function ruleDetailHtml(){
   const dateStr=d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
   const author=c.by?userLabel(c.by):'익명';
   const canEdit=ruleCanEdit(c);
-  const catBadge=c.cat?`<span class="rule-cat-badge">[${esc(c.cat)}]</span> `:'';
+  const catBadge=c.cat?`<span class="rule-cat-badge" style="color:${ruleCatColor(c.cat)};">[${esc(c.cat)}]</span> `:'';
   return `<div class="snap-detail" id="ruleDetail">
     <div class="snap-detail-top">
       <button class="qna-send sm snap-detail-back" onclick="closeRulePost()">← 목록으로</button>
@@ -6092,9 +6097,19 @@ function editAttendSession(si){
 }
 // 멤버 상태 정규화 (기존 데이터 호환: number가 ★→명예, -→번호없음)
 function memStatus(m){
-  if(m.status) return m.status; // 'active' | 'honor' | 'rest'
-  if(m.number==='★') return 'honor';
-  return 'active';
+  // 기본 상태 ('active' | 'honor' | 'rest')
+  const base = m.status ? m.status : (m.number==='★' ? 'honor' : 'active');
+  // 명예회원은 휴식 기간과 무관하게 유지
+  if(base==='honor') return 'honor';
+  // [휴식시작] 버튼은 rest_periods만 추가하고 status는 그대로 두므로,
+  // 오늘 날짜가 휴식 기간에 들어가면 '휴식중'으로 판정 (출석현황과 동일 기준).
+  // 기간이 끝나면(to 지남) 자동으로 원래 상태로 복귀.
+  if(Array.isArray(m.rest_periods) && m.rest_periods.length){
+    const d=new Date();
+    const today=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    if(isRestingOnDate(m, today)) return 'rest';
+  }
+  return base;
 }
 // 특정 세션 날짜(dateStr)에 이 멤버가 '휴식 기간'인지 판단.
 // m.rest_periods = [{from:'2026-1-1', to:'2026-6-30'}] (to 생략 시 아직 복귀 안 함=계속 휴식)
