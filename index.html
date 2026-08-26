@@ -490,6 +490,48 @@
   .stat-ctrl{display:flex;gap:2px;}
   .stat-ctrl button{width:18px;height:18px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:3px;cursor:pointer;font-size:12px;}
   .stat-ctrl button:hover{background:#eaf4fb;}
+  /* ===== 스탯/순위 섹션 ===== */
+  .srank-wrap{display:flex;flex-direction:column;gap:14px;margin:8px 0 4px;}
+  .srank-box{background:#f6fbff;border:1px solid #cfe6f5;border-radius:10px;padding:14px 16px;font-family:'Pretendard','Malgun Gothic',sans-serif;}
+  .srank-h{font-size:15px;font-weight:700;color:#2176a8;margin-bottom:12px;}
+  .srank-sub{font-size:11px;font-weight:400;color:#8aa;margin-left:4px;}
+  .srank-in-row{display:flex;align-items:center;gap:8px;margin:7px 0;}
+  .srank-in-name{flex:0 0 52px;font-size:13px;color:#3a5566;font-weight:600;}
+  .srank-in-pips{flex:0 0 auto;display:flex;gap:3px;}
+  .srank-in-ctrl{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .srank-in-val{min-width:16px;text-align:center;font-size:14px;font-weight:700;color:#2176a8;}
+  .srank-in-btn{width:26px;height:26px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:5px;cursor:pointer;font-size:15px;font-weight:700;}
+  .srank-in-btn:hover{background:#eaf4fb;}
+  .srank-myovr{margin-top:12px;padding-top:10px;border-top:1px dashed #cfe6f5;font-size:14px;color:#3a5566;text-align:center;}
+  .srank-myovr b{font-size:20px;color:#e0662b;}
+  .srank-fb{margin-top:8px;background:#fff5ec;border:1px solid #ffd9b8;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#c0562b;line-height:1.5;text-align:center;}
+  .srank-lock{text-align:center;color:#3a5566;line-height:1.7;}
+  .srank-mylabel{background:#eaf4fb;border-radius:7px;padding:7px 12px;font-size:13px;color:#2176a8;text-align:center;margin-bottom:10px;}
+  .srank-mylabel b{font-size:15px;}
+  .srank-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;margin:3px 0;}
+  .srank-row.me{background:#fff3d9;border:1px solid #f5cf7a;}
+  .srank-rank{flex:0 0 30px;text-align:center;font-size:16px;}
+  .srank-num{display:inline-block;font-size:13px;color:#8aa;font-weight:700;}
+  .srank-nm{flex:1;font-size:14px;color:#3a5566;}
+  .srank-ovr{flex:0 0 auto;font-size:16px;font-weight:700;color:#2176a8;}
+  .srank-ovr-max{font-size:11px;color:#9aa6ae;font-weight:400;}
+  .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
+  /* 정밀 스탯 입력 (그룹/슬라이더/숫자) */
+  .sr-group{margin:10px 0 4px;}
+  .sr-ghead{display:flex;align-items:center;justify-content:space-between;border-left:4px solid #ccc;padding:2px 0 2px 8px;margin-bottom:4px;}
+  .sr-glabel{font-size:13px;font-weight:700;}
+  .sr-gavg{font-size:11px;color:#8aa;}
+  .sr-row{display:flex;align-items:center;gap:6px;margin:5px 0;}
+  .sr-name{flex:0 0 62px;font-size:12px;color:#3a5566;}
+  .sr-btn{flex:0 0 auto;width:24px;height:24px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:5px;cursor:pointer;font-size:14px;font-weight:700;}
+  .sr-btn:hover{background:#eaf4fb;}
+  .sr-slider{flex:1;min-width:60px;accent-color:#3aa0d8;cursor:pointer;}
+  .sr-num{flex:0 0 44px;width:44px;text-align:center;font-size:13px;font-weight:700;color:#2176a8;border:1px solid #cfe6f5;border-radius:5px;padding:3px 2px;font-family:inherit;}
+  @media(max-width:760px){
+    .sr-name{flex:0 0 54px;font-size:11px;}
+    .sr-slider{min-width:40px;}
+    .sr-num{flex:0 0 40px;width:40px;}
+  }
   .stat-ctrl button:active{background:#3aa0d8;color:#fff;}
   /* 전체 멤버 구경 칭찬 토스트 */
   .peek-praise{position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);background:linear-gradient(#3aa0d8,#2176a8);color:#fff;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:15px;line-height:1.6;text-align:center;padding:16px 22px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .4s,transform .4s;z-index:9999;pointer-events:none;}
@@ -1005,7 +1047,7 @@
       <button class="tab-btn tab-more" id="moreBtn" onclick="toggleMore()">더보기 <span id="moreArrow">▾</span></button>
       <div class="more-wrap" id="moreWrap">
         <button class="tab-btn" data-page="diary" onclick="go('diary',this)" style="display:none;">훈련일지<span class="lock" id="lk1">🔒</span></button>
-        <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
+        <button class="tab-btn" data-page="rule" onclick="go('rule',this)">스탯/순위</button>
         <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
         <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
         <button class="tab-btn" data-page="snap" onclick="go('snap',this)">파도스냅</button>
@@ -4312,13 +4354,168 @@ function ruleCatColor(cat){
 }
 function ruleCanWrite(){ return canManage(); } // 임원·관리자만 작성
 function ruleCanEdit(c){ return adminLevel()===1 || (c && me && c.by===me); }
+/* ===== 스탯/순위 섹션 (정밀 스탯 0~99, 22항목) ===== */
+// 6그룹 22항목 정의
+const SR_GROUPS=[
+  {key:'SHO',label:'슈팅',  color:'#e11d48',keys:['결정력','슛파워','위치선정','콜타이밍']},
+  {key:'PAS',label:'패스',  color:'#16a34a',keys:['짧은패스','패스스피드','시야','정확도']},
+  {key:'DRI',label:'드리블',color:'#d97706',keys:['볼컨트롤','드리블기술','밸런스','볼소유력']},
+  {key:'DEF',label:'수비',  color:'#2563eb',keys:['1:1마크','집중력','적극성','가로채기']},
+  {key:'PHY',label:'피지컬',color:'#7c3aed',keys:['체력','스피드','몸싸움']},
+  {key:'GK', label:'골레이로',color:'#0891b2',keys:['GK반응','GK선방','GK1대1']}
+];
+// 전체 22개 항목 평면 리스트
+const SR_KEYS=SR_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
+const SR_MAX=99;
+// Firebase 경로 안전화 (기존 statKey 재사용)
+// 내 정밀스탯 가져오기 (없으면 전부 0)
+function getStats2(name){
+  const s=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  const out={};
+  SR_KEYS.forEach(k=>{ out[k]=Math.max(0,Math.min(SR_MAX,parseInt(s[k]||0,10)||0)); });
+  return out;
+}
+// 하나라도 입력됐는지
+function hasAnyStat2(stats){ return SR_KEYS.some(k=>(parseInt(stats[k]||0,10)||0)>0); }
+// OVR: 22항목 평균 (0~99)
+function statOVR2(stats){
+  let sum=0; SR_KEYS.forEach(k=>{ sum+=(parseInt(stats[k]||0,10)||0); });
+  return Math.round(sum/SR_KEYS.length);
+}
+// 그룹 평균 (0~99)
+function groupAvg2(stats,g){
+  let s=0; g.keys.forEach(k=>{ s+=(parseInt(stats[k]||0,10)||0); });
+  return Math.round(s/g.keys.length);
+}
+// 순위 (입력자만, OVR 내림차순)
+function statRanking2(){
+  const users=DATA.users||{};
+  const rows=[];
+  Object.keys(users).forEach(uk=>{
+    const u=users[uk];
+    if(!u || u.approved!==true) return;
+    const nm=u.name; if(!nm) return;
+    const st=getStats2(nm);
+    if(!hasAnyStat2(st)) return;
+    rows.push({name:nm, ovr:statOVR2(st), stats:st});
+  });
+  rows.sort((a,b)=> b.ovr-a.ovr || a.name.localeCompare(b.name,'ko'));
+  return rows;
+}
+// OVR 점수대별 피드백
+function statFeedback2(ovr){
+  if(ovr>=80) return '⚽ 최상위권! 팀의 에이스예요. 이 폼 그대로 유지해요.';
+  if(ovr>=65) return '🔥 상위권이에요. 약점만 다듬으면 최고가 됩니다!';
+  if(ovr>=45) return '💪 딱 중간, 성장할 일만 남았어요. 하나씩 채워봐요.';
+  if(ovr>=25) return '🌱 이제 시작! 부족한 능력치를 집중 연습하면 쑥쑥 올라요.';
+  return '👟 기초부터 차근차근. 꾸준함이 실력이 돼요!';
+}
+// 스탯/순위 섹션 전체 HTML
+function statRankSection(){
+  if(!isApproved()){
+    return `<div class="srank-box" style="text-align:center;color:#8aa;padding:24px 12px;">🔒 로그인(회원 승인) 후 내 스탯과 순위를 볼 수 있어요.</div>`;
+  }
+  const myName=myRealName();
+  const myStats=getStats2(myName);
+  const entered=hasAnyStat2(myStats);
+  const rank=statRanking2();
+  const myRankIdx=rank.findIndex(r=>r.name===myName);
+  const myOvr=statOVR2(myStats);
+  // --- 그룹별 입력 UI ---
+  const groupHtml=SR_GROUPS.map(g=>{
+    const ga=groupAvg2(myStats,g);
+    const rows=g.keys.map(k=>{
+      const v=myStats[k]||0;
+      const safe=jsStr(k);
+      return `<div class="sr-row" data-key="${esc(k)}">
+        <span class="sr-name">${k}</span>
+        <button class="sr-btn" onclick="statAdjust2('${safe}',-1)">－</button>
+        <input class="sr-slider" type="range" min="0" max="99" value="${v}"
+               oninput="statSlide('${safe}',this.value)" onchange="statSlideEnd('${safe}',this.value)">
+        <button class="sr-btn" onclick="statAdjust2('${safe}',1)">＋</button>
+        <input class="sr-num" type="number" min="0" max="99" value="${v}"
+               onchange="statSetNum('${safe}',this.value)">
+      </div>`;
+    }).join('');
+    return `<div class="sr-group">
+      <div class="sr-ghead" style="border-color:${g.color};">
+        <span class="sr-glabel" style="color:${g.color};">${g.label}</span>
+        <span class="sr-gavg">평균 ${ga}</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+  const inputBox=`<div class="srank-box">
+    <div class="srank-h">📝 내 스탯 입력 <span class="srank-sub">(0~99 · 본인만 수정 · 버튼/슬라이더/직접입력)</span></div>
+    ${groupHtml}
+    <div class="srank-myovr">내 종합점수(OVR) <b>${myOvr}</b> / 99</div>
+    ${entered?`<div class="srank-fb">${statFeedback2(myOvr)}</div>`:''}
+  </div>`;
+  if(!entered){
+    return `<div class="srank-wrap">
+      ${inputBox}
+      <div class="srank-box srank-lock">🏆 <b>내 스탯을 추가해야 실시간 순위가 보여요!</b><br><span style="font-size:12px;color:#8aa;">위 22개 항목을 입력해 주세요. 슬라이더를 드래그하거나 숫자를 바로 쳐도 돼요.</span></div>
+    </div>`;
+  }
+  // --- 순위 (간단 미리보기) ---
+  const rankRows=rank.map((r,i)=>{
+    const me_=(r.name===myName);
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="srank-num">${i+1}</span>`;
+    return `<div class="srank-row${me_?' me':''}">
+      <span class="srank-rank">${medal}</span>
+      <span class="srank-nm">${esc(r.name)}${me_?' <b>(나)</b>':''}</span>
+      <span class="srank-ovr">${r.ovr}<span class="srank-ovr-max">/99</span></span>
+    </div>`;
+  }).join('');
+  const rankBox=`<div class="srank-box">
+    <div class="srank-h">🏆 실시간 순위 <span class="srank-sub">(종합점수 높은 순 · ${rank.length}명)</span></div>
+    <div class="srank-mylabel">내 순위 <b>${myRankIdx+1}위</b> / ${rank.length}명</div>
+    ${rankRows}
+  </div>`;
+  return `<div class="srank-wrap">${inputBox}${rankBox}</div>`;
+}
+// 저장 (본인만)
+function saveStat2(key,val){
+  if(!isApproved()){ alert('로그인 후 이용해 주세요.'); return false; }
+  const name=myRealName();
+  if(!name) return false;
+  let v=Math.max(0,Math.min(SR_MAX,parseInt(val,10)||0));
+  const cur=getStats2(name);
+  cur[key]=v;
+  cur._ts=Date.now();
+  ROOT.child('member_stats2/'+statKey(name)).set(cur);
+  logActivityCapped('statset', 1);
+  return true;
+}
+// ＋/－ 버튼
+function statAdjust2(key, delta){
+  const name=myRealName();
+  const cur=getStats2(name);
+  saveStat2(key,(cur[key]||0)+delta);
+}
+// 슬라이더 드래그 중: 같은 행의 숫자칸만 즉시 갱신 (저장은 안 함)
+function statSlide(key,val){
+  const box=document.getElementById('centerArea');
+  if(!box) return;
+  try{
+    const row=box.querySelector('.sr-row[data-key="'+key+'"]');
+    if(row){ const num=row.querySelector('.sr-num'); if(num) num.value=val; }
+  }catch(e){}
+}
+// 슬라이더 놓았을 때: 저장
+function statSlideEnd(key,val){ saveStat2(key,val); }
+// 숫자 직접 입력
+function statSetNum(key,val){ saveStat2(key,val); }
 function pageRule(){
+  const statSec=`<div class="page-h">📊 스탯 / 순위</div>${statRankSection()}
+    <div class="srank-divider"></div>
+    <div class="page-h" style="margin-top:18px;">📖 풋살력 테스트</div>`;
   if(ruleOpen!==null && ruleEditing===null){
     const dh=ruleDetailHtml();
-    if(dh) return `<div class="page-h">📖 풋살 규칙</div>${dh}`;
+    if(dh) return `${statSec}${dh}`;
     ruleOpen=null;
   }
-  return pageRuleList();
+  return `${statSec}${pageRuleList()}`;
 }
 function pageRuleList(){
   try{ if(ruleWriting || ruleEditing!==null) ruleCaptureDraft(); }catch(e){}
