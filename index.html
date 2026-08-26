@@ -516,6 +516,9 @@
   .srank-ovr{flex:0 0 auto;font-size:16px;font-weight:700;color:#2176a8;}
   .srank-ovr-max{font-size:11px;color:#9aa6ae;font-weight:400;}
   .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
+  .sr-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
+  .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
+  .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
   /* 정밀 스탯 입력 (그룹/슬라이더/숫자) */
   .sr-group{margin:10px 0 4px;}
   .sr-ghead{display:flex;align-items:center;justify-content:space-between;border-left:4px solid #ccc;padding:2px 0 2px 8px;margin-bottom:4px;}
@@ -1691,6 +1694,7 @@ function openAdminTools(){
         <button class="at-tab" id="attab_bonus" onclick="adminToolsTab('bonus')">🔹 출석 TOP6 보너스</button>
         <button class="at-tab" id="attab_kb" onclick="adminToolsTab('kb')">🔹 QnA 지식베이스</button>
         <button class="at-tab" id="attab_quiz" onclick="adminToolsTab('quiz')">🔹 깜짝퀴즈 등록</button>
+        <button class="at-tab" id="attab_stat" onclick="adminToolsTab('stat')">🔹 스탯 관리</button>
       </div>
       <div id="adminToolsBody" style="padding:14px 18px 20px;max-height:64vh;overflow-y:auto;"></div>
     </div>`;
@@ -1701,12 +1705,31 @@ function openAdminTools(){
 function closeAdminTools(){ const ov=document.getElementById('adminToolsOverlay'); if(ov) ov.remove(); }
 function adminToolsTab(tab){
   const body=document.getElementById('adminToolsBody'); if(!body) return;
-  ['bonus','kb','quiz'].forEach(t=>{ const b=document.getElementById('attab_'+t); if(b) b.classList.toggle('on',t===tab); });
+  ['bonus','kb','quiz','stat'].forEach(t=>{ const b=document.getElementById('attab_'+t); if(b) b.classList.toggle('on',t===tab); });
   if(tab==='bonus') body.innerHTML=adminToolsBonusHtml();
   else if(tab==='kb') body.innerHTML=adminToolsKbHtml();
   else if(tab==='quiz') body.innerHTML=adminToolsQuizHtml();
+  else if(tab==='stat') body.innerHTML=adminToolsStatHtml();
   if(tab==='kb') renderKbAdmin();
   if(tab==='quiz') renderQuizAdmin();
+}
+// --- 스탯 관리 탭 ---
+function adminToolsStatHtml(){
+  const n=(typeof WAVE_STAT_IMPORT!=='undefined')?Object.keys(WAVE_STAT_IMPORT).length:0;
+  // 현재 저장된 스탯 인원
+  const have=DATA.member_stats2?Object.keys(DATA.member_stats2).length:0;
+  return `<div style="font-size:13px;color:#3a5566;line-height:1.7;">
+    <div style="font-weight:700;margin-bottom:8px;">📊 정밀 스탯(22항목) 관리</div>
+    <div style="background:#f6fbff;border:1px solid #cfe6f5;border-radius:8px;padding:12px;margin-bottom:12px;">
+      <div>· 출석표에서 변환한 초기 데이터: <b>${n}명</b></div>
+      <div>· 현재 미니홈피에 저장된 스탯: <b>${have}명</b></div>
+    </div>
+    <button class="qna-send" onclick="importStatsFromCSV()" style="width:100%;padding:11px;font-size:14px;">⬇ 출석표 스탯 ${n}명 가져오기</button>
+    <div style="font-size:11px;color:#8aa;margin-top:8px;line-height:1.6;">
+      ※ 이름이 같은 회원의 스탯을 채웁니다. 이미 입력된 값은 덮어써요.<br>
+      ※ '정확도' 항목은 출석표에 없어 0으로 들어갑니다(나중에 엑셀로 보완).
+    </div>
+  </div>`;
 }
 // --- 출석 TOP6 보너스 탭 ---
 function adminToolsBonusHtml(){
@@ -4367,6 +4390,27 @@ const SR_GROUPS=[
 // 전체 22개 항목 평면 리스트
 const SR_KEYS=SR_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
 const SR_MAX=99;
+// ── 출석표 CSV에서 변환한 초기 스탯 (관리자 1회 가져오기용) ──
+const WAVE_STAT_IMPORT={"김서영":{"결정력":78,"슛파워":86,"위치선정":72,"콜타이밍":85,"짧은패스":85,"패스스피드":73,"시야":80,"정확도":0,"볼컨트롤":79,"드리블기술":86,"밸런스":80,"볼소유력":83,"1:1마크":93,"집중력":92,"적극성":82,"가로채기":81,"체력":83,"스피드":92,"몸싸움":92,"GK반응":65,"GK선방":45,"GK1대1":82,"_foot":"R"},"박지예":{"결정력":84,"슛파워":87,"위치선정":85,"콜타이밍":90,"짧은패스":90,"패스스피드":78,"시야":92,"정확도":0,"볼컨트롤":92,"드리블기술":87,"밸런스":75,"볼소유력":87,"1:1마크":89,"집중력":90,"적극성":72,"가로채기":83,"체력":54,"스피드":80,"몸싸움":94,"GK반응":70,"GK선방":82,"GK1대1":80,"_foot":"B"},"조은비":{"결정력":78,"슛파워":90,"위치선정":72,"콜타이밍":88,"짧은패스":89,"패스스피드":76,"시야":83,"정확도":0,"볼컨트롤":83,"드리블기술":80,"밸런스":85,"볼소유력":90,"1:1마크":81,"집중력":87,"적극성":81,"가로채기":81,"체력":74,"스피드":82,"몸싸움":90,"GK반응":42,"GK선방":71,"GK1대1":68,"_foot":"R"},"장윤ㅎ":{"결정력":80,"슛파워":83,"위치선정":86,"콜타이밍":86,"짧은패스":83,"패스스피드":71,"시야":81,"정확도":0,"볼컨트롤":80,"드리블기술":86,"밸런스":45,"볼소유력":83,"1:1마크":90,"집중력":80,"적극성":81,"가로채기":82,"체력":79,"스피드":81,"몸싸움":81,"GK반응":93,"GK선방":95,"GK1대1":85,"_foot":"R"},"안시하":{"결정력":83,"슛파워":90,"위치선정":80,"콜타이밍":86,"짧은패스":81,"패스스피드":80,"시야":86,"정확도":0,"볼컨트롤":89,"드리블기술":88,"밸런스":88,"볼소유력":80,"1:1마크":80,"집중력":89,"적극성":75,"가로채기":85,"체력":89,"스피드":86,"몸싸움":93,"GK반응":76,"GK선방":87,"GK1대1":83,"_foot":"R"},"김나연":{"결정력":76,"슛파워":85,"위치선정":70,"콜타이밍":83,"짧은패스":60,"패스스피드":79,"시야":76,"정확도":0,"볼컨트롤":90,"드리블기술":76,"밸런스":82,"볼소유력":75,"1:1마크":72,"집중력":78,"적극성":78,"가로채기":75,"체력":86,"스피드":80,"몸싸움":83,"GK반응":94,"GK선방":94,"GK1대1":86,"_foot":"L"},"이가희":{"결정력":75,"슛파워":60,"위치선정":68,"콜타이밍":45,"짧은패스":65,"패스스피드":76,"시야":70,"정확도":0,"볼컨트롤":75,"드리블기술":68,"밸런스":50,"볼소유력":60,"1:1마크":42,"집중력":53,"적극성":60,"가로채기":50,"체력":81,"스피드":68,"몸싸움":59,"GK반응":50,"GK선방":65,"GK1대1":45,"_foot":"R","_status":"honor"},"최혜린":{"결정력":83,"슛파워":86,"위치선정":70,"콜타이밍":85,"짧은패스":75,"패스스피드":85,"시야":80,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":81,"1:1마크":53,"집중력":67,"적극성":65,"가로채기":84,"체력":93,"스피드":90,"몸싸움":78,"GK반응":67,"GK선방":81,"GK1대1":76,"_foot":"R","_status":"honor"},"장예나":{"결정력":80,"슛파워":81,"위치선정":60,"콜타이밍":62,"짧은패스":72,"패스스피드":75,"시야":72,"정확도":0,"볼컨트롤":70,"드리블기술":80,"밸런스":32,"볼소유력":68,"1:1마크":50,"집중력":70,"적극성":62,"가로채기":80,"체력":90,"스피드":93,"몸싸움":48,"GK반응":85,"GK선방":85,"GK1대1":75,"_foot":"R"},"여현진":{"결정력":80,"슛파워":80,"위치선정":85,"콜타이밍":35,"짧은패스":50,"패스스피드":75,"시야":60,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":80,"1:1마크":45,"집중력":55,"적극성":50,"가로채기":74,"체력":80,"스피드":85,"몸싸움":75,"GK반응":30,"GK선방":20,"GK1대1":15,"_foot":"R","_status":"rest"},"조안나":{"결정력":30,"슛파워":20,"위치선정":30,"콜타이밍":10,"짧은패스":40,"패스스피드":40,"시야":38,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":45,"볼소유력":20,"1:1마크":70,"집중력":73,"적극성":84,"가로채기":34,"체력":67,"스피드":72,"몸싸움":50,"GK반응":7,"GK선방":15,"GK1대1":18,"_foot":"R"},"김시정":{"결정력":70,"슛파워":70,"위치선정":60,"콜타이밍":17,"짧은패스":55,"패스스피드":78,"시야":50,"정확도":0,"볼컨트롤":82,"드리블기술":70,"밸런스":52,"볼소유력":82,"1:1마크":35,"집중력":69,"적극성":80,"가로채기":79,"체력":72,"스피드":91,"몸싸움":72,"GK반응":40,"GK선방":37,"GK1대1":32,"_foot":"R"},"엄다정":{"결정력":68,"슛파워":65,"위치선정":71,"콜타이밍":54,"짧은패스":68,"패스스피드":58,"시야":78,"정확도":0,"볼컨트롤":80,"드리블기술":67,"밸런스":51,"볼소유력":70,"1:1마크":60,"집중력":80,"적극성":63,"가로채기":70,"체력":62,"스피드":65,"몸싸움":68,"GK반응":35,"GK선방":58,"GK1대1":65,"_foot":"R"},"이윤지":{"결정력":65,"슛파워":85,"위치선정":40,"콜타이밍":15,"짧은패스":52,"패스스피드":70,"시야":50,"정확도":0,"볼컨트롤":60,"드리블기술":62,"밸런스":70,"볼소유력":78,"1:1마크":75,"집중력":85,"적극성":83,"가로채기":65,"체력":94,"스피드":88,"몸싸움":96,"GK반응":45,"GK선방":62,"GK1대1":60,"_foot":"R"},"김하경":{"결정력":40,"슛파워":30,"위치선정":60,"콜타이밍":0,"짧은패스":70,"패스스피드":65,"시야":45,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":40,"볼소유력":30,"1:1마크":40,"집중력":60,"적극성":20,"가로채기":35,"체력":43,"스피드":35,"몸싸움":30,"GK반응":65,"GK선방":68,"GK1대1":62,"_foot":"R","_status":"rest"},"김민지":{"결정력":42,"슛파워":77,"위치선정":40,"콜타이밍":0,"짧은패스":60,"패스스피드":60,"시야":30,"정확도":0,"볼컨트롤":50,"드리블기술":40,"밸런스":50,"볼소유력":30,"1:1마크":68,"집중력":74,"적극성":58,"가로채기":50,"체력":49,"스피드":89,"몸싸움":80,"GK반응":62,"GK선방":70,"GK1대1":31,"_foot":"R"},"안주현":{"결정력":64,"슛파워":50,"위치선정":42,"콜타이밍":0,"짧은패스":67,"패스스피드":40,"시야":40,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":51,"볼소유력":30,"1:1마크":30,"집중력":50,"적극성":50,"가로채기":45,"체력":75,"스피드":60,"몸싸움":52,"GK반응":20,"GK선방":30,"GK1대1":42,"_foot":"R"},"장하라":{"결정력":60,"슛파워":40,"위치선정":35,"콜타이밍":0,"짧은패스":50,"패스스피드":40,"시야":20,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":50,"볼소유력":20,"1:1마크":30,"집중력":40,"적극성":40,"가로채기":50,"체력":70,"스피드":51,"몸싸움":55,"GK반응":30,"GK선방":35,"GK1대1":40,"_foot":"R"},"장하현":{"결정력":28,"슛파워":10,"위치선정":10,"콜타이밍":0,"짧은패스":21,"패스스피드":20,"시야":20,"정확도":0,"볼컨트롤":20,"드리블기술":10,"밸런스":29,"볼소유력":10,"1:1마크":18,"집중력":25,"적극성":10,"가로채기":15,"체력":40,"스피드":50,"몸싸움":62,"GK반응":8,"GK선방":20,"GK1대1":10,"_foot":"R"},"김소연":{"결정력":55,"슛파워":36,"위치선정":65,"콜타이밍":0,"짧은패스":50,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":30,"밸런스":35,"볼소유력":10,"1:1마크":5,"집중력":35,"적극성":9,"가로채기":30,"체력":38,"스피드":40,"몸싸움":29,"GK반응":21,"GK선방":35,"GK1대1":15,"_foot":"R"},"김리원":{"결정력":25,"슛파워":20,"위치선정":2,"콜타이밍":0,"짧은패스":30,"패스스피드":20,"시야":5,"정확도":0,"볼컨트롤":20,"드리블기술":5,"밸런스":20,"볼소유력":10,"1:1마크":3,"집중력":17,"적극성":5,"가로채기":20,"체력":20,"스피드":30,"몸싸움":40,"GK반응":15,"GK선방":25,"GK1대1":15,"_foot":"R"},"조훈지":{"결정력":39,"슛파워":60,"위치선정":5,"콜타이밍":0,"짧은패스":26,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":5,"밸런스":18,"볼소유력":25,"1:1마크":10,"집중력":20,"적극성":13,"가로채기":15,"체력":30,"스피드":52,"몸싸움":38,"GK반응":2,"GK선방":3,"GK1대1":3,"_foot":"R"}};
+// 관리자 전용: 위 데이터를 member_stats2에 반영 (기존 값 있으면 덮어씀 확인)
+function importStatsFromCSV(){
+  if(adminLevel()!==1){ alert('관리자만 사용할 수 있어요.'); return; }
+  const names=Object.keys(WAVE_STAT_IMPORT);
+  if(!confirm(names.length+'명의 스탯을 가져올까요?\n(이미 입력된 값은 덮어씁니다)')) return;
+  let done=0;
+  names.forEach(nm=>{
+    const src=WAVE_STAT_IMPORT[nm];
+    const rec={};
+    SR_KEYS.forEach(k=>{ rec[k]=Math.max(0,Math.min(SR_MAX,parseInt(src[k]||0,10)||0)); });
+    if(src._foot) rec._foot=src._foot;
+    if(src._status) rec._status=src._status;
+    rec._ts=Date.now();
+    ROOT.child('member_stats2/'+statKey(nm)).set(rec);
+    done++;
+  });
+  alert(done+'명 스탯을 가져왔어요! 스탯/순위 메뉴에서 확인해 보세요.');
+}
+
 // Firebase 경로 안전화 (기존 statKey 재사용)
 // 내 정밀스탯 가져오기 (없으면 전부 0)
 function getStats2(name){
@@ -4375,12 +4419,18 @@ function getStats2(name){
   SR_KEYS.forEach(k=>{ out[k]=Math.max(0,Math.min(SR_MAX,parseInt(s[k]||0,10)||0)); });
   return out;
 }
-// 하나라도 입력됐는지
-function hasAnyStat2(stats){ return SR_KEYS.some(k=>(parseInt(stats[k]||0,10)||0)>0); }
-// OVR: 22항목 평균 (0~99)
+// 회원 상태 뱃지 (휴식/명예) — member_stats2의 _status 기준
+function statStatusBadge(name){
+  const s=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  if(s._status==='rest') return '<span class="sr-badge rest">휴식중</span>';
+  if(s._status==='honor') return '<span class="sr-badge honor">명예회원</span>';
+  return '';
+}
+// OVR: 22항목 중 입력된(>0) 항목만 평균 (0~99)
 function statOVR2(stats){
-  let sum=0; SR_KEYS.forEach(k=>{ sum+=(parseInt(stats[k]||0,10)||0); });
-  return Math.round(sum/SR_KEYS.length);
+  let sum=0,cnt=0;
+  SR_KEYS.forEach(k=>{ const v=parseInt(stats[k]||0,10)||0; if(v>0){ sum+=v; cnt++; } });
+  return cnt? Math.round(sum/cnt) : 0;
 }
 // 그룹 평균 (0~99)
 function groupAvg2(stats,g){
@@ -4463,7 +4513,7 @@ function statRankSection(){
     const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="srank-num">${i+1}</span>`;
     return `<div class="srank-row${me_?' me':''}">
       <span class="srank-rank">${medal}</span>
-      <span class="srank-nm">${esc(r.name)}${me_?' <b>(나)</b>':''}</span>
+      <span class="srank-nm">${esc(r.name)}${me_?' <b>(나)</b>':''}${statStatusBadge(r.name)}</span>
       <span class="srank-ovr">${r.ovr}<span class="srank-ovr-max">/99</span></span>
     </div>`;
   }).join('');
