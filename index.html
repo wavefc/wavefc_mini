@@ -993,7 +993,7 @@
       <button class="tab-btn active" data-page="home" onclick="go('home',this)">홈</button>
       <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
       <button class="tab-btn" data-page="notice" onclick="go('notice',this)">공지사항</button>
-      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정·훈련일지<span class="lock" id="lk2">🔒</span></button>
+      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정/기록<span class="lock" id="lk2">🔒</span></button>
       <button class="tab-btn" data-page="diary" onclick="go('diary',this)" style="display:none;">훈련일지<span class="lock" id="lk1">🔒</span></button>
       <button class="tab-btn" data-page="snap" onclick="go('snap',this)">파도스냅</button>
       <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
@@ -1180,7 +1180,21 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<div class="modal-bg" id="calModalBg">
+  <div class="modal" style="width:340px;">
+    <div class="mh"><span>📅 일정 추가</span><span class="x" onclick="closeCalModal()">✕</span></div>
+    <div class="mb">
+      <label>날짜</label><input id="calMDate" type="date">
+      <label>종류</label>
+      <select id="calMType" style="width:100%;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:12px;padding:6px;border:1px solid #c9d6df;"></select>
+      <label>시간 <span style="color:#8aa;">(선택)</span></label><input id="calMTime" placeholder="예: 20:00-22:00">
+      <label>장소 <span style="color:#8aa;">(선택)</span></label><input id="calMPlace" placeholder="예: BJ풋살장, FC스퀘어">
+      <label>메모 <span style="color:#8aa;">(선택)</span></label><input id="calMMemo" placeholder="추가 안내사항">
+      <button class="go" onclick="saveCalFromModal()">일정 등록</button>
+      <div class="hint" id="calMHint"></div>
+    </div>
+  </div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 if(typeof firebase==='undefined'){
@@ -5160,10 +5174,10 @@ function pageDiary(){
   // 훈련일지는 일정 페이지에 통합됨 — 직접 진입 시 일정 페이지로 안내
   return `<div class="page-h">📝 훈련 일지</div>
     <div style="padding:16px;line-height:1.7;color:#5a7585;">
-      훈련일지는 <b>일정 · 훈련일지</b> 페이지로 합쳐졌어요.<br>
+      훈련일지는 <b>일정/기록</b> 페이지로 합쳐졌어요.<br>
       달력에서 <b>📝 표시된 날</b>을 누르면 그 날 일지가 열려요.
       <div style="margin-top:10px;">
-        <button class="qna-send sm" onclick="go('cal', document.querySelector('[data-page=\\'cal\\']'))">일정 · 훈련일지로 가기</button>
+        <button class="qna-send sm" onclick="go('cal', document.querySelector('[data-page=\\'cal\\']'))">일정/기록으로 가기</button>
       </div>
     </div>`;
 }
@@ -5533,22 +5547,22 @@ function pageCalendar(){
     const diaryBadge=dLogs.length
       ? `<div class="cal-diary-badge" title="이 날 훈련일지 보기" onclick="event.stopPropagation();openDiaryOnCal(${dLogs[0]._i})">📝 일지${dLogs.length>1?' '+dLogs.length:''}</div>`
       : '';
-    // 날짜 셀 클릭: 관리자는 일정추가, 그 외엔 일지 있으면 일지로
-    const cellClick = isExec
-      ? `onclick="openCalAdd('${key}')"`
-      : (dLogs.length ? `onclick="openDiaryOnCal(${dLogs[0]._i})" style="cursor:pointer;"` : '');
+    // 날짜 셀 클릭: 일지가 있으면 누구나 그 날 일지로 이동
+    const cellClick = dLogs.length ? `onclick="openDiaryOnCal(${dLogs[0]._i})" style="cursor:pointer;"` : '';
     cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
       <div class="cal-d">${d}</div>${evHtml}${diaryBadge}</div>`;
   }
 
   const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
 
-  return `<div class="page-h">📅 일정 · 훈련일지</div>
+  return `<div class="page-h">📅 일정/기록</div>
     <div class="cal-bar">
       <button onclick="calNav(-1)">◀</button>
       <b>${y}년 ${m+1}월</b>
       <button onclick="calNav(1)">▶</button>
-      <span style="margin-left:auto;font-size:12px;color:#8aa;">${isExec?'날짜 클릭 → 일정 추가':'📝 표시된 날 → 훈련일지'}</span>
+      ${isExec
+        ? `<button onclick="openCalAdd()" style="margin-left:auto;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;font-weight:700;background:var(--frame,#3f5a6e);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;">＋ 일정 추가</button>`
+        : `<span style="margin-left:auto;font-size:12px;color:#8aa;">📝 표시된 날 → 훈련일지</span>`}
     </div>
     <div class="cal-legend">${legend}
       <div style="margin-top:4px;">📍장소색:
@@ -5588,16 +5602,41 @@ function calNav(delta){
   if(calMonth>11){calMonth=0;calYear++;}
   renderPage('cal');
 }
+// 일정 추가 팝업 열기 — dateKey("YYYY-M-D") 미리 채움(없으면 오늘)
 function openCalAdd(dateKey){
   if(!canManage()) return;
-  const etype=prompt('일정 종류 (정기훈련/친선경기/특별훈련/대회/회식/기타)','정기훈련');
-  if(!etype) return;
-  const time=prompt('시간 (예: 20:00-22:00, 비워도 됨)','20:00-22:00')||'';
-  const place=prompt('장소 (예: 진해풋살장 / 달력에 함께 표시됩니다)','')||'';
-  const memo=prompt('메모 (선택)','')||'';
+  // 종류 드롭다운 채우기
+  const sel=document.getElementById('calMType');
+  sel.innerHTML=ETYPES.map(e=>`<option value="${e.k}">${e.k}</option>`).join('');
+  // 날짜 input은 "YYYY-MM-DD" 형식 필요 → 0채움
+  let d;
+  if(dateKey){ const p=dateKey.split('-'); d=`${p[0]}-${String(p[1]).padStart(2,'0')}-${String(p[2]).padStart(2,'0')}`; }
+  else { const t=new Date(); d=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+  document.getElementById('calMDate').value=d;
+  document.getElementById('calMTime').value='';
+  document.getElementById('calMPlace').value='';
+  document.getElementById('calMMemo').value='';
+  document.getElementById('calMHint').textContent='';
+  document.getElementById('calModalBg').classList.add('show');
+}
+function closeCalModal(){ document.getElementById('calModalBg').classList.remove('show'); }
+function saveCalFromModal(){
+  if(!canManage()) return;
+  const dVal=document.getElementById('calMDate').value; // "YYYY-MM-DD"
+  if(!dVal){ document.getElementById('calMHint').textContent='날짜를 선택하세요.'; return; }
+  const p=dVal.split('-').map(x=>parseInt(x,10));
+  const dateKey=`${p[0]}-${p[1]}-${p[2]}`; // 달력 저장 형식 "YYYY-M-D"
+  const etype=document.getElementById('calMType').value;
+  const time=document.getElementById('calMTime').value.trim();
+  const place=document.getElementById('calMPlace').value.trim();
+  const memo=document.getElementById('calMMemo').value.trim();
   const arr=DATA.calendar.slice();
-  arr.push({date:dateKey,etype:etype.trim(),time:time.trim(),place:place.trim(),memo:memo.trim(),ts:Date.now()});
+  arr.push({date:dateKey,etype:etype,time:time,place:place,memo:memo,ts:Date.now()});
   ROOT.child('calendar').set(arr);
+  closeCalModal();
+  // 추가한 달로 이동해서 바로 보이게
+  calYear=p[0]; calMonth=p[1]-1;
+  renderPage('cal');
 }
 function delCalEvent(i){
   if(!canManage()) return;
