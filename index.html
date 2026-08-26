@@ -356,6 +356,10 @@
     .cal-grid{grid-template-columns:0.72fr 0.72fr 2.1fr 0.72fr 0.72fr 0.72fr 0.72fr !important;}
     .cal-cell{min-height:58px;padding:2px;}
     .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
+    .cal-cell.has-diary{background:#f2f9ff;}
+    .cal-diary-badge{font-size:9px;font-weight:700;color:#2176a8;background:#e3f0fa;border-radius:5px;padding:1px 3px;margin-top:2px;display:inline-block;cursor:pointer;line-height:1.3;}
+    .cal-diary-badge:hover{background:#c9e3f5;}
+    .cal-diary-section{margin-top:8px;}
     /* 이벤트 카드: 글씨 확 작게, 세로로 쪼개지지 않게, 여백 최소화 */
     .cal-ev{font-size:8.5px !important;padding:2px 11px 2px 3px !important;line-height:1.25 !important;margin-bottom:1px !important;word-break:break-word !important;overflow-wrap:break-word !important;overflow:hidden;}
     .cal-ev-x{font-size:9px;top:1px;right:2px;}
@@ -989,8 +993,8 @@
       <button class="tab-btn active" data-page="home" onclick="go('home',this)">홈</button>
       <button class="tab-btn" data-page="rule" onclick="go('rule',this)">풋살규칙</button>
       <button class="tab-btn" data-page="notice" onclick="go('notice',this)">공지사항</button>
-      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정안내<span class="lock" id="lk2">🔒</span></button>
-      <button class="tab-btn" data-page="diary" onclick="go('diary',this)">훈련일지<span class="lock" id="lk1">🔒</span></button>
+      <button class="tab-btn" data-page="cal" onclick="go('cal',this)">일정·훈련일지<span class="lock" id="lk2">🔒</span></button>
+      <button class="tab-btn" data-page="diary" onclick="go('diary',this)" style="display:none;">훈련일지<span class="lock" id="lk1">🔒</span></button>
       <button class="tab-btn" data-page="snap" onclick="go('snap',this)">파도스냅</button>
       <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
       <button class="tab-btn" data-page="attend" onclick="go('attend',this)">출석현황<span class="lock" id="lk4">🔒</span></button>
@@ -3795,7 +3799,7 @@ function go(page,btn){
   currentPage=page;
   noticeEditing=null;
   diaryEditing=null;
-  if(page==='diary'){ diaryOpen=null; diaryPage=1; } // 훈련일지 진입 시 모두 접힌 상태·1페이지로 시작
+  if(page==='diary'||page==='cal'){ diaryOpen=null; diaryPage=1; } // 훈련일지 진입 시 모두 접힌 상태·1페이지로 시작
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='snap'){ snapWriting=false; snapEditing=null; snapOpen=null; }
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
@@ -5073,9 +5077,9 @@ function gotoNoticePost(i){
   setTimeout(()=>{ const c=document.getElementById('centerArea'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
 }
 function gotoDiaryPost(i){
-  const tab=document.querySelector('[data-page="diary"]');
-  go('diary', tab);
-  setTimeout(()=>{ diaryOpen=i; diaryPage=diaryPageOf(i); renderPage('diary'); const c=document.getElementById('centerArea'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+  const tab=document.querySelector('[data-page="cal"]');
+  go('cal', tab);
+  setTimeout(()=>{ openDiaryOnCal(i); }, 60);
 }
 function gotoSnapPost(ts){
   if(!canViewSnap()){ alert('파도스냅은 회원만 볼 수 있어요.'); return; }
@@ -5142,7 +5146,7 @@ function diaryPageOf(i){
   const pos=diaryVisibleList().findIndex(l=>l._i===i);
   return pos<0?1:Math.floor(pos/DIARY_PER)+1;
 }
-function goDiaryPage(p){ diaryPage=p; diaryOpen=null; renderPage('diary'); scrollToPageTop(); }
+function goDiaryPage(p){ diaryPage=p; diaryOpen=null; renderPage('cal'); scrollToPageTop(); }
 var diaryWriting=false; // 글쓰기 폼 펼침 여부
 var diaryEditing=null;  // 인라인 편집 중인 일지 인덱스
 var _diaryFiles=[];// 첨부 이미지 base64 배열(최대 4)
@@ -5153,6 +5157,18 @@ function diaryImgs(l){
   return [];
 }
 function pageDiary(){
+  // 훈련일지는 일정 페이지에 통합됨 — 직접 진입 시 일정 페이지로 안내
+  return `<div class="page-h">📝 훈련 일지</div>
+    <div style="padding:16px;line-height:1.7;color:#5a7585;">
+      훈련일지는 <b>일정 · 훈련일지</b> 페이지로 합쳐졌어요.<br>
+      달력에서 <b>📝 표시된 날</b>을 누르면 그 날 일지가 열려요.
+      <div style="margin-top:10px;">
+        <button class="qna-send sm" onclick="go('cal', document.querySelector('[data-page=\\'cal\\']'))">일정 · 훈련일지로 가기</button>
+      </div>
+    </div>`;
+}
+// 훈련일지 목록 본문 (일정 페이지 하단에 그대로 삽입)
+function pageDiaryBody(){
   const isExec=canManage();
   const list=diaryVisibleList();
   // 10개씩 페이지 나누기 (1페이지=최신)
@@ -5226,7 +5242,7 @@ function pageDiary(){
     const cmtCnt=cmtTotal(l.comments);
     const likeCnt=l.likes||0;
     return `
-      <div class="diary-item">
+      <div class="diary-item" id="diaryItem_${l._i}">
         <div class="diary-head" onclick="toggleDiary(${l._i})">
           <span class="diary-arrow">${opened?'▼':'▶'}</span>
           <span class="diary-title">${l.secret?'🔒 ':''}${esc(title)}${newBadge(l.ts)}${imgs.length?' 📷':''} <span class="diary-like" id="dlike_${l._i}" style="${likeCnt?'':'display:none;'}">❤️${likeCnt}</span> <span class="diary-cmt" id="dcmt_${l._i}" style="${cmtCnt?'':'display:none;'}">💬${cmtCnt}</span></span>
@@ -5247,15 +5263,14 @@ function pageDiary(){
     diaryPager=`<div style="text-align:center;margin:14px 0 4px;">${btns}
       <div style="font-size:10px;color:#9aa6ae;margin-top:4px;">◀ 최신 · 과거 ▶ · 전체 ${totalD}개 (${curPageD}/${pageCountD} 페이지)</div></div>`;
   }
-  return `<div class="page-h">📝 훈련 일지</div>
-    ${writeToggle}
+  return `${writeToggle}
     ${writeBox}
     <div class="diary-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 훈련일지가 없어요.</div>'}</div>
     ${diaryPager}`;
 }
-function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderPage('diary'); }
-function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('diary'); }
-function toggleDiarySecret(i){ if(!canManage())return; const a=JSON.parse(JSON.stringify(DATA.logs)); a[i].secret=!a[i].secret; DATA.logs=a; ROOT.child('logs').set(a); renderPage('diary'); }
+function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderPage('cal'); }
+function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('cal'); }
+function toggleDiarySecret(i){ if(!canManage())return; const a=JSON.parse(JSON.stringify(DATA.logs)); a[i].secret=!a[i].secret; DATA.logs=a; ROOT.child('logs').set(a); renderPage('cal'); }
 function onDiaryFile(ev){
   const files=Array.from(ev.target.files||[]);
   if(!files.length)return;
@@ -5373,11 +5388,11 @@ function addDiary(){
   diaryEditing=null;
   DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
-  renderPage('diary');         // 저장 직후 화면 즉시 갱신
+  renderPage('cal');         // 저장 직후 화면 즉시 갱신
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function editDiary(i){ if(!canManage())return; diaryEditing=i; _diaryFiles=[]; renderPage('diary'); }
-function cancelDiary(){ diaryEditing=null; _diaryFiles=[]; renderPage('diary'); }
+function editDiary(i){ if(!canManage())return; diaryEditing=i; _diaryFiles=[]; renderPage('cal'); }
+function cancelDiary(){ diaryEditing=null; _diaryFiles=[]; renderPage('cal'); }
 function saveDiary(i){
   if(!canManage()) return;
   const a=JSON.parse(JSON.stringify(DATA.logs));
@@ -5392,7 +5407,7 @@ function saveDiary(i){
   diaryEditing=null; _diaryFiles=[];
   DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
-  renderPage('diary');         // 저장 직후 화면 즉시 갱신(편집폼 닫고 결과 표시)
+  renderPage('cal');         // 저장 직후 화면 즉시 갱신(편집폼 닫고 결과 표시)
 }
 function removeDiaryImgAt(i,k){
   if(!canManage()) return;
@@ -5467,6 +5482,27 @@ function shortPlace(p){
   if(/스퀘어|FC스퀘/i.test(s)) return '스퀘어';
   return s.slice(0,3);
 }
+// 어떤 날짜 문자열이든 "YYYY-M-D"(0채움 없음)로 정규화 — 캘린더 키와 맞추기 위함
+// 캘린더: "2026-6-2" / 훈련일지: "2026.08.20" 형태 → 둘 다 "2026-6-2" "2026-8-20"로
+function normDateKey(str){
+  if(!str) return '';
+  const p=String(str).split(/[.\-\/]/).map(x=>parseInt(x,10));
+  if(p.length<3||p.some(isNaN)) return '';
+  return `${p[0]}-${p[1]}-${p[2]}`;
+}
+// 날짜 키 → 그 날 훈련일지들(_i 보존). secret 일지는 관리자만.
+function diaryByDayMap(){
+  const isExec=canManage();
+  const map={};
+  DATA.logs.forEach((l,i)=>{
+    if(l.secret && !isExec) return;
+    const k=normDateKey(l.date);
+    if(!k) return;
+    (map[k]=map[k]||[]).push({...l,_i:i});
+  });
+  return map;
+}
+
 function pageCalendar(){
   const now=new Date();
   if(calYear===null){calYear=now.getFullYear();calMonth=now.getMonth();}
@@ -5482,26 +5518,37 @@ function pageCalendar(){
     const key=e.date; // "2026-6-14" 형태로 저장
     (byDay[key]=byDay[key]||[]).push({...e,_i:i});
   });
+  // 날짜별 훈련일지 매핑
+  const diaryMap=diaryByDayMap();
 
   let cells='';
   for(let i=0;i<startDow;i++) cells+='<div class="cal-cell empty"></div>';
   for(let d=1;d<=daysInMonth;d++){
     const key=`${y}-${m+1}-${d}`;
     const evs=byDay[key]||[];
+    const dLogs=diaryMap[key]||[];
     const dow=new Date(y,m,d).getDay();
     const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(e.time)+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span class="cal-ev-x" onclick="event.stopPropagation();delCalEvent(${e._i})">×</span>`:''}</div>`).join('');
-    cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''}" ${isExec?`onclick="openCalAdd('${key}')"`:''}>
-      <div class="cal-d">${d}</div>${evHtml}</div>`;
+    // 그 날 일지가 있으면 📝 배지 — 클릭 시 아래 일지로 이동/펼침
+    const diaryBadge=dLogs.length
+      ? `<div class="cal-diary-badge" title="이 날 훈련일지 보기" onclick="event.stopPropagation();openDiaryOnCal(${dLogs[0]._i})">📝 일지${dLogs.length>1?' '+dLogs.length:''}</div>`
+      : '';
+    // 날짜 셀 클릭: 관리자는 일정추가, 그 외엔 일지 있으면 일지로
+    const cellClick = isExec
+      ? `onclick="openCalAdd('${key}')"`
+      : (dLogs.length ? `onclick="openDiaryOnCal(${dLogs[0]._i})" style="cursor:pointer;"` : '');
+    cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
+      <div class="cal-d">${d}</div>${evHtml}${diaryBadge}</div>`;
   }
 
   const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
 
-  return `<div class="page-h">📅 일정 안내</div>
+  return `<div class="page-h">📅 일정 · 훈련일지</div>
     <div class="cal-bar">
       <button onclick="calNav(-1)">◀</button>
       <b>${y}년 ${m+1}월</b>
       <button onclick="calNav(1)">▶</button>
-      <span style="margin-left:auto;font-size:12px;color:#8aa;">${isExec?'날짜 클릭 → 일정 추가':'일정은 임원·관리자만 등록'}</span>
+      <span style="margin-left:auto;font-size:12px;color:#8aa;">${isExec?'날짜 클릭 → 일정 추가':'📝 표시된 날 → 훈련일지'}</span>
     </div>
     <div class="cal-legend">${legend}
       <div style="margin-top:4px;">📍장소색:
@@ -5519,7 +5566,21 @@ function pageCalendar(){
       <div class="place-row"><b style="color:#2176a8;">내서스포츠</b> 마산회원구 내서읍 호원로 177</div>
       <div class="place-row"><b style="color:#e84a8a;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
     </div>
-    <div class="board-react-wrap"><div class="board-react-h">💬 이번 달도 뜨거운 활동을 위한 한마디 해주세요</div>${reactBox('calendar',0)}</div>`;
+    <div class="board-react-wrap"><div class="board-react-h">💬 이번 달도 뜨거운 활동을 위한 한마디 해주세요</div>${reactBox('calendar',0)}</div>
+    <div class="cal-diary-section" id="calDiarySection">
+      <div class="page-h" style="margin-top:22px;">📝 훈련 일지</div>
+      ${pageDiaryBody()}
+    </div>`;
+}
+// 달력에서 일지 배지 클릭 → 아래 일지 목록에서 해당 글 펼치고 스크롤
+function openDiaryOnCal(i){
+  diaryOpen=i;
+  diaryPage=diaryPageOf(i);
+  renderPage('cal');
+  setTimeout(()=>{
+    const el=document.getElementById('diaryItem_'+i)||document.getElementById('calDiarySection');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },60);
 }
 function calNav(delta){
   calMonth+=delta;
@@ -8630,9 +8691,8 @@ function pageSnapList(){
     </div>`;
   }).join('');
 
-  return `<div class="page-h">🌊 파도스냅</div>
+  return `<div class="page-h">🌊 파도스냅 <span style="font-size:11px;font-weight:400;color:#5a7585;">· 멤버 누구나 올릴 수 있어요 📷</span></div>
     ${snapIntroHtml()}
-    ${coverHtml}
     ${writeToggle}
     ${writeBox}
     <div class="snap-cards">${cards||'<div style="color:#8aa;padding:16px;text-align:center;">아직 올라온 스냅이 없어요. 첫 순간을 담아보세요 :)</div>'}</div>`;
