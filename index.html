@@ -1050,7 +1050,7 @@
       <button class="tab-btn tab-more" id="moreBtn" onclick="toggleMore()">더보기 <span id="moreArrow">▾</span></button>
       <div class="more-wrap" id="moreWrap">
         <button class="tab-btn" data-page="diary" onclick="go('diary',this)" style="display:none;">훈련일지<span class="lock" id="lk1">🔒</span></button>
-        <button class="tab-btn" data-page="rule" onclick="go('rule',this)">스탯/순위</button>
+        <button class="tab-btn" id="tabStat" data-page="rule" onclick="go('rule',this)">스탯/순위</button>
         <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
         <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
         <button class="tab-btn" data-page="snap" onclick="go('snap',this)">파도스냅</button>
@@ -3653,6 +3653,8 @@ function updateLocks(){
   ['lk1','lk2','lk3','lk6'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=show;});
   const lk5=document.getElementById('lk5'); if(lk5) lk5.style.display=isApproved()?'none':'inline';
   const lk4=document.getElementById('lk4'); if(lk4) lk4.style.display=canViewAttend()?'none':'inline';
+  // ⏸ 스탯/순위: 완성 전까지 관리자(대표)에게만 노출
+  const tabStat=document.getElementById('tabStat'); if(tabStat) tabStat.style.display=(adminLevel()===1)?'':'none';
 }
 
 // 사용자가 지금 글을 입력하는 중인지 감지 (입력 중이면 자동 재렌더를 미뤄 글 유실 방지)
@@ -4419,6 +4421,8 @@ function getStats2(name){
   SR_KEYS.forEach(k=>{ out[k]=Math.max(0,Math.min(SR_MAX,parseInt(s[k]||0,10)||0)); });
   return out;
 }
+// 하나라도 입력됐는지 (전부 0이면 미입력)
+function hasAnyStat2(stats){ return SR_KEYS.some(k=>(parseInt(stats[k]||0,10)||0)>0); }
 // 회원 상태 뱃지 (휴식/명예) — member_stats2의 _status 기준
 function statStatusBadge(name){
   const s=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
@@ -4557,6 +4561,14 @@ function statSlideEnd(key,val){ saveStat2(key,val); }
 // 숫자 직접 입력
 function statSetNum(key,val){ saveStat2(key,val); }
 function pageRule(){
+  // ⏸ 스탯/순위 완성 전까지 관리자(대표)만 접근
+  if(adminLevel()!==1){
+    return `<div class="page-h">📊 스탯 / 순위</div>
+      <div style="padding:40px 20px;text-align:center;color:#7b9cc4;line-height:1.8;">
+        🛠️ <b>준비 중이에요</b><br>
+        <span style="font-size:13px;color:#8aa;">더 멋지게 만들고 있어요. 곧 공개할게요!</span>
+      </div>`;
+  }
   const statSec=`<div class="page-h">📊 스탯 / 순위</div>${statRankSection()}
     <div class="srank-divider"></div>
     <div class="page-h" style="margin-top:18px;">📖 풋살력 테스트</div>`;
