@@ -1701,6 +1701,7 @@ function openAdminTools(){
         <button class="at-tab" id="attab_kb" onclick="adminToolsTab('kb')">🔹 QnA 지식베이스</button>
         <button class="at-tab" id="attab_quiz" onclick="adminToolsTab('quiz')">🔹 깜짝퀴즈 등록</button>
         <button class="at-tab" id="attab_stat" onclick="adminToolsTab('stat')">🔹 스탯 관리</button>
+        <button class="at-tab" id="attab_eval" onclick="adminToolsTab('eval')">🎖️ 감독 평가</button>
       </div>
       <div id="adminToolsBody" style="padding:14px 18px 20px;max-height:64vh;overflow-y:auto;"></div>
     </div>`;
@@ -1711,13 +1712,108 @@ function openAdminTools(){
 function closeAdminTools(){ const ov=document.getElementById('adminToolsOverlay'); if(ov) ov.remove(); }
 function adminToolsTab(tab){
   const body=document.getElementById('adminToolsBody'); if(!body) return;
-  ['bonus','kb','quiz','stat'].forEach(t=>{ const b=document.getElementById('attab_'+t); if(b) b.classList.toggle('on',t===tab); });
+  ['bonus','kb','quiz','stat','eval'].forEach(t=>{ const b=document.getElementById('attab_'+t); if(b) b.classList.toggle('on',t===tab); });
   if(tab==='bonus') body.innerHTML=adminToolsBonusHtml();
   else if(tab==='kb') body.innerHTML=adminToolsKbHtml();
   else if(tab==='quiz') body.innerHTML=adminToolsQuizHtml();
   else if(tab==='stat') body.innerHTML=adminToolsStatHtml();
+  else if(tab==='eval') body.innerHTML=adminToolsEvalHtml();
   if(tab==='kb') renderKbAdmin();
   if(tab==='quiz') renderQuizAdmin();
+  if(tab==='eval') renderEvalEditor();
+}
+// --- 🎖️ 감독 평가 탭 ---
+// 평가 대상 = 미니홈피 승인회원 + import 데이터의 원래 이름 (합집합)
+function evalTargetNames(){
+  const names=new Set();
+  const users=DATA.users||{};
+  Object.keys(users).forEach(uk=>{ const u=users[uk]; if(u&&u.approved===true&&u.name) names.add(u.name); });
+  if(typeof WAVE_STAT_IMPORT!=='undefined'){
+    Object.keys(WAVE_STAT_IMPORT).forEach(nm=>names.add(nm));
+  }
+  return Array.from(names).sort((a,b)=>a.localeCompare(b,'ko'));
+}
+let _evalSel=''; // 현재 평가 중인 멤버 이름
+function adminToolsEvalHtml(){
+  const names=evalTargetNames();
+  if(!_evalSel && names.length) _evalSel=names[0];
+  const opts=names.map(nm=>`<option value="${esc(nm)}"${nm===_evalSel?' selected':''}>${esc(nm)}</option>`).join('');
+  const today=new Date();
+  const ymd=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  return `<div style="font-size:13px;color:#3a5566;">
+    <div style="font-weight:700;margin-bottom:10px;">🎖️ 감독 평가 <span style="font-size:11px;color:#8aa;font-weight:400;">— 선수를 평가하고 날짜별로 확정 기록</span></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <select id="evalSel" onchange="evalPick(this.value)" style="flex:1;min-width:120px;padding:7px;border:1px solid #cfe6f5;border-radius:6px;font-family:inherit;font-size:13px;">${opts}</select>
+      <span id="evalOvr" style="font-size:13px;color:#2176a8;font-weight:700;"></span>
+    </div>
+    <div id="evalEditor"></div>
+  </div>`;
+}
+function evalPick(nm){ _evalSel=nm; renderEvalEditor(); }
+// 편집기: 선택 멤버의 22항목 슬라이더 + 날짜 + 확정
+function renderEvalEditor(){
+  const box=document.getElementById('evalEditor'); if(!box) return;
+  const nm=_evalSel; if(!nm){ box.innerHTML=''; return; }
+  const st=getStats2(nm);
+  const ovrEl=document.getElementById('evalOvr'); if(ovrEl) ovrEl.textContent='OVR '+statOVR2(st);
+  const groups=SR_GROUPS.map(g=>{
+    const rows=g.keys.map(k=>{
+      const v=st[k]||0; const safe=jsStr(k);
+      return `<div class="sr-row" data-ekey="${esc(k)}">
+        <span class="sr-name">${k}</span>
+        <button class="sr-btn" onclick="evalAdjust('${safe}',-1)">－</button>
+        <input class="sr-slider" type="range" min="0" max="100" value="${v}" oninput="evalSlide('${safe}',this.value)" onchange="evalSet('${safe}',this.value)">
+        <button class="sr-btn" onclick="evalAdjust('${safe}',1)">＋</button>
+        <input class="sr-num" type="number" min="0" max="100" value="${v}" onchange="evalSet('${safe}',this.value)">
+      </div>`;
+    }).join('');
+    return `<div class="sr-group"><div class="sr-ghead" style="border-color:${g.color};"><span class="sr-glabel" style="color:${g.color};">${g.label}</span><span class="sr-gavg">평균 ${groupAvg2(st,g)}</span></div>${rows}</div>`;
+  }).join('');
+  const today=new Date();
+  const ymd=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  // 기존 확정 이력 개수
+  const hist=(DATA.stat_history&&DATA.stat_history[statKey(nm)])||{};
+  const histCnt=Object.keys(hist).filter(k=>k!=='_ts').length;
+  box.innerHTML=`
+    <div class="sr-grid">${groups}</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #cfe6f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:12px;color:#5a7585;">확정 날짜(훈련일)</label>
+      <input type="date" id="evalDate" value="${ymd}" style="padding:6px;border:1px solid #cfe6f5;border-radius:6px;font-family:inherit;">
+      <button class="qna-send" onclick="evalConfirm()" style="padding:9px 18px;">✅ 확정 저장</button>
+      <span style="font-size:11px;color:#8aa;">지금까지 확정 ${histCnt}회</span>
+    </div>
+    <div style="font-size:11px;color:#8aa;margin-top:8px;line-height:1.6;">※ 확정하면 이 날짜의 총점(OVR)과 22항목이 기록돼요. 같은 날짜에 다시 확정하면 덮어써요.<br>※ 슬라이더만 조정하고 확정 안 하면 그래프엔 안 남고, 현재 스탯만 바뀝니다.</div>`;
+}
+// 감독 평가값 저장 (member_stats2에 즉시 반영 = 공식 스탯)
+function evalSaveStat(key,val){
+  const nm=_evalSel; if(!nm) return;
+  let v=Math.max(0,Math.min(SR_MAX,parseInt(val,10)||0));
+  const cur=getStats2(nm);
+  // getStats2는 _foot/_status를 안 담으므로 원본에서 보존
+  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(nm)])||{};
+  cur[key]=v;
+  if(raw._foot) cur._foot=raw._foot;
+  if(raw._status) cur._status=raw._status;
+  cur._ts=Date.now();
+  ROOT.child('member_stats2/'+statKey(nm)).set(cur);
+}
+function evalAdjust(key,delta){ const st=getStats2(_evalSel); evalSaveStat(key,(st[key]||0)+delta); setTimeout(renderEvalEditor,150); }
+function evalSlide(key,val){ const box=document.getElementById('evalEditor'); if(!box) return; const row=box.querySelector('.sr-row[data-ekey="'+key+'"]'); if(row){ const n=row.querySelector('.sr-num'); if(n) n.value=val; } const o=document.getElementById('evalOvr'); /* 실시간 OVR은 저장 후 갱신 */ }
+function evalSet(key,val){ evalSaveStat(key,val); setTimeout(renderEvalEditor,150); }
+// 확정: 현재 스탯을 날짜별 이력으로 저장
+function evalConfirm(){
+  const nm=_evalSel; if(!nm){ alert('선수를 선택해 주세요.'); return; }
+  const dEl=document.getElementById('evalDate'); const date=dEl?dEl.value:'';
+  if(!date){ alert('확정 날짜를 선택해 주세요.'); return; }
+  const st=getStats2(nm);
+  const ovr=statOVR2(st);
+  const snap={ovr:ovr};
+  SR_KEYS.forEach(k=>{ snap[k]=st[k]||0; });
+  snap._ts=Date.now();
+  ROOT.child('stat_history/'+statKey(nm)+'/'+date).set(snap).then(()=>{
+    alert(nm+' 선수의 '+date+' 평가를 확정했어요! (OVR '+ovr+')');
+    renderEvalEditor();
+  }).catch(err=>{ alert('저장 오류: '+(err&&err.message||err)); });
 }
 // --- 스탯 관리 탭 ---
 function adminToolsStatHtml(){
@@ -3292,6 +3388,7 @@ ROOT.on('value',snap=>{
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
     member_stats:(v.member_stats&&typeof v.member_stats==='object'?v.member_stats:{}),
     member_stats2:(v.member_stats2&&typeof v.member_stats2==='object'?v.member_stats2:{}),
+    stat_history:(v.stat_history&&typeof v.stat_history==='object'?v.stat_history:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
