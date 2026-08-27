@@ -494,6 +494,10 @@
   .srank-wrap{display:flex;flex-direction:column;gap:14px;margin:8px 0 4px;}
   .srank-box{background:#f6fbff;border:1px solid #cfe6f5;border-radius:10px;padding:14px 16px;font-family:'Pretendard','Malgun Gothic',sans-serif;}
   .srank-h{font-size:15px;font-weight:700;color:#2176a8;margin-bottom:12px;}
+  .srank-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:0;}
+  .srank-toggle:hover{color:#3aa0d8;}
+  .srank-arrow{font-size:12px;color:#7b9cc4;font-weight:600;}
+  .sr-collapse{margin-top:12px;}
   .srank-sub{font-size:11px;font-weight:400;color:#8aa;margin-left:4px;}
   .srank-in-row{display:flex;align-items:center;gap:8px;margin:7px 0;}
   .srank-in-name{flex:0 0 52px;font-size:13px;color:#3a5566;font-weight:600;}
@@ -508,13 +512,13 @@
   .srank-lock{text-align:center;color:#3a5566;line-height:1.7;}
   .srank-mylabel{background:#eaf4fb;border-radius:7px;padding:7px 12px;font-size:13px;color:#2176a8;text-align:center;margin-bottom:10px;}
   .srank-mylabel b{font-size:15px;}
-  .srank-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;margin:3px 0;}
+  .srank-row{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:5px;margin:1px 0;}
   .srank-row.me{background:#fff3d9;border:1px solid #f5cf7a;}
-  .srank-rank{flex:0 0 30px;text-align:center;font-size:16px;}
-  .srank-num{display:inline-block;font-size:13px;color:#8aa;font-weight:700;}
-  .srank-nm{flex:1;font-size:14px;color:#3a5566;}
-  .srank-ovr{flex:0 0 auto;font-size:16px;font-weight:700;color:#2176a8;}
-  .srank-ovr-max{font-size:11px;color:#9aa6ae;font-weight:400;}
+  .srank-rank{flex:0 0 24px;text-align:center;font-size:13px;}
+  .srank-num{display:inline-block;font-size:11px;color:#8aa;font-weight:700;}
+  .srank-nm{flex:1;font-size:12.5px;color:#3a5566;}
+  .srank-ovr{flex:0 0 auto;font-size:14px;font-weight:700;color:#2176a8;}
+  .srank-ovr-max{font-size:10px;color:#9aa6ae;font-weight:400;}
   .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
   .sr-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
@@ -4394,7 +4398,7 @@ const SR_GROUPS=[
 ];
 // 전체 22개 항목 평면 리스트
 const SR_KEYS=SR_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
-const SR_MAX=99;
+const SR_MAX=100;
 // ── 출석표 CSV에서 변환한 초기 스탯 (관리자 1회 가져오기용) ──
 const WAVE_STAT_IMPORT={"김서영":{"결정력":78,"슛파워":86,"위치선정":72,"콜타이밍":85,"짧은패스":85,"패스스피드":73,"시야":80,"정확도":0,"볼컨트롤":79,"드리블기술":86,"밸런스":80,"볼소유력":83,"1:1마크":93,"집중력":92,"적극성":82,"가로채기":81,"체력":83,"스피드":92,"몸싸움":92,"GK반응":65,"GK선방":45,"GK1대1":82,"_foot":"R"},"박지예":{"결정력":84,"슛파워":87,"위치선정":85,"콜타이밍":90,"짧은패스":90,"패스스피드":78,"시야":92,"정확도":0,"볼컨트롤":92,"드리블기술":87,"밸런스":75,"볼소유력":87,"1:1마크":89,"집중력":90,"적극성":72,"가로채기":83,"체력":54,"스피드":80,"몸싸움":94,"GK반응":70,"GK선방":82,"GK1대1":80,"_foot":"B"},"조은비":{"결정력":78,"슛파워":90,"위치선정":72,"콜타이밍":88,"짧은패스":89,"패스스피드":76,"시야":83,"정확도":0,"볼컨트롤":83,"드리블기술":80,"밸런스":85,"볼소유력":90,"1:1마크":81,"집중력":87,"적극성":81,"가로채기":81,"체력":74,"스피드":82,"몸싸움":90,"GK반응":42,"GK선방":71,"GK1대1":68,"_foot":"R"},"장윤ㅎ":{"결정력":80,"슛파워":83,"위치선정":86,"콜타이밍":86,"짧은패스":83,"패스스피드":71,"시야":81,"정확도":0,"볼컨트롤":80,"드리블기술":86,"밸런스":45,"볼소유력":83,"1:1마크":90,"집중력":80,"적극성":81,"가로채기":82,"체력":79,"스피드":81,"몸싸움":81,"GK반응":93,"GK선방":95,"GK1대1":85,"_foot":"R"},"안시하":{"결정력":83,"슛파워":90,"위치선정":80,"콜타이밍":86,"짧은패스":81,"패스스피드":80,"시야":86,"정확도":0,"볼컨트롤":89,"드리블기술":88,"밸런스":88,"볼소유력":80,"1:1마크":80,"집중력":89,"적극성":75,"가로채기":85,"체력":89,"스피드":86,"몸싸움":93,"GK반응":76,"GK선방":87,"GK1대1":83,"_foot":"R"},"김나연":{"결정력":76,"슛파워":85,"위치선정":70,"콜타이밍":83,"짧은패스":60,"패스스피드":79,"시야":76,"정확도":0,"볼컨트롤":90,"드리블기술":76,"밸런스":82,"볼소유력":75,"1:1마크":72,"집중력":78,"적극성":78,"가로채기":75,"체력":86,"스피드":80,"몸싸움":83,"GK반응":94,"GK선방":94,"GK1대1":86,"_foot":"L"},"이가희":{"결정력":75,"슛파워":60,"위치선정":68,"콜타이밍":45,"짧은패스":65,"패스스피드":76,"시야":70,"정확도":0,"볼컨트롤":75,"드리블기술":68,"밸런스":50,"볼소유력":60,"1:1마크":42,"집중력":53,"적극성":60,"가로채기":50,"체력":81,"스피드":68,"몸싸움":59,"GK반응":50,"GK선방":65,"GK1대1":45,"_foot":"R","_status":"honor"},"최혜린":{"결정력":83,"슛파워":86,"위치선정":70,"콜타이밍":85,"짧은패스":75,"패스스피드":85,"시야":80,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":81,"1:1마크":53,"집중력":67,"적극성":65,"가로채기":84,"체력":93,"스피드":90,"몸싸움":78,"GK반응":67,"GK선방":81,"GK1대1":76,"_foot":"R","_status":"honor"},"장예나":{"결정력":80,"슛파워":81,"위치선정":60,"콜타이밍":62,"짧은패스":72,"패스스피드":75,"시야":72,"정확도":0,"볼컨트롤":70,"드리블기술":80,"밸런스":32,"볼소유력":68,"1:1마크":50,"집중력":70,"적극성":62,"가로채기":80,"체력":90,"스피드":93,"몸싸움":48,"GK반응":85,"GK선방":85,"GK1대1":75,"_foot":"R"},"여현진":{"결정력":80,"슛파워":80,"위치선정":85,"콜타이밍":35,"짧은패스":50,"패스스피드":75,"시야":60,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":80,"1:1마크":45,"집중력":55,"적극성":50,"가로채기":74,"체력":80,"스피드":85,"몸싸움":75,"GK반응":30,"GK선방":20,"GK1대1":15,"_foot":"R","_status":"rest"},"조안나":{"결정력":30,"슛파워":20,"위치선정":30,"콜타이밍":10,"짧은패스":40,"패스스피드":40,"시야":38,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":45,"볼소유력":20,"1:1마크":70,"집중력":73,"적극성":84,"가로채기":34,"체력":67,"스피드":72,"몸싸움":50,"GK반응":7,"GK선방":15,"GK1대1":18,"_foot":"R"},"김시정":{"결정력":70,"슛파워":70,"위치선정":60,"콜타이밍":17,"짧은패스":55,"패스스피드":78,"시야":50,"정확도":0,"볼컨트롤":82,"드리블기술":70,"밸런스":52,"볼소유력":82,"1:1마크":35,"집중력":69,"적극성":80,"가로채기":79,"체력":72,"스피드":91,"몸싸움":72,"GK반응":40,"GK선방":37,"GK1대1":32,"_foot":"R"},"엄다정":{"결정력":68,"슛파워":65,"위치선정":71,"콜타이밍":54,"짧은패스":68,"패스스피드":58,"시야":78,"정확도":0,"볼컨트롤":80,"드리블기술":67,"밸런스":51,"볼소유력":70,"1:1마크":60,"집중력":80,"적극성":63,"가로채기":70,"체력":62,"스피드":65,"몸싸움":68,"GK반응":35,"GK선방":58,"GK1대1":65,"_foot":"R"},"이윤지":{"결정력":65,"슛파워":85,"위치선정":40,"콜타이밍":15,"짧은패스":52,"패스스피드":70,"시야":50,"정확도":0,"볼컨트롤":60,"드리블기술":62,"밸런스":70,"볼소유력":78,"1:1마크":75,"집중력":85,"적극성":83,"가로채기":65,"체력":94,"스피드":88,"몸싸움":96,"GK반응":45,"GK선방":62,"GK1대1":60,"_foot":"R"},"김하경":{"결정력":40,"슛파워":30,"위치선정":60,"콜타이밍":0,"짧은패스":70,"패스스피드":65,"시야":45,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":40,"볼소유력":30,"1:1마크":40,"집중력":60,"적극성":20,"가로채기":35,"체력":43,"스피드":35,"몸싸움":30,"GK반응":65,"GK선방":68,"GK1대1":62,"_foot":"R","_status":"rest"},"김민지":{"결정력":42,"슛파워":77,"위치선정":40,"콜타이밍":0,"짧은패스":60,"패스스피드":60,"시야":30,"정확도":0,"볼컨트롤":50,"드리블기술":40,"밸런스":50,"볼소유력":30,"1:1마크":68,"집중력":74,"적극성":58,"가로채기":50,"체력":49,"스피드":89,"몸싸움":80,"GK반응":62,"GK선방":70,"GK1대1":31,"_foot":"R"},"안주현":{"결정력":64,"슛파워":50,"위치선정":42,"콜타이밍":0,"짧은패스":67,"패스스피드":40,"시야":40,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":51,"볼소유력":30,"1:1마크":30,"집중력":50,"적극성":50,"가로채기":45,"체력":75,"스피드":60,"몸싸움":52,"GK반응":20,"GK선방":30,"GK1대1":42,"_foot":"R"},"장하라":{"결정력":60,"슛파워":40,"위치선정":35,"콜타이밍":0,"짧은패스":50,"패스스피드":40,"시야":20,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":50,"볼소유력":20,"1:1마크":30,"집중력":40,"적극성":40,"가로채기":50,"체력":70,"스피드":51,"몸싸움":55,"GK반응":30,"GK선방":35,"GK1대1":40,"_foot":"R"},"장하현":{"결정력":28,"슛파워":10,"위치선정":10,"콜타이밍":0,"짧은패스":21,"패스스피드":20,"시야":20,"정확도":0,"볼컨트롤":20,"드리블기술":10,"밸런스":29,"볼소유력":10,"1:1마크":18,"집중력":25,"적극성":10,"가로채기":15,"체력":40,"스피드":50,"몸싸움":62,"GK반응":8,"GK선방":20,"GK1대1":10,"_foot":"R"},"김소연":{"결정력":55,"슛파워":36,"위치선정":65,"콜타이밍":0,"짧은패스":50,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":30,"밸런스":35,"볼소유력":10,"1:1마크":5,"집중력":35,"적극성":9,"가로채기":30,"체력":38,"스피드":40,"몸싸움":29,"GK반응":21,"GK선방":35,"GK1대1":15,"_foot":"R"},"김리원":{"결정력":25,"슛파워":20,"위치선정":2,"콜타이밍":0,"짧은패스":30,"패스스피드":20,"시야":5,"정확도":0,"볼컨트롤":20,"드리블기술":5,"밸런스":20,"볼소유력":10,"1:1마크":3,"집중력":17,"적극성":5,"가로채기":20,"체력":20,"스피드":30,"몸싸움":40,"GK반응":15,"GK선방":25,"GK1대1":15,"_foot":"R"},"조훈지":{"결정력":39,"슛파워":60,"위치선정":5,"콜타이밍":0,"짧은패스":26,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":5,"밸런스":18,"볼소유력":25,"1:1마크":10,"집중력":20,"적극성":13,"가로채기":15,"체력":30,"스피드":52,"몸싸움":38,"GK반응":2,"GK선방":3,"GK1대1":3,"_foot":"R"}};
 // 관리자 전용: 위 데이터를 member_stats2에 반영 (기존 값 있으면 덮어씀 확인)
@@ -4491,10 +4495,10 @@ function statRankSection(){
       return `<div class="sr-row" data-key="${esc(k)}">
         <span class="sr-name">${k}</span>
         <button class="sr-btn" onclick="statAdjust2('${safe}',-1)">－</button>
-        <input class="sr-slider" type="range" min="0" max="99" value="${v}"
+        <input class="sr-slider" type="range" min="0" max="100" value="${v}"
                oninput="statSlide('${safe}',this.value)" onchange="statSlideEnd('${safe}',this.value)">
         <button class="sr-btn" onclick="statAdjust2('${safe}',1)">＋</button>
-        <input class="sr-num" type="number" min="0" max="99" value="${v}"
+        <input class="sr-num" type="number" min="0" max="100" value="${v}"
                onchange="statSetNum('${safe}',this.value)">
       </div>`;
     }).join('');
@@ -4506,11 +4510,18 @@ function statRankSection(){
       ${rows}
     </div>`;
   }).join('');
+  const open = (typeof window._srInputOpen!=='undefined') ? window._srInputOpen : !entered;
   const inputBox=`<div class="srank-box">
-    <div class="srank-h">📝 내 스탯 입력 <span class="srank-sub">(0~99 · 본인만 수정 · 버튼/슬라이더/직접입력)</span></div>
-    <div class="sr-grid">${groupHtml}</div>
-    <div class="srank-myovr">내 종합점수(OVR) <b>${myOvr}</b> / 99</div>
-    ${entered?`<div class="srank-fb">${statFeedback2(myOvr)}</div>`:''}
+    <div class="srank-h srank-toggle" onclick="toggleStatInput()">
+      <span>📝 내 스탯 입력 <span class="srank-sub">(0~100 · 본인만 수정)</span></span>
+      <span class="srank-arrow">${open?'▲':'▼ 펼치기'}</span>
+    </div>
+    <div class="sr-collapse" style="${open?'':'display:none;'}">
+      <div class="sr-grid">${groupHtml}</div>
+      <div class="srank-myovr">내 종합점수(OVR) <b>${myOvr}</b> / 100</div>
+      ${entered?`<div class="srank-fb">${statFeedback2(myOvr)}</div>`:''}
+    </div>
+    ${open?'':`<div class="srank-myovr" style="margin-top:6px;padding-top:0;border:none;">내 OVR <b>${myOvr}</b> / 100 ${entered?'· 눌러서 수정':''}</div>`}
   </div>`;
   if(!entered){
     return `<div class="srank-wrap">
@@ -4525,7 +4536,7 @@ function statRankSection(){
     return `<div class="srank-row${me_?' me':''}">
       <span class="srank-rank">${medal}</span>
       <span class="srank-nm">${esc(r.name)}${me_?' <b>(나)</b>':''}${statStatusBadge(r.name)}</span>
-      <span class="srank-ovr">${r.ovr}<span class="srank-ovr-max">/99</span></span>
+      <span class="srank-ovr">${r.ovr}<span class="srank-ovr-max">/100</span></span>
     </div>`;
   }).join('');
   const rankBox=`<div class="srank-box">
@@ -4534,6 +4545,12 @@ function statRankSection(){
     ${rankRows}
   </div>`;
   return `<div class="srank-wrap">${inputBox}${rankBox}</div>`;
+}
+// 내 스탯 입력 접기/펼치기
+function toggleStatInput(){
+  window._srInputOpen = !((typeof window._srInputOpen!=='undefined')?window._srInputOpen:false);
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
 }
 // 저장 (본인만)
 function saveStat2(key,val){
