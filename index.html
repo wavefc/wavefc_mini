@@ -540,6 +540,14 @@
   .sd-podium-row.me{background:#fff3d9;border-radius:5px;font-weight:700;color:#c0562b;}
   .sd-podium-row b{color:#2176a8;}
   @media(max-width:760px){ .sd-big{font-size:28px;} }
+  /* 포지션별 점수 */
+  .sd-pos-row{display:flex;gap:6px;margin-top:6px;}
+  .sd-pos{flex:1;background:#f6fbff;border:1px solid #dcebf5;border-radius:9px;padding:8px 4px;text-align:center;}
+  .sd-pos.best{background:#eafaf0;border:1.5px solid #5cc98a;}
+  .sd-pos-score{font-size:20px;font-weight:800;color:#1a9d5a;line-height:1.1;}
+  .sd-pos-name{font-size:11px;color:#5a7585;margin-top:2px;font-weight:600;}
+  .sd-pos-crown{display:inline-block;background:#1a9d5a;color:#fff;font-size:8px;padding:0 4px;border-radius:6px;vertical-align:middle;}
+  @media(max-width:760px){ .sd-pos-score{font-size:16px;} .sd-pos-name{font-size:9px;} }
   .sr-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
@@ -4714,6 +4722,48 @@ function statFeedback2(ovr){
   return '👟 기초부터 차근차근. 꾸준함이 실력이 돼요!';
 }
 // 스탯/순위 섹션 전체 HTML
+// ===== 포지션별 종합점수 =====
+// 그룹키(SHO/PAS/DRI/DEF/PHY/GK) 평균 구하기
+function groupAvgByKey(stats,gkey){
+  const g=SR_GROUPS.find(x=>x.key===gkey); if(!g) return 0;
+  let s=0,c=0; g.keys.forEach(k=>{ const v=parseInt(stats[k]||0,10)||0; if(v>0){s+=v;c++;} });
+  return c?s/c:0;
+}
+// 포지션 가중치 (합 1.0)
+const POS_WEIGHTS={
+  '피보':   {SHO:0.45, DRI:0.25, PHY:0.20, PAS:0.10, DEF:0,   GK:0},
+  '아라':   {DRI:0.35, SHO:0.25, PHY:0.25, PAS:0.15, DEF:0,   GK:0},
+  '픽소':   {DEF:0.40, PAS:0.30, PHY:0.20, SHO:0.10, DRI:0,   GK:0},
+  '골레이로':{GK:0.80, PHY:0.10, PAS:0.10, SHO:0,    DRI:0,   DEF:0}
+};
+// 한 포지션의 점수
+function posScore(stats,pos){
+  const w=POS_WEIGHTS[pos]; if(!w) return 0;
+  let sum=0;
+  Object.keys(w).forEach(gk=>{ sum += groupAvgByKey(stats,gk)*w[gk]; });
+  return Math.round(sum);
+}
+// 주발 기반 아라 좌우 가점: 왼발=L 유리, 오른발=R 유리, 양발=동일
+function araSide(stats,name){
+  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  const foot=raw._foot||'R';
+  const base=posScore(stats,'아라');
+  // 주발 맞는 쪽 +2, 반대쪽 -0 (양발이면 둘 다 base)
+  if(foot==='B') return {L:base, R:base};
+  if(foot==='L') return {L:base+2, R:base};
+  return {L:base, R:base+2}; // 오른발
+}
+// 전체 포지션 점수 세트
+function allPosScores(stats,name){
+  const ara=araSide(stats,name);
+  return [
+    {pos:'피보',   label:'피보',    score:posScore(stats,'피보')},
+    {pos:'아라L',  label:'아라(L)', score:ara.L},
+    {pos:'아라R',  label:'아라(R)', score:ara.R},
+    {pos:'픽소',   label:'픽소',    score:posScore(stats,'픽소')},
+    {pos:'골레이로',label:'골레이로',score:posScore(stats,'골레이로')}
+  ];
+}
 // 팀 평균보다 낮은 약점 2~3개 (과제 대상)
 function statWeakness(myStats){
   const avg=statTeamAvgByKey();
@@ -4822,6 +4872,16 @@ function statRankSection(){
   if(myRankIdx>=3){
     myPodiumExtra=`<div class="sd-podium-row me"><span>${myRank}위 ${esc(myName)}</span><b>${myOvr}</b></div>`;
   }
+  // 포지션별 점수
+  const posScores=allPosScores(myStats,myName);
+  const bestPos=posScores.reduce((a,b)=>b.score>a.score?b:a,posScores[0]);
+  const posHtml=posScores.map(p=>{
+    const isBest=(p.label===bestPos.label);
+    return `<div class="sd-pos${isBest?' best':''}">
+      <div class="sd-pos-score">${p.score}</div>
+      <div class="sd-pos-name">${p.label}${isBest?' <span class="sd-pos-crown">최적</span>':''}</div>
+    </div>`;
+  }).join('');
   const dashboard=`<div class="sd-grid">
     <div class="sd-card sd-small">
       <div class="sd-label">평가지표 📊</div>
@@ -4834,6 +4894,10 @@ function statRankSection(){
       <div class="sd-unit">/ ${total}명</div>
     </div>
     <div class="sd-card sd-wide">
+      <div class="sd-label">⚽ 포지션별 종합점수 <span style="font-size:10px;color:#8aa;">(자리마다 점수가 달라져요)</span></div>
+      <div class="sd-pos-row">${posHtml}</div>
+    </div>
+    <div class="sd-card sd-wide">
       <div class="sd-label">📝 내 과제 <span style="font-size:10px;color:#8aa;">(약점 집중 연습)</span></div>
       <div class="sd-tasks">${taskHtml}</div>
     </div>
@@ -4844,7 +4908,7 @@ function statRankSection(){
       </div>
       <div id="sdGraphBody">${statGraphHtml(myName)}</div>
     </div>
-    <div class="sd-card sd-small">
+    <div class="sd-card sd-wide">
       <div class="sd-label">🏆 TOP 3</div>
       <div class="sd-podium">${podium}${myPodiumExtra}</div>
     </div>
