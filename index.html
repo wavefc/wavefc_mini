@@ -520,17 +520,19 @@
   .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
   /* 정밀 스탯 입력 (그룹/슬라이더/숫자) */
-  .sr-group{margin:10px 0 4px;}
+  .sr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;}
+  .sr-group{margin:4px 0;}
   .sr-ghead{display:flex;align-items:center;justify-content:space-between;border-left:4px solid #ccc;padding:2px 0 2px 8px;margin-bottom:4px;}
   .sr-glabel{font-size:13px;font-weight:700;}
   .sr-gavg{font-size:11px;color:#8aa;}
-  .sr-row{display:flex;align-items:center;gap:6px;margin:5px 0;}
-  .sr-name{flex:0 0 62px;font-size:12px;color:#3a5566;}
-  .sr-btn{flex:0 0 auto;width:24px;height:24px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:5px;cursor:pointer;font-size:14px;font-weight:700;}
+  .sr-row{display:flex;align-items:center;gap:4px;margin:5px 0;}
+  .sr-name{flex:0 0 52px;font-size:11.5px;color:#3a5566;}
+  .sr-btn{flex:0 0 auto;width:22px;height:22px;line-height:1;padding:0;border:1px solid #6ab8e8;background:#fff;color:#2176a8;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700;}
   .sr-btn:hover{background:#eaf4fb;}
-  .sr-slider{flex:1;min-width:60px;accent-color:#3aa0d8;cursor:pointer;}
-  .sr-num{flex:0 0 44px;width:44px;text-align:center;font-size:13px;font-weight:700;color:#2176a8;border:1px solid #cfe6f5;border-radius:5px;padding:3px 2px;font-family:inherit;}
+  .sr-slider{flex:1;min-width:36px;accent-color:#3aa0d8;cursor:pointer;}
+  .sr-num{flex:0 0 40px;width:40px;text-align:center;font-size:12.5px;font-weight:700;color:#2176a8;border:1px solid #cfe6f5;border-radius:5px;padding:3px 2px;font-family:inherit;}
   @media(max-width:760px){
+    .sr-grid{grid-template-columns:1fr;gap:6px;}
     .sr-name{flex:0 0 54px;font-size:11px;}
     .sr-slider{min-width:40px;}
     .sr-num{flex:0 0 40px;width:40px;}
@@ -3285,6 +3287,7 @@ ROOT.on('value',snap=>{
     _offsideFix1:(v._offsideFix1===true),
     _sampleQuizRemoved:(v._sampleQuizRemoved===true),
     member_stats:(v.member_stats&&typeof v.member_stats==='object'?v.member_stats:{}),
+    member_stats2:(v.member_stats2&&typeof v.member_stats2==='object'?v.member_stats2:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
@@ -4399,18 +4402,22 @@ function importStatsFromCSV(){
   if(adminLevel()!==1){ alert('관리자만 사용할 수 있어요.'); return; }
   const names=Object.keys(WAVE_STAT_IMPORT);
   if(!confirm(names.length+'명의 스탯을 가져올까요?\n(이미 입력된 값은 덮어씁니다)')) return;
-  let done=0;
-  names.forEach(nm=>{
+  const proms=names.map(nm=>{
     const src=WAVE_STAT_IMPORT[nm];
     const rec={};
     SR_KEYS.forEach(k=>{ rec[k]=Math.max(0,Math.min(SR_MAX,parseInt(src[k]||0,10)||0)); });
     if(src._foot) rec._foot=src._foot;
     if(src._status) rec._status=src._status;
     rec._ts=Date.now();
-    ROOT.child('member_stats2/'+statKey(nm)).set(rec);
-    done++;
+    return ROOT.child('member_stats2/'+statKey(nm)).set(rec);
   });
-  alert(done+'명 스탯을 가져왔어요! 스탯/순위 메뉴에서 확인해 보세요.');
+  Promise.all(proms).then(()=>{
+    alert(names.length+'명 스탯을 저장했어요! 스탯/순위 메뉴에서 확인해 보세요.');
+    // 관리자 도구 스탯 탭 새로고침 (저장 인원수 갱신)
+    try{ const b=document.getElementById('adminToolsBody'); if(b) b.innerHTML=adminToolsStatHtml(); }catch(e){}
+  }).catch(err=>{
+    alert('저장 중 오류가 났어요: '+(err&&err.message||err)+'\n다시 시도하거나, 새로고침 후 확인해 주세요.');
+  });
 }
 
 // Firebase 경로 안전화 (기존 statKey 재사용)
@@ -4501,7 +4508,7 @@ function statRankSection(){
   }).join('');
   const inputBox=`<div class="srank-box">
     <div class="srank-h">📝 내 스탯 입력 <span class="srank-sub">(0~99 · 본인만 수정 · 버튼/슬라이더/직접입력)</span></div>
-    ${groupHtml}
+    <div class="sr-grid">${groupHtml}</div>
     <div class="srank-myovr">내 종합점수(OVR) <b>${myOvr}</b> / 99</div>
     ${entered?`<div class="srank-fb">${statFeedback2(myOvr)}</div>`:''}
   </div>`;
