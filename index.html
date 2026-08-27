@@ -525,6 +525,9 @@
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
   /* 정밀 스탯 입력 (그룹/슬라이더/숫자) */
   .sr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;}
+  .sr-grid2{grid-template-columns:repeat(2,1fr)!important;}
+  .ev-xbtn{background:#eaf4fb;border:1px solid #9bc9e8;color:#2176a8;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .ev-xbtn:hover{background:#d7ebf9;}
   .sr-group{margin:4px 0;}
   .sr-ghead{display:flex;align-items:center;justify-content:space-between;border-left:4px solid #ccc;padding:2px 0 2px 8px;margin-bottom:4px;}
   .sr-glabel{font-size:13px;font-weight:700;}
@@ -537,6 +540,7 @@
   .sr-num{flex:0 0 40px;width:40px;text-align:center;font-size:12.5px;font-weight:700;color:#2176a8;border:1px solid #cfe6f5;border-radius:5px;padding:3px 2px;font-family:inherit;}
   @media(max-width:760px){
     .sr-grid{grid-template-columns:1fr;gap:6px;}
+    .sr-grid2{grid-template-columns:1fr!important;}
     .sr-name{flex:0 0 54px;font-size:11px;}
     .sr-slider{min-width:40px;}
     .sr-num{flex:0 0 40px;width:40px;}
@@ -1742,12 +1746,128 @@ function adminToolsEvalHtml(){
   const ymd=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   return `<div style="font-size:13px;color:#3a5566;">
     <div style="font-weight:700;margin-bottom:10px;">🎖️ 감독 평가 <span style="font-size:11px;color:#8aa;font-weight:400;">— 선수를 평가하고 날짜별로 확정 기록</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="ev-xbtn" onclick="evalExportCSV()">📥 엑셀(CSV) 내보내기</button>
+      <button class="ev-xbtn" onclick="document.getElementById('evalCsvFile').click()">📤 엑셀(CSV) 불러오기</button>
+      <button class="ev-xbtn" onclick="evalTogglePaste()">📋 복사/붙여넣기</button>
+      <input type="file" id="evalCsvFile" accept=".csv" style="display:none;" onchange="evalImportCSVFile(this)">
+    </div>
+    <div id="evalPasteBox" style="display:none;margin-bottom:12px;"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
       <select id="evalSel" onchange="evalPick(this.value)" style="flex:1;min-width:120px;padding:7px;border:1px solid #cfe6f5;border-radius:6px;font-family:inherit;font-size:13px;">${opts}</select>
       <span id="evalOvr" style="font-size:13px;color:#2176a8;font-weight:700;"></span>
     </div>
     <div id="evalEditor"></div>
   </div>`;
+}
+// CSV 컬럼 = 이름 + 22항목
+function evalCSVHeader(){ return ['이름'].concat(SR_KEYS); }
+// 내보내기: 평가대상 전원의 현재 스탯을 CSV로
+function evalExportCSV(){
+  const names=evalTargetNames();
+  const head=evalCSVHeader();
+  const lines=[head.join(',')];
+  names.forEach(nm=>{
+    const st=getStats2(nm);
+    const row=[csvCell(nm)].concat(SR_KEYS.map(k=>st[k]||0));
+    lines.push(row.join(','));
+  });
+  const csv='\ufeff'+lines.join('\r\n'); // BOM으로 엑셀 한글 깨짐 방지
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const today=new Date();
+  const ymd=today.getFullYear()+String(today.getMonth()+1).padStart(2,'0')+String(today.getDate()).padStart(2,'0');
+  a.href=url; a.download='WAVE_감독평가_'+ymd+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function csvCell(s){ s=String(s==null?'':s); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+// CSV 문자열 파싱 → 반영
+function evalApplyCSV(text){
+  try{
+    text=text.replace(/^\ufeff/,'');
+    const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+    if(lines.length<2){ alert('데이터가 없어요.'); return; }
+    const head=parseCsvLine(lines[0]);
+    const nameIdx=head.indexOf('이름');
+    if(nameIdx<0){ alert('첫 줄에 "이름" 컬럼이 없어요. 내보내기 한 파일을 사용해 주세요.'); return; }
+    // 각 항목 컬럼 위치
+    const colIdx={};
+    SR_KEYS.forEach(k=>{ colIdx[k]=head.indexOf(k); });
+    let applied=0;
+    const proms=[];
+    for(let i=1;i<lines.length;i++){
+      const cells=parseCsvLine(lines[i]);
+      const nm=(cells[nameIdx]||'').trim();
+      if(!nm) continue;
+      const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(nm)])||{};
+      const rec={};
+      SR_KEYS.forEach(k=>{
+        const ci=colIdx[k];
+        let v=(ci>=0 && cells[ci]!=null)?parseInt(String(cells[ci]).trim(),10):0;
+        rec[k]=Math.max(0,Math.min(SR_MAX,isNaN(v)?0:v));
+      });
+      if(raw._foot) rec._foot=raw._foot;
+      if(raw._status) rec._status=raw._status;
+      rec._ts=Date.now();
+      proms.push(ROOT.child('member_stats2/'+statKey(nm)).set(rec));
+      applied++;
+    }
+    Promise.all(proms).then(()=>{
+      alert(applied+'명 스탯을 반영했어요!');
+      renderEvalEditor();
+    }).catch(err=>{ alert('저장 오류: '+(err&&err.message||err)); });
+  }catch(e){ alert('CSV 읽기 오류: '+(e&&e.message||e)); }
+}
+// 한 줄 CSV 파싱 (따옴표 처리)
+function parseCsvLine(line){
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(q){
+      if(c==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===','){ out.push(cur); cur=''; }
+      else cur+=c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+// 파일 불러오기
+function evalImportCSVFile(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{ evalApplyCSV(String(e.target.result||'')); input.value=''; };
+  rd.onerror=()=>{ alert('파일을 읽지 못했어요.'); };
+  rd.readAsText(f,'utf-8');
+}
+// 복사/붙여넣기 박스 토글
+function evalTogglePaste(){
+  const box=document.getElementById('evalPasteBox'); if(!box) return;
+  if(box.style.display==='none'){
+    const names=evalTargetNames();
+    const head=evalCSVHeader().join('\t');
+    const rows=names.map(nm=>{ const st=getStats2(nm); return [nm].concat(SR_KEYS.map(k=>st[k]||0)).join('\t'); });
+    const tsv=[head].concat(rows).join('\n');
+    box.innerHTML=`<div style="font-size:11px;color:#8aa;margin-bottom:4px;">아래 표를 복사해 엑셀에 붙여넣거나, 엑셀에서 수정한 표를 붙여넣고 "반영"을 누르세요.</div>
+      <textarea id="evalPasteArea" style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid #cfe6f5;border-radius:6px;padding:6px;">${esc(tsv)}</textarea>
+      <button class="qna-send" onclick="evalApplyPaste()" style="margin-top:6px;padding:7px 16px;">붙여넣은 표 반영</button>`;
+    box.style.display='block';
+  }else{ box.style.display='none'; }
+}
+// 붙여넣기 표 반영 (TSV 또는 CSV 자동감지)
+function evalApplyPaste(){
+  const ta=document.getElementById('evalPasteArea'); if(!ta) return;
+  let text=ta.value||'';
+  // 탭 구분이면 콤마로 변환 (parseCsvLine이 콤마 기준)
+  if(text.indexOf('\t')>=0){
+    text=text.split(/\r?\n/).map(line=>line.split('\t').map(c=>csvCell(c)).join(',')).join('\n');
+  }
+  evalApplyCSV(text);
 }
 function evalPick(nm){ _evalSel=nm; renderEvalEditor(); }
 // 편집기: 선택 멤버의 22항목 슬라이더 + 날짜 + 확정
@@ -1775,7 +1895,7 @@ function renderEvalEditor(){
   const hist=(DATA.stat_history&&DATA.stat_history[statKey(nm)])||{};
   const histCnt=Object.keys(hist).filter(k=>k!=='_ts').length;
   box.innerHTML=`
-    <div class="sr-grid">${groups}</div>
+    <div class="sr-grid sr-grid2">${groups}</div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #cfe6f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <label style="font-size:12px;color:#5a7585;">확정 날짜(훈련일)</label>
       <input type="date" id="evalDate" value="${ymd}" style="padding:6px;border:1px solid #cfe6f5;border-radius:6px;font-family:inherit;">
