@@ -520,6 +520,26 @@
   .srank-ovr{flex:0 0 auto;font-size:14px;font-weight:700;color:#2176a8;}
   .srank-ovr-max{font-size:10px;color:#9aa6ae;font-weight:400;}
   .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
+  /* ===== 스탯 대시보드 (출석현황 스타일) ===== */
+  .sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .sd-card{background:#fff;border:1px solid #dcebf5;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .sd-small{text-align:center;display:flex;flex-direction:column;justify-content:center;}
+  .sd-wide{grid-column:1 / -1;}
+  .sd-label{font-size:12px;color:#5a7585;font-weight:700;margin-bottom:6px;}
+  .sd-big{font-size:34px;font-weight:800;color:#2176a8;line-height:1.1;}
+  .sd-unit{font-size:11px;color:#9aa6ae;}
+  .sd-tasks{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+  .sd-task{display:flex;align-items:center;gap:8px;font-size:13px;color:#3a5566;cursor:pointer;padding:6px 8px;background:#f6fbff;border-radius:7px;}
+  .sd-task input{width:16px;height:16px;accent-color:#3aa0d8;cursor:pointer;flex:0 0 auto;}
+  .sd-task.done .sd-task-txt{text-decoration:line-through;color:#aab;}
+  .sd-task-gap{font-size:11px;color:#8aa;font-weight:400;}
+  .sd-gbtn{background:#eaf4fb;border:1px solid #9bc9e8;color:#2176a8;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .sd-gbtn:hover{background:#d7ebf9;}
+  .sd-podium{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+  .sd-podium-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#3a5566;padding:3px 4px;}
+  .sd-podium-row.me{background:#fff3d9;border-radius:5px;font-weight:700;color:#c0562b;}
+  .sd-podium-row b{color:#2176a8;}
+  @media(max-width:760px){ .sd-big{font-size:28px;} }
   .sr-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
@@ -3509,6 +3529,7 @@ ROOT.on('value',snap=>{
     member_stats:(v.member_stats&&typeof v.member_stats==='object'?v.member_stats:{}),
     member_stats2:(v.member_stats2&&typeof v.member_stats2==='object'?v.member_stats2:{}),
     stat_history:(v.stat_history&&typeof v.stat_history==='object'?v.stat_history:{}),
+    member_tasks:(v.member_tasks&&typeof v.member_tasks==='object'?v.member_tasks:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
@@ -4693,6 +4714,36 @@ function statFeedback2(ovr){
   return '👟 기초부터 차근차근. 꾸준함이 실력이 돼요!';
 }
 // 스탯/순위 섹션 전체 HTML
+// 팀 평균보다 낮은 약점 2~3개 (과제 대상)
+function statWeakness(myStats){
+  const avg=statTeamAvgByKey();
+  const gaps=SR_KEYS.filter(k=>(myStats[k]||0)>0 || true).map(k=>({key:k, mine:myStats[k]||0, avg:avg[k]||0, gap:(myStats[k]||0)-(avg[k]||0)}));
+  // 팀평균보다 낮은 것만, 격차 큰 순
+  const below=gaps.filter(g=>g.gap<0).sort((a,b)=>a.gap-b.gap);
+  return below.slice(0,3);
+}
+// 능력치별 팀 평균 (입력자 대상)
+function statTeamAvgByKey(){
+  const rank=statRanking2();
+  const avg={};
+  SR_KEYS.forEach(k=>{
+    if(!rank.length){ avg[k]=0; return; }
+    let s=0,c=0; rank.forEach(r=>{ const v=r.stats[k]||0; if(v>0){s+=v;c++;} });
+    avg[k]=c?Math.round(s/c):0;
+  });
+  return avg;
+}
+// 과제 완료 체크 상태 (member_tasks/{이름}/{key}=true)
+function getMyTaskDone(){
+  const nm=myRealName();
+  return (DATA.member_tasks&&DATA.member_tasks[statKey(nm)])||{};
+}
+function toggleTask(key){
+  const nm=myRealName(); if(!nm) return;
+  const done=getMyTaskDone();
+  const cur=!done[key];
+  ROOT.child('member_tasks/'+statKey(nm)+'/'+statKey(key)).set(cur);
+}
 function statRankSection(){
   if(!isApproved()){
     return `<div class="srank-box" style="text-align:center;color:#8aa;padding:24px 12px;">🔒 로그인(회원 승인) 후 내 스탯과 순위를 볼 수 있어요.</div>`;
@@ -4746,22 +4797,78 @@ function statRankSection(){
       <div class="srank-box srank-lock">🏆 <b>내 스탯을 추가해야 실시간 순위가 보여요!</b><br><span style="font-size:12px;color:#8aa;">위 22개 항목을 입력해 주세요. 슬라이더를 드래그하거나 숫자를 바로 쳐도 돼요.</span></div>
     </div>`;
   }
-  // --- 순위 (간단 미리보기) ---
-  const rankRows=rank.map((r,i)=>{
+  // ===== 대시보드 카드 =====
+  const myRank=myRankIdx+1;
+  const total=rank.length;
+  // 과제
+  const weak=statWeakness(myStats);
+  const taskDone=getMyTaskDone();
+  const taskHtml = weak.length ? weak.map(w=>{
+    const done=!!taskDone[statKey(w.key)];
+    return `<label class="sd-task${done?' done':''}">
+      <input type="checkbox" ${done?'checked':''} onclick="toggleTask('${jsStr(w.key)}')">
+      <span class="sd-task-txt"><b>${w.key}</b> 연습 <span class="sd-task-gap">(내 ${w.mine} · 팀평균 ${w.avg})</span></span>
+    </label>`;
+  }).join('') : `<div style="color:#8aa;font-size:12px;text-align:center;padding:12px;">👍 약점이 없어요! 훌륭해요.</div>`;
+  // 점수 순위 1·2·3 (이름 숨김, 내 이름만)
+  const podium=rank.slice(0,3).map((r,i)=>{
     const me_=(r.name===myName);
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="srank-num">${i+1}</span>`;
-    return `<div class="srank-row${me_?' me':''}">
-      <span class="srank-rank">${medal}</span>
-      <span class="srank-nm">${esc(r.name)}${me_?' <b>(나)</b>':''}${statStatusBadge(r.name)}</span>
-      <span class="srank-ovr">${r.ovr}<span class="srank-ovr-max">/100</span></span>
-    </div>`;
+    const medal=['🥇','🥈','🥉'][i];
+    const label=me_?esc(r.name):'???';
+    return `<div class="sd-podium-row${me_?' me':''}"><span>${medal} ${label}</span><b>${r.ovr}</b></div>`;
   }).join('');
-  const rankBox=`<div class="srank-box">
-    <div class="srank-h">🏆 실시간 순위 <span class="srank-sub">(종합점수 높은 순 · ${rank.length}명)</span></div>
-    <div class="srank-mylabel">내 순위 <b>${myRankIdx+1}위</b> / ${rank.length}명</div>
-    ${rankRows}
+  // 내가 4위 밖이면 내 줄도 추가
+  let myPodiumExtra='';
+  if(myRankIdx>=3){
+    myPodiumExtra=`<div class="sd-podium-row me"><span>${myRank}위 ${esc(myName)}</span><b>${myOvr}</b></div>`;
+  }
+  const dashboard=`<div class="sd-grid">
+    <div class="sd-card sd-small">
+      <div class="sd-label">평가지표 📊</div>
+      <div class="sd-big">${myOvr}</div>
+      <div class="sd-unit">/ 100</div>
+    </div>
+    <div class="sd-card sd-small">
+      <div class="sd-label">나의 순위 🏅</div>
+      <div class="sd-big">${myRank}<span style="font-size:16px;">위</span></div>
+      <div class="sd-unit">/ ${total}명</div>
+    </div>
+    <div class="sd-card sd-wide">
+      <div class="sd-label">📝 내 과제 <span style="font-size:10px;color:#8aa;">(약점 집중 연습)</span></div>
+      <div class="sd-tasks">${taskHtml}</div>
+    </div>
+    <div class="sd-card sd-wide" id="sdGraphCard">
+      <div class="sd-label" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📈 성장 그래프</span>
+        <button class="sd-gbtn" onclick="toggleGraphMode()">${(window._sdGraphMode==='bar')?'📉 성장추이':'📊 팀평균비교'}</button>
+      </div>
+      <div id="sdGraphBody">${statGraphHtml(myName)}</div>
+    </div>
+    <div class="sd-card sd-small">
+      <div class="sd-label">🏆 TOP 3</div>
+      <div class="sd-podium">${podium}${myPodiumExtra}</div>
+    </div>
   </div>`;
-  return `<div class="srank-wrap">${inputBox}${rankBox}</div>`;
+  return `<div class="srank-wrap">${dashboard}${inputBox}</div>`;
+}
+// 그래프 모드 전환
+function toggleGraphMode(){
+  window._sdGraphMode=(window._sdGraphMode==='bar')?'line':'bar';
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 그래프 HTML (조각2에서 채움 - 임시)
+function statGraphHtml(name){
+  const mode=window._sdGraphMode||'line';
+  const hist=(DATA.stat_history&&DATA.stat_history[statKey(name)])||{};
+  const dates=Object.keys(hist).filter(k=>k!=='_ts').sort();
+  if(mode==='bar'){
+    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📊 팀평균 비교 막대<br><span style="font-size:11px;">(다음 단계에서 그려져요)</span></div>`;
+  }
+  if(dates.length<1){
+    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">아직 확정된 평가가 없어요.<br><span style="font-size:11px;">감독이 평가를 확정하면 여기에 성장 그래프가 그려져요.</span></div>`;
+  }
+  return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📈 성장 추이 (확정 ${dates.length}회)<br><span style="font-size:11px;">(다음 단계에서 그려져요)</span></div>`;
 }
 // 내 스탯 입력 접기/펼치기
 function toggleStatInput(){
