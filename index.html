@@ -554,6 +554,21 @@
   .sd-pos-name{font-size:11px;color:#5a7585;margin-top:2px;font-weight:600;}
   .sd-pos-crown{display:inline-block;background:#1a9d5a;color:#fff;font-size:8px;padding:0 4px;border-radius:6px;vertical-align:middle;}
   @media(max-width:760px){ .sd-pos-score{font-size:16px;} .sd-pos-name{font-size:9px;} }
+  /* 미니 경기장 */
+  .sd-field-wrap{max-width:220px;margin:8px auto 0;}
+  .sd-field{width:100%;height:auto;display:block;}
+  .sd-posfb{margin-top:10px;background:#f6fbff;border:1px solid #d6ebf7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#3a5566;line-height:1.5;}
+  /* 팀평균 비교 막대 */
+  .sd-bars{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .sd-bar-row{display:flex;align-items:center;gap:8px;}
+  .sd-bar-name{flex:0 0 44px;font-size:11px;font-weight:700;}
+  .sd-bar-track{flex:1;position:relative;height:14px;background:#eef4f8;border-radius:7px;overflow:hidden;}
+  .sd-bar-team{position:absolute;left:0;top:0;height:100%;background:#c9d4dc;border-radius:7px;}
+  .sd-bar-mine{position:absolute;left:0;top:0;height:100%;border-radius:7px;opacity:.9;}
+  .sd-bar-val{flex:0 0 52px;text-align:right;font-size:11px;}
+  .sd-bar-legend{margin-top:8px;font-size:11px;color:#8aa;text-align:center;}
+  .sd-bar-legend .lg-mine{color:#2176a8;}
+  .sd-bar-legend .lg-team{color:#c9d4dc;}
   .sr-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .sr-badge.rest{background:#fff2d6;color:#b7791f;border:1px solid #f0d089;}
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
@@ -4799,6 +4814,85 @@ function allPosScores(stats,name){
     {pos:'골레이로',label:'골레이로',score:posScore(stats,'골레이로')}
   ];
 }
+// 2-2 포메이션: 공격수·수비수·GK (공격=피보/아라 최고값, 수비=픽소)
+function posScores22(stats,name){
+  const ara=araSide(stats,name);
+  const atk=Math.max(posScore(stats,'피보'), ara.L, ara.R); // 공격 자리 최적값
+  const def=posScore(stats,'픽소');
+  const gk=posScore(stats,'골레이로');
+  return [
+    {pos:'공격',label:'공격수',score:atk},
+    {pos:'수비',label:'수비수',score:def},
+    {pos:'GK',  label:'골레이로',score:gk}
+  ];
+}
+// 최적 포지션 한 줄 피드백
+function bestPosFeedback(stats,name){
+  const all=allPosScores(stats,name);
+  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  const foot=raw._foot||'R';
+  const footTxt=foot==='B'?'양발':(foot==='L'?'왼발':'오른발');
+  let tip='';
+  if(best.pos==='피보') tip='슛 결정력이 좋아 최전방에서 골을 노리는 자리예요.';
+  else if(best.pos.indexOf('아라')>=0) tip='드리블·스피드가 좋아 측면을 흔드는 자리예요.';
+  else if(best.pos==='픽소') tip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리예요.';
+  else if(best.pos==='골레이로') tip='반응·선방이 좋아 골문을 지키는 자리예요.';
+  return `너는 <b>${best.label}</b>가 최적이야! (${best.score}점) — ${tip} <span style="color:#8aa;">[${footTxt}]</span>`;
+}
+// 미니 경기장 SVG (1-2-1 또는 2-2)
+function miniFieldHtml(stats,name){
+  const f=window._sdFormation||'1-2-1';
+  // 최적 자리 판정용
+  const all=allPosScores(stats,name);
+  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  let spots;
+  if(f==='2-2'){
+    const s=posScores22(stats,name);
+    const atk=s[0].score, def=s[1].score, gk=s[2].score;
+    spots=[
+      {x:32,y:26,label:'공격',score:atk},
+      {x:68,y:26,label:'공격',score:atk},
+      {x:32,y:60,label:'수비',score:def},
+      {x:68,y:60,label:'수비',score:def},
+      {x:50,y:86,label:'GK',score:gk}
+    ];
+  }else{
+    const ara=araSide(stats,name);
+    spots=[
+      {x:50,y:20,label:'피보',score:posScore(stats,'피보')},
+      {x:26,y:44,label:'아라L',score:ara.L},
+      {x:74,y:44,label:'아라R',score:ara.R},
+      {x:50,y:64,label:'픽소',score:posScore(stats,'픽소')},
+      {x:50,y:86,label:'GK',score:posScore(stats,'골레이로')}
+    ];
+  }
+  // 최고 점수 자리 강조
+  const maxScore=Math.max.apply(null,spots.map(s=>s.score));
+  const dots=spots.map(sp=>{
+    const isBest=(sp.score===maxScore);
+    return `<g>
+      <circle cx="${sp.x}" cy="${sp.y}" r="9" fill="${isBest?'#1a9d5a':'#2176a8'}" stroke="#fff" stroke-width="1.5"/>
+      <text x="${sp.x}" y="${sp.y+3}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">${sp.score}</text>
+      <text x="${sp.x}" y="${sp.y-11}" text-anchor="middle" font-size="5.5" font-weight="700" fill="#3a5566">${sp.label}</text>
+    </g>`;
+  }).join('');
+  return `<div class="sd-field-wrap">
+    <svg viewBox="0 0 100 100" class="sd-field">
+      <rect x="2" y="2" width="96" height="96" rx="4" fill="#3f8c50" stroke="#2e6e3d" stroke-width="1"/>
+      <line x1="2" y1="50" x2="98" y2="50" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <circle cx="50" cy="50" r="10" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <rect x="34" y="2" width="32" height="14" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <rect x="34" y="84" width="32" height="14" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      ${dots}
+    </svg>
+  </div>`;
+}
+function toggleFormation(){
+  window._sdFormation=(window._sdFormation==='2-2')?'1-2-1':'2-2';
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
 // 팀 평균보다 낮은 약점 2~3개 (과제 대상)
 function statWeakness(myStats){
   const avg=statTeamAvgByKey();
@@ -4899,16 +4993,9 @@ function statRankSection(){
   if(myRankIdx>=3){
     myPodiumExtra=`<div class="sd-podium-row me"><span>${myRank}위 ${esc(myName)}</span><b>${myOvr}</b></div>`;
   }
-  // 포지션별 점수
-  const posScores=allPosScores(myStats,myName);
-  const bestPos=posScores.reduce((a,b)=>b.score>a.score?b:a,posScores[0]);
-  const posHtml=posScores.map(p=>{
-    const isBest=(p.label===bestPos.label);
-    return `<div class="sd-pos${isBest?' best':''}">
-      <div class="sd-pos-score">${p.score}</div>
-      <div class="sd-pos-name">${p.label}${isBest?' <span class="sd-pos-crown">최적</span>':''}</div>
-    </div>`;
-  }).join('');
+  // 포지션별 점수 → 미니 경기장
+  const fieldHtml=miniFieldHtml(myStats,myName);
+  const posFeedback=bestPosFeedback(myStats,myName);
   const dashboard=`<div class="sd-grid">
     <div class="sd-card sd-small">
       <div class="sd-label">평가지표 📊</div>
@@ -4921,8 +5008,12 @@ function statRankSection(){
       <div class="sd-unit">/ ${total}명</div>
     </div>
     <div class="sd-card sd-wide">
-      <div class="sd-label">⚽ 포지션별 종합점수 <span style="font-size:10px;color:#8aa;">(자리마다 점수가 달라져요)</span></div>
-      <div class="sd-pos-row">${posHtml}</div>
+      <div class="sd-label" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>⚽ 포지션별 종합점수</span>
+        <button class="sd-gbtn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'▶ 1-2-1로':'▶ 2-2로'}</button>
+      </div>
+      <div id="sdFieldBody">${fieldHtml}</div>
+      <div class="sd-posfb">${posFeedback}</div>
     </div>
     <div class="sd-card sd-wide">
       <div class="sd-label">📝 내 과제 <span style="font-size:10px;color:#8aa;">(약점 집중 연습)</span></div>
@@ -4948,18 +5039,52 @@ function toggleGraphMode(){
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
 }
-// 그래프 HTML (조각2에서 채움 - 임시)
+// 그래프 HTML: bar=팀평균비교(지금 가능), line=성장추이(확정 데이터 필요)
 function statGraphHtml(name){
-  const mode=window._sdGraphMode||'line';
+  const mode=window._sdGraphMode||'bar';
   const hist=(DATA.stat_history&&DATA.stat_history[statKey(name)])||{};
   const dates=Object.keys(hist).filter(k=>k!=='_ts').sort();
   if(mode==='bar'){
-    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📊 팀평균 비교 막대<br><span style="font-size:11px;">(다음 단계에서 그려져요)</span></div>`;
+    // 6그룹: 나 vs 팀평균
+    const my=getStats2(name);
+    const teamAvg=statTeamAvgByKey();
+    const rows=SR_GROUPS.map(g=>{
+      const mine=groupAvgByKey(my,g.key);
+      let tsum=0,tc=0;
+      g.keys.forEach(k=>{ const a=teamAvg[k]||0; if(a>0){tsum+=a;tc++;} });
+      const team=tc?Math.round(tsum/tc):0;
+      const mineR=Math.round(mine);
+      const mp=Math.round(mineR/SR_MAX*100), tp=Math.round(team/SR_MAX*100);
+      return `<div class="sd-bar-row">
+        <span class="sd-bar-name" style="color:${g.color};">${g.label}</span>
+        <div class="sd-bar-track">
+          <div class="sd-bar-team" style="width:${tp}%;"></div>
+          <div class="sd-bar-mine" style="width:${mp}%;background:${g.color};"></div>
+        </div>
+        <span class="sd-bar-val"><b style="color:${g.color};">${mineR}</b> <span style="color:#b0bcc4;">/${team}</span></span>
+      </div>`;
+    }).join('');
+    return `<div class="sd-bars">${rows}</div>
+      <div class="sd-bar-legend"><span class="lg-mine">■</span> 나 &nbsp; <span class="lg-team">■</span> 팀평균</div>`;
   }
-  if(dates.length<1){
-    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">아직 확정된 평가가 없어요.<br><span style="font-size:11px;">감독이 평가를 확정하면 여기에 성장 그래프가 그려져요.</span></div>`;
+  // line = 성장 추이
+  if(dates.length<2){
+    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📈 성장 추이는 <b>2회 이상 확정</b>되면 그려져요.<br><span style="font-size:11px;">현재 확정 ${dates.length}회 — 감독 평가에서 날짜별로 확정해 주세요.</span></div>`;
   }
-  return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📈 성장 추이 (확정 ${dates.length}회)<br><span style="font-size:11px;">(다음 단계에서 그려져요)</span></div>`;
+  // 선그래프 SVG
+  const pts=dates.map(d=>({d:d, ovr:(hist[d]&&hist[d].ovr)||0}));
+  const W=280,H=120,pad=24;
+  const xs=(i)=> pad + (W-2*pad)*(pts.length===1?0.5:i/(pts.length-1));
+  const maxV=Math.max.apply(null,pts.map(p=>p.ovr)), minV=Math.min.apply(null,pts.map(p=>p.ovr));
+  const range=Math.max(10,maxV-minV);
+  const ys=(v)=> H-pad - (H-2*pad)*((v-(minV-2))/(range+4));
+  const line=pts.map((p,i)=>`${xs(i)},${ys(p.ovr)}`).join(' ');
+  const dotsG=pts.map((p,i)=>`<circle cx="${xs(i)}" cy="${ys(p.ovr)}" r="3" fill="#2176a8"/><text x="${xs(i)}" y="${ys(p.ovr)-7}" text-anchor="middle" font-size="9" font-weight="700" fill="#2176a8">${p.ovr}</text>`).join('');
+  const labels=pts.map((p,i)=>`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" font-size="7" fill="#8aa">${p.d.slice(5)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+    <polyline points="${line}" fill="none" stroke="#2176a8" stroke-width="2"/>
+    ${dotsG}${labels}
+  </svg>`;
 }
 // 내 스탯 입력 접기/펼치기
 function toggleStatInput(){
