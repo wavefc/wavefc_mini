@@ -529,20 +529,25 @@
   .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
   /* ===== 픽셀 감성 스탯 대시보드 ===== */
   .px-dash{display:flex;flex-direction:column;gap:10px;font-family:'DungGeunMo','Galmuri11','Pretendard','Malgun Gothic',sans-serif;}
+  .px-adminbar{display:flex;align-items:center;gap:8px;background:#fff8e6;border:2px solid #f0c674;padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:700;color:#b7791f;}
+  .px-adminbar select{border:1.5px solid #e0b050;border-radius:0;padding:3px 8px;font-family:inherit;font-size:12px;font-weight:700;color:#b7791f;background:#fff;cursor:pointer;}
   .px-box{background:#fff;border:2px solid #1a3a5c;border-radius:0;box-shadow:3px 3px 0 #b9cfe0;padding:12px;}
   .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
   .px-btn{background:#2176a8;color:#fff;border:2px solid #14415f;border-radius:0;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #14415f;}
   .px-btn:active{transform:translate(2px,2px);box-shadow:none;}
   /* 1단: 레이더(크게) + 오른쪽 정보 */
   .px-summary2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
-  .px-radar-big{display:flex;align-items:center;justify-content:center;padding:6px;}
-  .px-radar-big svg{width:100%;height:auto;max-height:240px;}
+  .px-radar-big{display:flex;flex-direction:column;}
+  .px-radar-inner{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;}
+  .px-radar-inner svg{width:100%;height:auto;max-height:230px;}
+  .px-hsub{font-size:9px;color:#a9b6be;font-weight:400;letter-spacing:-.3px;}
   .px-summary-right{display:flex;flex-direction:column;gap:8px;}
   .px-sr-top{display:grid;grid-template-columns:auto 1fr;gap:8px;}
   .px-sr-mid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;}
-  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:70px;}
+  .px-jersey{display:flex;flex-direction:column;min-width:78px;}
+  .px-jersey-in{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
   .px-jersey-name{font-size:11px;font-weight:800;color:#1a3a5c;text-align:center;}
-  .px-info{display:flex;flex-direction:column;justify-content:center;gap:5px;}
+  .px-info{display:flex;flex-direction:column;gap:5px;}
   .px-info-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;align-items:center;}
   .px-info-row span{color:#8aa;font-weight:700;}
   .px-info-row b{color:#1a3a5c;font-weight:800;}
@@ -5177,15 +5182,14 @@ function coachFeedback(stats,name,task){
 }
 // 과제 진행도 (member_tasks/{이름}/{key}_prog = 0~3)
 function taskProgress(key){
-  const nm=myRealName();
+  const nm=srTargetName();
   const t=(DATA.member_tasks&&DATA.member_tasks[statKey(nm)])||{};
   return parseInt(t[statKey(key)+'_prog']||0,10)||0;
 }
 function bumpTaskProgress(key){
-  const nm=myRealName(); if(!nm) return;
+  const nm=srTargetName(); if(!nm) return;
   let p=taskProgress(key); p=(p+1)%4; // 0→1→2→3→0
   ROOT.child('member_tasks/'+statKey(nm)+'/'+statKey(key)+'_prog').set(p).then(()=>{
-    // DATA 반영 후 다시 그리기
     if(!DATA.member_tasks) DATA.member_tasks={};
     if(!DATA.member_tasks[statKey(nm)]) DATA.member_tasks[statKey(nm)]={};
     DATA.member_tasks[statKey(nm)][statKey(key)+'_prog']=p;
@@ -5241,12 +5245,28 @@ function statRankSection(){
   if(!isApproved()){
     return `<div class="srank-box" style="text-align:center;color:#8aa;padding:24px 12px;">🔒 로그인(회원 승인) 후 내 스탯과 순위를 볼 수 있어요.</div>`;
   }
-  const myName=myRealName();
+  const isAdmin=(typeof adminLevel==='function' && adminLevel()===1);
+  // 관리자: 다른 선수 화면 보기 (_srViewAs)
+  let viewName=myRealName();
+  if(isAdmin && window._srViewAs) viewName=window._srViewAs;
+  const myName=viewName;
   const myStats=getStats2(myName);
   const entered=hasAnyStat2(myStats);
   const rank=statRanking2();
   const myRankIdx=rank.findIndex(r=>r.name===myName);
   const myOvr=statOVR2(myStats);
+  // 관리자용 선수 선택 바
+  let adminBar='';
+  if(isAdmin){
+    const names=rank.map(r=>r.name);
+    const opts=names.map(n=>`<option value="${esc(n)}"${n===myName?' selected':''}>${esc(n)}</option>`).join('');
+    const meName=myRealName();
+    adminBar=`<div class="px-adminbar">
+      <span>👑 관리자 보기</span>
+      <select onchange="srViewAs(this.value)">${opts}</select>
+      ${myName!==meName?`<button class="px-btn" onclick="srViewAs('')">내 화면으로</button>`:''}
+    </div>`;
+  }
   // --- 그룹별 능력치 (보기 전용) ---
   const groupHtml=SR_GROUPS.map(g=>{
     const ga=groupAvg2(myStats,g);
@@ -5311,14 +5331,21 @@ function statRankSection(){
   const dashboard=`<div class="px-dash">
     <!-- 1단: 레이더(크게, 왼쪽) + 오른쪽 정보 세로 -->
     <div class="px-summary2">
-      <div class="px-box px-radar-big">${hexRadarHtml(myStats,240,true)}</div>
+      <div class="px-box px-radar-big">
+        <div class="px-box-h">👟 능력치 <span class="px-hsub">*세부 능력치는 아래에 있어요</span></div>
+        <div class="px-radar-inner">${hexRadarHtml(myStats,240,true)}</div>
+      </div>
       <div class="px-summary-right">
         <div class="px-sr-top">
           <div class="px-box px-jersey">
-            ${jerseyImg(jno,54)}
-            <div class="px-jersey-name">${esc(myName)}${badge}</div>
+            <div class="px-box-h">🔢 백넘버</div>
+            <div class="px-jersey-in">
+              ${jerseyImg(jno,50)}
+              <div class="px-jersey-name">${esc(myName)}${badge}</div>
+            </div>
           </div>
           <div class="px-box px-info">
+            <div class="px-box-h">🤖 선수 정보</div>
             <div class="px-info-row"><span>No.</span><b>${jno||'-'}</b></div>
             <div class="px-info-row"><span>포지션</span><b>${bestP.label}</b></div>
             <div class="px-info-row"><span>주발</span>
@@ -5367,16 +5394,28 @@ function statRankSection(){
       </div>
     </div>
   </div>`;
-  return `<div class="srank-wrap">${dashboard}${inputBox}</div>`;
+  return `<div class="srank-wrap">${adminBar}${dashboard}${inputBox}</div>`;
 }
-// 컨디션 저장 (본인만)
+// 관리자: 선수 화면 전환
+function srViewAs(name){
+  window._srViewAs = name||'';
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 현재 조작 대상(관리자가 보는 선수 or 본인)
+function srTargetName(){
+  const isAdmin=(typeof adminLevel==='function' && adminLevel()===1);
+  if(isAdmin && window._srViewAs) return window._srViewAs;
+  return myRealName();
+}
+// 컨디션 저장
 function setMyCond(val){
-  const nm=myRealName(); if(!nm) return;
+  const nm=srTargetName(); if(!nm) return;
   ROOT.child('member_cond/'+statKey(nm)).set(val);
 }
-// 주발 저장 (본인만)
+// 주발 저장
 function setMyFoot(val){
-  const nm=myRealName(); if(!nm) return;
+  const nm=srTargetName(); if(!nm) return;
   ROOT.child('member_foot/'+statKey(nm)).set(val);
 }
 // 그래프 모드 전환
