@@ -555,9 +555,26 @@
   .sd-pos-crown{display:inline-block;background:#1a9d5a;color:#fff;font-size:8px;padding:0 4px;border-radius:6px;vertical-align:middle;}
   @media(max-width:760px){ .sd-pos-score{font-size:16px;} .sd-pos-name{font-size:9px;} }
   /* 미니 경기장 */
-  .sd-field-wrap{max-width:220px;margin:8px auto 0;}
+  .sd-field-wrap{max-width:180px;margin:0 auto;}
   .sd-field{width:100%;height:auto;display:block;}
   .sd-posfb{margin-top:10px;background:#f6fbff;border:1px solid #d6ebf7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#3a5566;line-height:1.5;}
+  /* 포지션 2단 (경기장 | 설명) */
+  .sd-pos-2col{display:flex;gap:12px;align-items:center;margin-top:6px;}
+  .sd-pos-field{flex:0 0 42%;}
+  .sd-pos-desc{flex:1;background:#f6fbff;border:1px solid #d6ebf7;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#3a5566;line-height:1.6;}
+  @media(max-width:760px){ .sd-pos-2col{flex-direction:column;} .sd-pos-field{flex:none;width:60%;} }
+  /* 요약 바 */
+  .sd-summary{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #dcebf5;border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .sd-sum-jersey{flex:0 0 auto;text-align:center;}
+  .sd-sum-name{font-size:12px;font-weight:700;color:#3a5566;margin-top:2px;}
+  .sd-sum-radar{flex:1;display:flex;justify-content:center;}
+  .sd-sum-nums{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;}
+  .sd-sum-ovr,.sd-sum-rank{background:#f6fbff;border:1px solid #dcebf5;border-radius:9px;padding:6px 12px;text-align:center;min-width:56px;}
+  .sd-sum-ovr span,.sd-sum-rank span{display:block;font-size:10px;color:#8aa;font-weight:700;}
+  .sd-sum-ovr b{font-size:22px;color:#e0662b;}
+  .sd-sum-rank b{font-size:22px;color:#2176a8;}
+  .sd-sum-rank small{font-size:12px;}
+  @media(max-width:760px){ .sd-summary{gap:6px;padding:10px;} .sd-sum-radar svg{width:110px;height:110px;} }
   /* 팀평균 비교 막대 */
   .sd-bars{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
   .sd-bar-row{display:flex;align-items:center;gap:8px;}
@@ -4696,7 +4713,7 @@ const SR_GROUPS=[
 const SR_KEYS=SR_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
 const SR_MAX=100;
 // ── 출석표 CSV에서 변환한 초기 스탯 (관리자 1회 가져오기용) ──
-const WAVE_STAT_IMPORT={"김서영":{"결정력":78,"슛파워":86,"위치선정":72,"콜타이밍":85,"짧은패스":85,"패스스피드":73,"시야":80,"정확도":0,"볼컨트롤":79,"드리블기술":86,"밸런스":80,"볼소유력":83,"1:1마크":93,"집중력":92,"적극성":82,"가로채기":81,"체력":83,"스피드":92,"몸싸움":92,"GK반응":65,"GK선방":45,"GK1대1":82,"_foot":"R"},"박지예":{"결정력":84,"슛파워":87,"위치선정":85,"콜타이밍":90,"짧은패스":90,"패스스피드":78,"시야":92,"정확도":0,"볼컨트롤":92,"드리블기술":87,"밸런스":75,"볼소유력":87,"1:1마크":89,"집중력":90,"적극성":72,"가로채기":83,"체력":54,"스피드":80,"몸싸움":94,"GK반응":70,"GK선방":82,"GK1대1":80,"_foot":"B"},"조은비":{"결정력":78,"슛파워":90,"위치선정":72,"콜타이밍":88,"짧은패스":89,"패스스피드":76,"시야":83,"정확도":0,"볼컨트롤":83,"드리블기술":80,"밸런스":85,"볼소유력":90,"1:1마크":81,"집중력":87,"적극성":81,"가로채기":81,"체력":74,"스피드":82,"몸싸움":90,"GK반응":42,"GK선방":71,"GK1대1":68,"_foot":"R"},"장윤ㅎ":{"결정력":80,"슛파워":83,"위치선정":86,"콜타이밍":86,"짧은패스":83,"패스스피드":71,"시야":81,"정확도":0,"볼컨트롤":80,"드리블기술":86,"밸런스":45,"볼소유력":83,"1:1마크":90,"집중력":80,"적극성":81,"가로채기":82,"체력":79,"스피드":81,"몸싸움":81,"GK반응":93,"GK선방":95,"GK1대1":85,"_foot":"R"},"안시하":{"결정력":83,"슛파워":90,"위치선정":80,"콜타이밍":86,"짧은패스":81,"패스스피드":80,"시야":86,"정확도":0,"볼컨트롤":89,"드리블기술":88,"밸런스":88,"볼소유력":80,"1:1마크":80,"집중력":89,"적극성":75,"가로채기":85,"체력":89,"스피드":86,"몸싸움":93,"GK반응":76,"GK선방":87,"GK1대1":83,"_foot":"R"},"김나연":{"결정력":76,"슛파워":85,"위치선정":70,"콜타이밍":83,"짧은패스":60,"패스스피드":79,"시야":76,"정확도":0,"볼컨트롤":90,"드리블기술":76,"밸런스":82,"볼소유력":75,"1:1마크":72,"집중력":78,"적극성":78,"가로채기":75,"체력":86,"스피드":80,"몸싸움":83,"GK반응":94,"GK선방":94,"GK1대1":86,"_foot":"L"},"이가희":{"결정력":75,"슛파워":60,"위치선정":68,"콜타이밍":45,"짧은패스":65,"패스스피드":76,"시야":70,"정확도":0,"볼컨트롤":75,"드리블기술":68,"밸런스":50,"볼소유력":60,"1:1마크":42,"집중력":53,"적극성":60,"가로채기":50,"체력":81,"스피드":68,"몸싸움":59,"GK반응":50,"GK선방":65,"GK1대1":45,"_foot":"R","_status":"honor"},"최혜린":{"결정력":83,"슛파워":86,"위치선정":70,"콜타이밍":85,"짧은패스":75,"패스스피드":85,"시야":80,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":81,"1:1마크":53,"집중력":67,"적극성":65,"가로채기":84,"체력":93,"스피드":90,"몸싸움":78,"GK반응":67,"GK선방":81,"GK1대1":76,"_foot":"R","_status":"honor"},"장예나":{"결정력":80,"슛파워":81,"위치선정":60,"콜타이밍":62,"짧은패스":72,"패스스피드":75,"시야":72,"정확도":0,"볼컨트롤":70,"드리블기술":80,"밸런스":32,"볼소유력":68,"1:1마크":50,"집중력":70,"적극성":62,"가로채기":80,"체력":90,"스피드":93,"몸싸움":48,"GK반응":85,"GK선방":85,"GK1대1":75,"_foot":"R"},"여현진":{"결정력":80,"슛파워":80,"위치선정":85,"콜타이밍":35,"짧은패스":50,"패스스피드":75,"시야":60,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":80,"1:1마크":45,"집중력":55,"적극성":50,"가로채기":74,"체력":80,"스피드":85,"몸싸움":75,"GK반응":30,"GK선방":20,"GK1대1":15,"_foot":"R","_status":"rest"},"조안나":{"결정력":30,"슛파워":20,"위치선정":30,"콜타이밍":10,"짧은패스":40,"패스스피드":40,"시야":38,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":45,"볼소유력":20,"1:1마크":70,"집중력":73,"적극성":84,"가로채기":34,"체력":67,"스피드":72,"몸싸움":50,"GK반응":7,"GK선방":15,"GK1대1":18,"_foot":"R"},"김시정":{"결정력":70,"슛파워":70,"위치선정":60,"콜타이밍":17,"짧은패스":55,"패스스피드":78,"시야":50,"정확도":0,"볼컨트롤":82,"드리블기술":70,"밸런스":52,"볼소유력":82,"1:1마크":35,"집중력":69,"적극성":80,"가로채기":79,"체력":72,"스피드":91,"몸싸움":72,"GK반응":40,"GK선방":37,"GK1대1":32,"_foot":"R"},"엄다정":{"결정력":68,"슛파워":65,"위치선정":71,"콜타이밍":54,"짧은패스":68,"패스스피드":58,"시야":78,"정확도":0,"볼컨트롤":80,"드리블기술":67,"밸런스":51,"볼소유력":70,"1:1마크":60,"집중력":80,"적극성":63,"가로채기":70,"체력":62,"스피드":65,"몸싸움":68,"GK반응":35,"GK선방":58,"GK1대1":65,"_foot":"R"},"이윤지":{"결정력":65,"슛파워":85,"위치선정":40,"콜타이밍":15,"짧은패스":52,"패스스피드":70,"시야":50,"정확도":0,"볼컨트롤":60,"드리블기술":62,"밸런스":70,"볼소유력":78,"1:1마크":75,"집중력":85,"적극성":83,"가로채기":65,"체력":94,"스피드":88,"몸싸움":96,"GK반응":45,"GK선방":62,"GK1대1":60,"_foot":"R"},"김하경":{"결정력":40,"슛파워":30,"위치선정":60,"콜타이밍":0,"짧은패스":70,"패스스피드":65,"시야":45,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":40,"볼소유력":30,"1:1마크":40,"집중력":60,"적극성":20,"가로채기":35,"체력":43,"스피드":35,"몸싸움":30,"GK반응":65,"GK선방":68,"GK1대1":62,"_foot":"R","_status":"rest"},"김민지":{"결정력":42,"슛파워":77,"위치선정":40,"콜타이밍":0,"짧은패스":60,"패스스피드":60,"시야":30,"정확도":0,"볼컨트롤":50,"드리블기술":40,"밸런스":50,"볼소유력":30,"1:1마크":68,"집중력":74,"적극성":58,"가로채기":50,"체력":49,"스피드":89,"몸싸움":80,"GK반응":62,"GK선방":70,"GK1대1":31,"_foot":"R"},"안주현":{"결정력":64,"슛파워":50,"위치선정":42,"콜타이밍":0,"짧은패스":67,"패스스피드":40,"시야":40,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":51,"볼소유력":30,"1:1마크":30,"집중력":50,"적극성":50,"가로채기":45,"체력":75,"스피드":60,"몸싸움":52,"GK반응":20,"GK선방":30,"GK1대1":42,"_foot":"R"},"장하라":{"결정력":60,"슛파워":40,"위치선정":35,"콜타이밍":0,"짧은패스":50,"패스스피드":40,"시야":20,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":50,"볼소유력":20,"1:1마크":30,"집중력":40,"적극성":40,"가로채기":50,"체력":70,"스피드":51,"몸싸움":55,"GK반응":30,"GK선방":35,"GK1대1":40,"_foot":"R"},"장하현":{"결정력":28,"슛파워":10,"위치선정":10,"콜타이밍":0,"짧은패스":21,"패스스피드":20,"시야":20,"정확도":0,"볼컨트롤":20,"드리블기술":10,"밸런스":29,"볼소유력":10,"1:1마크":18,"집중력":25,"적극성":10,"가로채기":15,"체력":40,"스피드":50,"몸싸움":62,"GK반응":8,"GK선방":20,"GK1대1":10,"_foot":"R"},"김소연":{"결정력":55,"슛파워":36,"위치선정":65,"콜타이밍":0,"짧은패스":50,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":30,"밸런스":35,"볼소유력":10,"1:1마크":5,"집중력":35,"적극성":9,"가로채기":30,"체력":38,"스피드":40,"몸싸움":29,"GK반응":21,"GK선방":35,"GK1대1":15,"_foot":"R"},"김리원":{"결정력":25,"슛파워":20,"위치선정":2,"콜타이밍":0,"짧은패스":30,"패스스피드":20,"시야":5,"정확도":0,"볼컨트롤":20,"드리블기술":5,"밸런스":20,"볼소유력":10,"1:1마크":3,"집중력":17,"적극성":5,"가로채기":20,"체력":20,"스피드":30,"몸싸움":40,"GK반응":15,"GK선방":25,"GK1대1":15,"_foot":"R"},"조훈지":{"결정력":39,"슛파워":60,"위치선정":5,"콜타이밍":0,"짧은패스":26,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":5,"밸런스":18,"볼소유력":25,"1:1마크":10,"집중력":20,"적극성":13,"가로채기":15,"체력":30,"스피드":52,"몸싸움":38,"GK반응":2,"GK선방":3,"GK1대1":3,"_foot":"R"}};
+const WAVE_STAT_IMPORT={"김서영":{"결정력":78,"슛파워":86,"위치선정":72,"콜타이밍":85,"짧은패스":85,"패스스피드":73,"시야":80,"정확도":0,"볼컨트롤":79,"드리블기술":86,"밸런스":80,"볼소유력":83,"1:1마크":93,"집중력":92,"적극성":82,"가로채기":81,"체력":83,"스피드":92,"몸싸움":92,"GK반응":65,"GK선방":45,"GK1대1":82,"_foot":"R","_no":"9"},"박지예":{"결정력":84,"슛파워":87,"위치선정":85,"콜타이밍":90,"짧은패스":90,"패스스피드":78,"시야":92,"정확도":0,"볼컨트롤":92,"드리블기술":87,"밸런스":75,"볼소유력":87,"1:1마크":89,"집중력":90,"적극성":72,"가로채기":83,"체력":54,"스피드":80,"몸싸움":94,"GK반응":70,"GK선방":82,"GK1대1":80,"_foot":"B","_no":"10"},"조은비":{"결정력":78,"슛파워":90,"위치선정":72,"콜타이밍":88,"짧은패스":89,"패스스피드":76,"시야":83,"정확도":0,"볼컨트롤":83,"드리블기술":80,"밸런스":85,"볼소유력":90,"1:1마크":81,"집중력":87,"적극성":81,"가로채기":81,"체력":74,"스피드":82,"몸싸움":90,"GK반응":42,"GK선방":71,"GK1대1":68,"_foot":"R","_no":"18"},"장윤ㅎ":{"결정력":80,"슛파워":83,"위치선정":86,"콜타이밍":86,"짧은패스":83,"패스스피드":71,"시야":81,"정확도":0,"볼컨트롤":80,"드리블기술":86,"밸런스":45,"볼소유력":83,"1:1마크":90,"집중력":80,"적극성":81,"가로채기":82,"체력":79,"스피드":81,"몸싸움":81,"GK반응":93,"GK선방":95,"GK1대1":85,"_foot":"R","_no":"16"},"안시하":{"결정력":83,"슛파워":90,"위치선정":80,"콜타이밍":86,"짧은패스":81,"패스스피드":80,"시야":86,"정확도":0,"볼컨트롤":89,"드리블기술":88,"밸런스":88,"볼소유력":80,"1:1마크":80,"집중력":89,"적극성":75,"가로채기":85,"체력":89,"스피드":86,"몸싸움":93,"GK반응":76,"GK선방":87,"GK1대1":83,"_foot":"R","_no":"47"},"김나연":{"결정력":76,"슛파워":85,"위치선정":70,"콜타이밍":83,"짧은패스":60,"패스스피드":79,"시야":76,"정확도":0,"볼컨트롤":90,"드리블기술":76,"밸런스":82,"볼소유력":75,"1:1마크":72,"집중력":78,"적극성":78,"가로채기":75,"체력":86,"스피드":80,"몸싸움":83,"GK반응":94,"GK선방":94,"GK1대1":86,"_foot":"L","_no":"5"},"이가희":{"결정력":75,"슛파워":60,"위치선정":68,"콜타이밍":45,"짧은패스":65,"패스스피드":76,"시야":70,"정확도":0,"볼컨트롤":75,"드리블기술":68,"밸런스":50,"볼소유력":60,"1:1마크":42,"집중력":53,"적극성":60,"가로채기":50,"체력":81,"스피드":68,"몸싸움":59,"GK반응":50,"GK선방":65,"GK1대1":45,"_foot":"R","_status":"honor","_no":"19"},"최혜린":{"결정력":83,"슛파워":86,"위치선정":70,"콜타이밍":85,"짧은패스":75,"패스스피드":85,"시야":80,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":81,"1:1마크":53,"집중력":67,"적극성":65,"가로채기":84,"체력":93,"스피드":90,"몸싸움":78,"GK반응":67,"GK선방":81,"GK1대1":76,"_foot":"R","_status":"honor","_no":"11"},"장예나":{"결정력":80,"슛파워":81,"위치선정":60,"콜타이밍":62,"짧은패스":72,"패스스피드":75,"시야":72,"정확도":0,"볼컨트롤":70,"드리블기술":80,"밸런스":32,"볼소유력":68,"1:1마크":50,"집중력":70,"적극성":62,"가로채기":80,"체력":90,"스피드":93,"몸싸움":48,"GK반응":85,"GK선방":85,"GK1대1":75,"_foot":"R","_no":"7"},"여현진":{"결정력":80,"슛파워":80,"위치선정":85,"콜타이밍":35,"짧은패스":50,"패스스피드":75,"시야":60,"정확도":0,"볼컨트롤":80,"드리블기술":80,"밸런스":50,"볼소유력":80,"1:1마크":45,"집중력":55,"적극성":50,"가로채기":74,"체력":80,"스피드":85,"몸싸움":75,"GK반응":30,"GK선방":20,"GK1대1":15,"_foot":"R","_status":"rest","_no":"22"},"조안나":{"결정력":30,"슛파워":20,"위치선정":30,"콜타이밍":10,"짧은패스":40,"패스스피드":40,"시야":38,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":45,"볼소유력":20,"1:1마크":70,"집중력":73,"적극성":84,"가로채기":34,"체력":67,"스피드":72,"몸싸움":50,"GK반응":7,"GK선방":15,"GK1대1":18,"_foot":"R","_no":"52"},"김시정":{"결정력":70,"슛파워":70,"위치선정":60,"콜타이밍":17,"짧은패스":55,"패스스피드":78,"시야":50,"정확도":0,"볼컨트롤":82,"드리블기술":70,"밸런스":52,"볼소유력":82,"1:1마크":35,"집중력":69,"적극성":80,"가로채기":79,"체력":72,"스피드":91,"몸싸움":72,"GK반응":40,"GK선방":37,"GK1대1":32,"_foot":"R","_no":"24"},"엄다정":{"결정력":68,"슛파워":65,"위치선정":71,"콜타이밍":54,"짧은패스":68,"패스스피드":58,"시야":78,"정확도":0,"볼컨트롤":80,"드리블기술":67,"밸런스":51,"볼소유력":70,"1:1마크":60,"집중력":80,"적극성":63,"가로채기":70,"체력":62,"스피드":65,"몸싸움":68,"GK반응":35,"GK선방":58,"GK1대1":65,"_foot":"R","_no":"13"},"이윤지":{"결정력":65,"슛파워":85,"위치선정":40,"콜타이밍":15,"짧은패스":52,"패스스피드":70,"시야":50,"정확도":0,"볼컨트롤":60,"드리블기술":62,"밸런스":70,"볼소유력":78,"1:1마크":75,"집중력":85,"적극성":83,"가로채기":65,"체력":94,"스피드":88,"몸싸움":96,"GK반응":45,"GK선방":62,"GK1대1":60,"_foot":"R","_no":"14"},"김하경":{"결정력":40,"슛파워":30,"위치선정":60,"콜타이밍":0,"짧은패스":70,"패스스피드":65,"시야":45,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":40,"볼소유력":30,"1:1마크":40,"집중력":60,"적극성":20,"가로채기":35,"체력":43,"스피드":35,"몸싸움":30,"GK반응":65,"GK선방":68,"GK1대1":62,"_foot":"R","_status":"rest","_no":"32"},"김민지":{"결정력":42,"슛파워":77,"위치선정":40,"콜타이밍":0,"짧은패스":60,"패스스피드":60,"시야":30,"정확도":0,"볼컨트롤":50,"드리블기술":40,"밸런스":50,"볼소유력":30,"1:1마크":68,"집중력":74,"적극성":58,"가로채기":50,"체력":49,"스피드":89,"몸싸움":80,"GK반응":62,"GK선방":70,"GK1대1":31,"_foot":"R","_no":"6"},"안주현":{"결정력":64,"슛파워":50,"위치선정":42,"콜타이밍":0,"짧은패스":67,"패스스피드":40,"시야":40,"정확도":0,"볼컨트롤":60,"드리블기술":50,"밸런스":51,"볼소유력":30,"1:1마크":30,"집중력":50,"적극성":50,"가로채기":45,"체력":75,"스피드":60,"몸싸움":52,"GK반응":20,"GK선방":30,"GK1대1":42,"_foot":"R"},"장하라":{"결정력":60,"슛파워":40,"위치선정":35,"콜타이밍":0,"짧은패스":50,"패스스피드":40,"시야":20,"정확도":0,"볼컨트롤":50,"드리블기술":30,"밸런스":50,"볼소유력":20,"1:1마크":30,"집중력":40,"적극성":40,"가로채기":50,"체력":70,"스피드":51,"몸싸움":55,"GK반응":30,"GK선방":35,"GK1대1":40,"_foot":"R"},"장하현":{"결정력":28,"슛파워":10,"위치선정":10,"콜타이밍":0,"짧은패스":21,"패스스피드":20,"시야":20,"정확도":0,"볼컨트롤":20,"드리블기술":10,"밸런스":29,"볼소유력":10,"1:1마크":18,"집중력":25,"적극성":10,"가로채기":15,"체력":40,"스피드":50,"몸싸움":62,"GK반응":8,"GK선방":20,"GK1대1":10,"_foot":"R","_no":"19"},"김소연":{"결정력":55,"슛파워":36,"위치선정":65,"콜타이밍":0,"짧은패스":50,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":30,"밸런스":35,"볼소유력":10,"1:1마크":5,"집중력":35,"적극성":9,"가로채기":30,"체력":38,"스피드":40,"몸싸움":29,"GK반응":21,"GK선방":35,"GK1대1":15,"_foot":"R","_no":"8"},"김리원":{"결정력":25,"슛파워":20,"위치선정":2,"콜타이밍":0,"짧은패스":30,"패스스피드":20,"시야":5,"정확도":0,"볼컨트롤":20,"드리블기술":5,"밸런스":20,"볼소유력":10,"1:1마크":3,"집중력":17,"적극성":5,"가로채기":20,"체력":20,"스피드":30,"몸싸움":40,"GK반응":15,"GK선방":25,"GK1대1":15,"_foot":"R"},"조훈지":{"결정력":39,"슛파워":60,"위치선정":5,"콜타이밍":0,"짧은패스":26,"패스스피드":30,"시야":20,"정확도":0,"볼컨트롤":30,"드리블기술":5,"밸런스":18,"볼소유력":25,"1:1마크":10,"집중력":20,"적극성":13,"가로채기":15,"체력":30,"스피드":52,"몸싸움":38,"GK반응":2,"GK선방":3,"GK1대1":3,"_foot":"R","_no":"29"}};
 // 관리자 전용: 위 데이터를 member_stats2에 반영 (기존 값 있으면 덮어씀 확인)
 function importStatsFromCSV(){
   if(adminLevel()!==1){ alert('관리자만 사용할 수 있어요.'); return; }
@@ -4839,6 +4856,49 @@ function bestPosFeedback(stats,name){
   else if(best.pos==='픽소') tip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리예요.';
   else if(best.pos==='골레이로') tip='반응·선방이 좋아 골문을 지키는 자리예요.';
   return `너는 <b>${best.label}</b>가 최적이야! (${best.score}점) — ${tip} <span style="color:#8aa;">[${footTxt}]</span>`;
+}
+// 등번호 찾기: member_stats2._no → users의 number
+function jerseyNoOf(name){
+  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  if(raw._no) return raw._no;
+  const users=DATA.users||{};
+  for(const uk in users){ const u=users[uk]; if(u&&u.name===name&&u.number) return u.number; }
+  if(typeof WAVE_STAT_IMPORT!=='undefined' && WAVE_STAT_IMPORT[name] && WAVE_STAT_IMPORT[name]._no) return WAVE_STAT_IMPORT[name]._no;
+  return '';
+}
+// 6각형 레이더 차트 (6그룹: SHO/PAS/DRI/DEF/PHY/GK)
+function hexRadarHtml(stats,size){
+  size=size||120;
+  const cx=size/2, cy=size/2, R=size/2-16;
+  const groups=SR_GROUPS; // 6개
+  const N=groups.length;
+  // 각 꼭짓점 각도 (12시부터 시계방향)
+  const ang=i=> (-90 + i*360/N) * Math.PI/180;
+  const pt=(i,r)=> [cx+r*Math.cos(ang(i)), cy+r*Math.sin(ang(i))];
+  // 배경 격자 (3단계)
+  let grid='';
+  [0.33,0.66,1].forEach(f=>{
+    const pts=groups.map((g,i)=>pt(i,R*f).join(',')).join(' ');
+    grid+=`<polygon points="${pts}" fill="none" stroke="#d9e4ec" stroke-width="0.8"/>`;
+  });
+  // 축선
+  let axes='';
+  groups.forEach((g,i)=>{ const [x,y]=pt(i,R); axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e4ecf2" stroke-width="0.6"/>`; });
+  // 데이터 폴리곤
+  const dpts=groups.map((g,i)=>{ const v=groupAvgByKey(stats,g.key); return pt(i, R*Math.max(0.04,v/SR_MAX)).join(','); }).join(' ');
+  // 라벨
+  let labels='';
+  groups.forEach((g,i)=>{
+    const [x,y]=pt(i,R+9);
+    const v=Math.round(groupAvgByKey(stats,g.key));
+    labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="700" fill="${g.color}">${g.label}</text>
+      <text x="${x}" y="${y+7}" text-anchor="middle" dominant-baseline="middle" font-size="6.5" fill="#8aa">${v}</text>`;
+  });
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+    ${grid}${axes}
+    <polygon points="${dpts}" fill="#3aa0d8" fill-opacity="0.28" stroke="#2176a8" stroke-width="1.6"/>
+    ${labels}
+  </svg>`;
 }
 // 미니 경기장 SVG (1-2-1 또는 2-2)
 function miniFieldHtml(stats,name){
@@ -4996,7 +5056,20 @@ function statRankSection(){
   // 포지션별 점수 → 미니 경기장
   const fieldHtml=miniFieldHtml(myStats,myName);
   const posFeedback=bestPosFeedback(myStats,myName);
-  const dashboard=`<div class="sd-grid">
+  // 요약 바 (유니폼 · 레이더 · OVR · 순위)
+  const jno=jerseyNoOf(myName);
+  const summaryBar=`<div class="sd-summary">
+    <div class="sd-sum-jersey">
+      ${jerseyImg(jno,54)}
+      <div class="sd-sum-name">${esc(myName)}</div>
+    </div>
+    <div class="sd-sum-radar">${hexRadarHtml(myStats,132)}</div>
+    <div class="sd-sum-nums">
+      <div class="sd-sum-ovr"><span>OVR</span><b>${myOvr}</b></div>
+      <div class="sd-sum-rank"><span>순위</span><b>${myRankIdx+1}<small>위</small></b></div>
+    </div>
+  </div>`;
+  const dashboard=`${summaryBar}<div class="sd-grid">
     <div class="sd-card sd-small">
       <div class="sd-label">평가지표 📊</div>
       <div class="sd-big">${myOvr}</div>
@@ -5012,8 +5085,10 @@ function statRankSection(){
         <span>⚽ 포지션별 종합점수</span>
         <button class="sd-gbtn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'▶ 1-2-1로':'▶ 2-2로'}</button>
       </div>
-      <div id="sdFieldBody">${fieldHtml}</div>
-      <div class="sd-posfb">${posFeedback}</div>
+      <div class="sd-pos-2col">
+        <div id="sdFieldBody" class="sd-pos-field">${fieldHtml}</div>
+        <div class="sd-pos-desc">${posFeedback}</div>
+      </div>
     </div>
     <div class="sd-card sd-wide">
       <div class="sd-label">📝 내 과제 <span style="font-size:10px;color:#8aa;">(약점 집중 연습)</span></div>
@@ -5045,27 +5120,42 @@ function statGraphHtml(name){
   const hist=(DATA.stat_history&&DATA.stat_history[statKey(name)])||{};
   const dates=Object.keys(hist).filter(k=>k!=='_ts').sort();
   if(mode==='bar'){
-    // 6그룹: 나 vs 팀평균
+    // 세로 막대: 팀평균(연회색 막대) + 나(점)
     const my=getStats2(name);
     const teamAvg=statTeamAvgByKey();
-    const rows=SR_GROUPS.map(g=>{
-      const mine=groupAvgByKey(my,g.key);
-      let tsum=0,tc=0;
-      g.keys.forEach(k=>{ const a=teamAvg[k]||0; if(a>0){tsum+=a;tc++;} });
+    const cats=SR_GROUPS.map(g=>{
+      const mine=Math.round(groupAvgByKey(my,g.key));
+      let tsum=0,tc=0; g.keys.forEach(k=>{ const a=teamAvg[k]||0; if(a>0){tsum+=a;tc++;} });
       const team=tc?Math.round(tsum/tc):0;
-      const mineR=Math.round(mine);
-      const mp=Math.round(mineR/SR_MAX*100), tp=Math.round(team/SR_MAX*100);
-      return `<div class="sd-bar-row">
-        <span class="sd-bar-name" style="color:${g.color};">${g.label}</span>
-        <div class="sd-bar-track">
-          <div class="sd-bar-team" style="width:${tp}%;"></div>
-          <div class="sd-bar-mine" style="width:${mp}%;background:${g.color};"></div>
-        </div>
-        <span class="sd-bar-val"><b style="color:${g.color};">${mineR}</b> <span style="color:#b0bcc4;">/${team}</span></span>
-      </div>`;
-    }).join('');
-    return `<div class="sd-bars">${rows}</div>
-      <div class="sd-bar-legend"><span class="lg-mine">■</span> 나 &nbsp; <span class="lg-team">■</span> 팀평균</div>`;
+      return {label:g.label,color:g.color,mine:mine,team:team};
+    });
+    const W=300,H=170,padL=8,padB=26,padT=14;
+    const n=cats.length;
+    const bw=(W-padL*2)/n;         // 칸 폭
+    const barW=bw*0.5;             // 막대 폭
+    const chartH=H-padB-padT;
+    const yOf=v=> padT + chartH*(1-v/100);
+    let bars='',dots='',labels='',glines='';
+    // 가로 눈금 (0/50/100)
+    [0,50,100].forEach(g=>{ const y=yOf(g); glines+=`<line x1="${padL}" y1="${y}" x2="${W-padL}" y2="${y}" stroke="#eef3f7" stroke-width="1"/><text x="${padL-2}" y="${y+3}" text-anchor="end" font-size="7" fill="#c0ccd4">${g}</text>`; });
+    cats.forEach((c,i)=>{
+      const cx=padL+bw*i+bw/2;
+      const bx=cx-barW/2;
+      const by=yOf(c.team);
+      // 팀평균 막대 (연회색, 아래에서 올라옴)
+      bars+=`<rect x="${bx}" y="${by}" width="${barW}" height="${padT+chartH-by}" rx="2" fill="#d3dde4"/>
+        <text x="${cx}" y="${by-3}" text-anchor="middle" font-size="7" fill="#9aa6ae">${c.team}</text>`;
+      // 나 점
+      const dy=yOf(c.mine);
+      dots+=`<circle cx="${cx}" cy="${dy}" r="4" fill="${c.color}" stroke="#fff" stroke-width="1.5"/>
+        <text x="${cx}" y="${dy-6}" text-anchor="middle" font-size="7.5" font-weight="700" fill="${c.color}">${c.mine}</text>`;
+      // 라벨
+      labels+=`<text x="${cx}" y="${H-padB+14}" text-anchor="middle" font-size="7.5" font-weight="700" fill="${c.color}">${c.label}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+      ${glines}${bars}${dots}${labels}
+    </svg>
+    <div class="sd-bar-legend"><span style="color:#c9d4dc;">■</span> 팀평균(막대) &nbsp; <span style="color:#2176a8;">●</span> 나(점)</div>`;
   }
   // line = 성장 추이
   if(dates.length<2){
