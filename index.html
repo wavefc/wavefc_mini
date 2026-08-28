@@ -533,24 +533,27 @@
   .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
   .px-btn{background:#2176a8;color:#fff;border:2px solid #14415f;border-radius:0;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #14415f;}
   .px-btn:active{transform:translate(2px,2px);box-shadow:none;}
-  /* 상단 6칸: 유니폼/정보/레이더/OVR/RANK/TOP3 */
-  .px-top6{display:grid;grid-template-columns:auto auto 1fr auto auto auto;gap:7px;align-items:stretch;}
-  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:64px;}
+  /* 1단: 레이더(크게) + 오른쪽 정보 */
+  .px-summary2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
+  .px-radar-big{display:flex;align-items:center;justify-content:center;padding:6px;}
+  .px-radar-big svg{width:100%;height:auto;max-height:240px;}
+  .px-summary-right{display:flex;flex-direction:column;gap:8px;}
+  .px-sr-top{display:grid;grid-template-columns:auto 1fr;gap:8px;}
+  .px-sr-mid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;}
+  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:70px;}
   .px-jersey-name{font-size:11px;font-weight:800;color:#1a3a5c;text-align:center;}
-  .px-info{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:92px;}
-  .px-info-row{display:flex;justify-content:space-between;gap:6px;font-size:11px;align-items:center;}
+  .px-info{display:flex;flex-direction:column;justify-content:center;gap:5px;}
+  .px-info-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;align-items:center;}
   .px-info-row span{color:#8aa;font-weight:700;}
   .px-info-row b{color:#1a3a5c;font-weight:800;}
-  .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 3px;font-size:10px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
-  .px-radar{display:flex;align-items:center;justify-content:center;padding:0;min-width:100px;}
-  .px-radar svg{display:block;width:100%;height:auto;max-height:130px;}
-  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;min-width:66px;}
+  .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 4px;font-size:11px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
+  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;}
   .px-ovr{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
   .px-rank{background:#fdeaf3;border-color:#e6197f;box-shadow:3px 3px 0 #f6bcd8;}
   .px-ovr span,.px-rank span{font-size:10px;font-weight:800;letter-spacing:1px;}
   .px-ovr span{color:#2176a8;} .px-rank span{color:#e6197f;}
-  .px-ovr b{font-size:34px;color:#1a6fc4;line-height:1;font-weight:900;}
-  .px-rank b{font-size:34px;color:#e6197f;line-height:1;font-weight:900;}
+  .px-ovr b{font-size:32px;color:#1a6fc4;line-height:1;font-weight:900;}
+  .px-rank b{font-size:32px;color:#e6197f;line-height:1;font-weight:900;}
   .px-rank small{font-size:12px;color:#e88bb8;}
   .px-top3-box{min-width:120px;padding:8px 10px;background:#fffdf5;border-color:#f0c674;box-shadow:3px 3px 0 #f5e2a8;}
   .px-top3-h{font-size:12px;font-weight:800;color:#b7791f;margin-bottom:6px;}
@@ -563,8 +566,8 @@
   /* 하단 2박스: 성장추이(좁게) / 능력그래프(넓게) */
   .px-bottom2{display:grid;grid-template-columns:0.8fr 2fr;gap:10px;align-items:start;}
   @media(max-width:760px){
-    .px-top6{grid-template-columns:1fr 1fr;}
-    .px-radar{grid-column:1 / -1;}
+    .px-summary2{grid-template-columns:1fr;}
+    .px-sr-mid{grid-template-columns:1fr 1fr;}
     .px-top3-box{grid-column:1 / -1;}
     .px-pos-row{grid-template-columns:1fr;}
     .px-bottom2{grid-template-columns:1fr;}
@@ -604,6 +607,7 @@
   .gt-box.on{background:#9b7fd0;color:#fff;}
   .gt-next{font-size:11px;color:#8aa;padding-top:4px;border-top:1px dashed #dbe8f2;}
   .gt-next-item{font-weight:700;color:#5a7585;}
+  .gt-done{color:#1a9d5a;font-weight:800;}
   /* TOP3 */
   .px-podium{display:flex;flex-direction:column;gap:4px;}
   .px-podium-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#2b3f4f;padding:5px 8px;background:#f4f9fd;border:2px solid #dbe8f2;}
@@ -5180,7 +5184,14 @@ function taskProgress(key){
 function bumpTaskProgress(key){
   const nm=myRealName(); if(!nm) return;
   let p=taskProgress(key); p=(p+1)%4; // 0→1→2→3→0
-  ROOT.child('member_tasks/'+statKey(nm)+'/'+statKey(key)+'_prog').set(p);
+  ROOT.child('member_tasks/'+statKey(nm)+'/'+statKey(key)+'_prog').set(p).then(()=>{
+    // DATA 반영 후 다시 그리기
+    if(!DATA.member_tasks) DATA.member_tasks={};
+    if(!DATA.member_tasks[statKey(nm)]) DATA.member_tasks[statKey(nm)]={};
+    DATA.member_tasks[statKey(nm)][statKey(key)+'_prog']=p;
+    const c=document.getElementById('centerArea');
+    if(c) c.innerHTML=pageRule();
+  });
 }
 // 메인 성장 과제 카드 HTML
 function growthTaskCard(stats,name){
@@ -5193,13 +5204,14 @@ function growthTaskCard(stats,name){
   const fb=coachFeedback(stats,name,main);
   const prog=taskProgress(main.key);
   const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}')">${i<prog?'✓':'□'}</span>`).join('');
+  const passed=prog>=2;
   const next=tasks.slice(1,3).map(t=>`<span class="gt-next-item">${t.key} ${t.mine}</span>`).join(' · ');
   return `<div class="gt-card">
     <div class="gt-head">🔴 <b>${main.key}</b> <span class="gt-score">내 ${main.mine} · 기준 ${main.teamAvg}</span></div>
-    <div class="gt-fb"><span class="gt-lbl">👀 감독 피드백</span>${fb}</div>
+    <div class="gt-fb"><span class="gt-lbl">👀 피드백</span>${fb}</div>
     <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${info.point}</div>
     <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${info.game}</div>
-    <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>최근 3회 중 2회 성공 &nbsp; <span class="gt-boxes">${boxes}</span></div>
+    <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>3회 중 <b>${prog}회</b> 성공${passed?' <span class="gt-done">— 통과! 🎉</span>':''} &nbsp; <span class="gt-boxes">${boxes}</span></div>
     ${next?`<div class="gt-next">NEXT 후보: ${next}</div>`:''}
   </div>`;
 }
@@ -5297,48 +5309,53 @@ function statRankSection(){
   const cond=(DATA.member_cond&&DATA.member_cond[statKey(myName)])||'보통';
   const condOpts=['굿','좋음','보통','별로','안좋음'].map(c=>`<option value="${c}"${c===cond?' selected':''}>${c}</option>`).join('');
   const dashboard=`<div class="px-dash">
-    <!-- 상단 6칸: 유니폼 / 정보 / 레이더 / OVR / RANK / TOP3 -->
-    <div class="px-top6">
-      <div class="px-box px-jersey">
-        ${jerseyImg(jno,68)}
-        <div class="px-jersey-name">${esc(myName)}${badge}</div>
-      </div>
-      <div class="px-box px-info">
-        <div class="px-info-row"><span>No.</span><b>${jno||'-'}</b></div>
-        <div class="px-info-row"><span>포지션</span><b>${bestP.label}</b></div>
-        <div class="px-info-row"><span>주발</span>
-          <select class="px-cond" onchange="setMyFoot(this.value)">${footOpts}</select>
+    <!-- 1단: 레이더(크게, 왼쪽) + 오른쪽 정보 세로 -->
+    <div class="px-summary2">
+      <div class="px-box px-radar-big">${hexRadarHtml(myStats,240,true)}</div>
+      <div class="px-summary-right">
+        <div class="px-sr-top">
+          <div class="px-box px-jersey">
+            ${jerseyImg(jno,54)}
+            <div class="px-jersey-name">${esc(myName)}${badge}</div>
+          </div>
+          <div class="px-box px-info">
+            <div class="px-info-row"><span>No.</span><b>${jno||'-'}</b></div>
+            <div class="px-info-row"><span>포지션</span><b>${bestP.label}</b></div>
+            <div class="px-info-row"><span>주발</span>
+              <select class="px-cond" onchange="setMyFoot(this.value)">${footOpts}</select>
+            </div>
+            <div class="px-info-row"><span>컨디션</span>
+              <select class="px-cond" onchange="setMyCond(this.value)">${condOpts}</select>
+            </div>
+          </div>
         </div>
-        <div class="px-info-row"><span>컨디션</span>
-          <select class="px-cond" onchange="setMyCond(this.value)">${condOpts}</select>
+        <div class="px-sr-mid">
+          <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
+          <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
+          <div class="px-box px-top3-box">
+            <div class="px-top3-h">🏆 TOP 3</div>
+            <div class="px-podium">${podium}${myPodiumExtra}</div>
+          </div>
         </div>
-      </div>
-      <div class="px-box px-radar">${hexRadarHtml(myStats,116,true)}</div>
-      <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
-      <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
-      <div class="px-box px-top3-box">
-        <div class="px-top3-h">🏆 TOP 3</div>
-        <div class="px-podium">${podium}${myPodiumExtra}</div>
       </div>
     </div>
-    <!-- 포메이션 + (포지션 + 약점과제) -->
+    <!-- 2단: 포메이션 + 포지션 (가로 2칸) -->
     <div class="px-pos-row">
       <div class="px-box px-form-box">
         <div class="px-box-h">🔃 포메이션 <button class="px-btn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'1-2-1':'2-2'}</button></div>
         <div id="sdFieldBody" class="px-field-svg">${fieldHtml}</div>
       </div>
-      <div class="px-pos-col">
-        <div class="px-box px-posfb-box">
-          <div class="px-box-h">⚽ 포지션</div>
-          <div class="px-field-fb">${posFeedback}</div>
-        </div>
-        <div class="px-box px-task-box">
-          <div class="px-box-h">📝 이번 성장 과제</div>
-          <div>${growthTaskCard(myStats,myName)}</div>
-        </div>
+      <div class="px-box px-posfb-box">
+        <div class="px-box-h">⚽ 포지션</div>
+        <div class="px-field-fb">${posFeedback}</div>
       </div>
     </div>
-    <!-- 하단 2박스: 성장추이 / 능력그래프(넓게) -->
+    <!-- 3단: 이번 성장 과제 (길게) -->
+    <div class="px-box px-task-box">
+      <div class="px-box-h">📝 이번 성장 과제</div>
+      <div>${growthTaskCard(myStats,myName)}</div>
+    </div>
+    <!-- 4단: 성장추이 / 능력그래프 -->
     <div class="px-bottom2">
       <div class="px-box px-growth-box">
         <div class="px-box-h">📈 성장추이</div>
