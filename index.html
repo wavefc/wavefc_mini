@@ -526,6 +526,62 @@
   .srank-ovr{flex:0 0 auto;font-size:14px;font-weight:700;color:#2176a8;}
   .srank-ovr-max{font-size:10px;color:#9aa6ae;font-weight:400;}
   .srank-divider{height:1px;background:#e0ebf2;margin:16px 0 0;}
+  /* ===== 픽셀 감성 스탯 대시보드 ===== */
+  .px-dash{display:flex;flex-direction:column;gap:10px;font-family:'DungGeunMo','Galmuri11','Pretendard','Malgun Gothic',sans-serif;}
+  .px-box{background:#fff;border:2px solid #1a3a5c;border-radius:0;box-shadow:3px 3px 0 #b9cfe0;padding:12px;}
+  .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
+  .px-btn{background:#2176a8;color:#fff;border:2px solid #14415f;border-radius:0;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #14415f;}
+  .px-btn:active{transform:translate(2px,2px);box-shadow:none;}
+  /* 상단 3분할: 유니폼 / 레이더 / 스탯 */
+  .px-top{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:stretch;}
+  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:78px;}
+  .px-jersey-name{font-size:12px;font-weight:800;color:#1a3a5c;text-align:center;}
+  .px-radar{display:flex;align-items:center;justify-content:center;padding:6px;}
+  .px-statbox{display:flex;flex-direction:column;gap:10px;min-width:74px;}
+  .px-ovr,.px-rank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;}
+  .px-ovr{background:#fff3e9;border-color:#e0662b;box-shadow:3px 3px 0 #f3c3a3;}
+  .px-rank{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
+  .px-ovr span,.px-rank span{font-size:10px;font-weight:800;letter-spacing:1px;}
+  .px-ovr span{color:#e0662b;} .px-rank span{color:#2176a8;}
+  .px-ovr b{font-size:30px;color:#e0662b;line-height:1;}
+  .px-rank b{font-size:30px;color:#2176a8;line-height:1;}
+  .px-rank small{font-size:12px;color:#7fa6c4;}
+  /* 경기장 2단 */
+  .px-field-2col{display:flex;gap:12px;align-items:stretch;}
+  .px-field-svg{flex:0 0 44%;display:flex;align-items:center;justify-content:center;}
+  .px-field-fb{flex:1;background:#f4f9fd;border:2px solid #cfe0ee;padding:10px;font-size:12px;color:#2b3f4f;line-height:1.5;display:flex;flex-direction:column;gap:5px;}
+  .pxfb-pos{font-size:13px;color:#1a3a5c;}
+  .pxfb-pos b{color:#1a9d5a;}
+  .pxfb-score{float:right;background:#1a9d5a;color:#fff;padding:0 8px;font-weight:800;}
+  .pxfb-line{color:#5a7585;font-size:11.5px;}
+  .pxfb-good{background:#eafaf0;border-left:3px solid #1a9d5a;padding:5px 8px;}
+  .pxfb-bad{background:#fff4ec;border-left:3px solid #e0662b;padding:5px 8px;}
+  /* 과제 */
+  .px-tasks{display:flex;flex-direction:column;gap:6px;}
+  .px-task{display:flex;align-items:center;gap:8px;font-size:13px;color:#2b3f4f;cursor:pointer;padding:8px;background:#f4f9fd;border:2px solid #dbe8f2;}
+  .px-task input{width:16px;height:16px;accent-color:#2176a8;cursor:pointer;flex:0 0 auto;}
+  .px-task.done{opacity:.55;} .px-task.done .px-task-txt{text-decoration:line-through;}
+  .px-task-tag{flex:0 0 auto;font-size:9px;font-weight:800;color:#fff;background:#7b9cc4;padding:2px 6px;letter-spacing:-.5px;}
+  .px-task-txt b{color:#1a3a5c;}
+  .px-task-gap{font-size:11px;color:#8aa;margin-left:4px;}
+  .px-empty{color:#8aa;font-size:12px;text-align:center;padding:14px;line-height:1.6;}
+  /* TOP3 */
+  .px-podium{display:flex;flex-direction:column;gap:4px;}
+  .px-podium-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#2b3f4f;padding:5px 8px;background:#f4f9fd;border:2px solid #dbe8f2;}
+  .px-podium-row.me{background:#fff3d9;border-color:#f5cf7a;font-weight:800;color:#c0562b;}
+  .px-podium-row b{color:#2176a8;}
+  /* 성장추이 숫자+화살표 */
+  .px-growth{display:flex;flex-direction:column;gap:5px;}
+  .px-growth-row{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#f4f9fd;border:2px solid #dbe8f2;font-size:13px;}
+  .px-growth-date{flex:0 0 auto;color:#8aa;font-size:11px;}
+  .px-growth-ovr{flex:1;font-weight:800;color:#1a3a5c;font-size:16px;}
+  .px-up{color:#1a9d5a;font-weight:800;} .px-down{color:#e0662b;font-weight:800;} .px-same{color:#9aa6ae;}
+  @media(max-width:760px){
+    .px-top{grid-template-columns:1fr;}
+    .px-statbox{flex-direction:row;}
+    .px-field-2col{flex-direction:column;}
+    .px-field-svg{flex:none;width:60%;margin:0 auto;}
+  }
   /* ===== 스탯 대시보드 (출석현황 스타일) ===== */
   .sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
   .sd-card{background:#fff;border:1px solid #dcebf5;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
@@ -4845,19 +4901,23 @@ function posScores22(stats,name){
     {pos:'GK',  label:'골레이로',score:gk}
   ];
 }
-// 최적 포지션 한 줄 피드백
+// 최적 포지션 피드백 (반말 · 장점 + 훈련할 점)
 function bestPosFeedback(stats,name){
   const all=allPosScores(stats,name);
   const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
-  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
-  const foot=raw._foot||'R';
-  const footTxt=foot==='B'?'양발':(foot==='L'?'왼발':'오른발');
-  let tip='';
-  if(best.pos==='피보') tip='슛 결정력이 좋아 최전방에서 골을 노리는 자리예요.';
-  else if(best.pos.indexOf('아라')>=0) tip='드리블·스피드가 좋아 측면을 흔드는 자리예요.';
-  else if(best.pos==='픽소') tip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리예요.';
-  else if(best.pos==='골레이로') tip='반응·선방이 좋아 골문을 지키는 자리예요.';
-  return `너는 <b>${best.label}</b>가 최적이야! (${best.score}점) — ${tip} <span style="color:#8aa;">[${footTxt}]</span>`;
+  // 최고 그룹 / 최저 그룹
+  const gs=SR_GROUPS.map(g=>({label:g.label,v:groupAvgByKey(stats,g.key)})).filter(x=>x.v>0);
+  gs.sort((a,b)=>b.v-a.v);
+  const top=gs[0], low=gs[gs.length-1];
+  let posTip='';
+  if(best.pos==='피보') posTip='슛 결정력이 좋아서 최전방에서 골 넣는 자리야.';
+  else if(best.pos.indexOf('아라')>=0) posTip='드리블·스피드가 좋아서 측면을 휘젓는 자리야.';
+  else if(best.pos==='픽소') posTip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리야.';
+  else if(best.pos==='골레이로') posTip='반응·선방이 좋아서 골문을 지키는 자리야.';
+  return `<div class="pxfb-pos">너는 <b>${best.label}</b>가 최적이야! <span class="pxfb-score">${best.score}</span></div>
+    <div class="pxfb-line">${posTip}</div>
+    <div class="pxfb-good">💪 <b>${top.label}</b>(${Math.round(top.v)})가 제일 강해. 이게 네 무기야.</div>
+    <div class="pxfb-bad">🔧 근데 <b>${low.label}</b>(${Math.round(low.v)})이 제일 아쉬워. 여길 집중해서 올려보자.</div>`;
 }
 // 등번호 찾기: member_stats2._no → users의 number
 function jerseyNoOf(name){
@@ -4955,13 +5015,33 @@ function toggleFormation(){
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
 }
-// 팀 평균보다 낮은 약점 2~3개 (과제 대상)
+// 과제: 팀평균보다 낮은 것 + 내 최저 능력치 + 불균형(같은 그룹 내 편차 큰 것)
 function statWeakness(myStats){
   const avg=statTeamAvgByKey();
-  const gaps=SR_KEYS.filter(k=>(myStats[k]||0)>0 || true).map(k=>({key:k, mine:myStats[k]||0, avg:avg[k]||0, gap:(myStats[k]||0)-(avg[k]||0)}));
-  // 팀평균보다 낮은 것만, 격차 큰 순
-  const below=gaps.filter(g=>g.gap<0).sort((a,b)=>a.gap-b.gap);
-  return below.slice(0,3);
+  const picks=[];
+  const seen={};
+  // 1) 팀평균보다 가장 많이 낮은 것
+  const below=SR_KEYS.map(k=>({key:k,mine:myStats[k]||0,avg:avg[k]||0,gap:(myStats[k]||0)-(avg[k]||0),type:'팀평균↓'}))
+    .filter(g=>g.gap<0).sort((a,b)=>a.gap-b.gap);
+  if(below[0]){ picks.push(below[0]); seen[below[0].key]=1; }
+  // 2) 내 능력 중 절대 최저값
+  const lowest=SR_KEYS.map(k=>({key:k,mine:myStats[k]||0,avg:avg[k]||0,gap:(myStats[k]||0)-(avg[k]||0),type:'내 최저'}))
+    .filter(g=>g.mine>0).sort((a,b)=>a.mine-b.mine);
+  if(lowest[0]&&!seen[lowest[0].key]){ picks.push(lowest[0]); seen[lowest[0].key]=1; }
+  // 3) 불균형: 같은 그룹 안에서 그룹평균 대비 가장 낮은 항목
+  let worstImb=null;
+  SR_GROUPS.forEach(g=>{
+    const vals=g.keys.map(k=>myStats[k]||0).filter(v=>v>0);
+    if(vals.length<2) return;
+    const gAvg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    g.keys.forEach(k=>{
+      const v=myStats[k]||0; if(v<=0) return;
+      const d=v-gAvg;
+      if(d<0 && (!worstImb||d<worstImb.d)) worstImb={key:k,mine:v,avg:Math.round(gAvg),gap:Math.round(d),type:'불균형',d:d,gl:g.label};
+    });
+  });
+  if(worstImb&&!seen[worstImb.key]){ picks.push(worstImb); seen[worstImb.key]=1; }
+  return picks.slice(0,3);
 }
 // 능력치별 팀 평균 (입력자 대상)
 function statTeamAvgByKey(){
@@ -5030,82 +5110,65 @@ function statRankSection(){
       <div class="srank-box srank-lock">🏗️ <b>아직 평가 전이에요</b><br><span style="font-size:12px;color:#8aa;">감독님이 능력치를 평가하면 여기에 내 스탯과 순위가 나타나요!</span></div>
     </div>`;
   }
-  // ===== 대시보드 카드 =====
-  const myRank=myRankIdx+1;
-  const total=rank.length;
-  // 과제
+  // 과제 (개선된 기준)
   const weak=statWeakness(myStats);
   const taskDone=getMyTaskDone();
   const taskHtml = weak.length ? weak.map(w=>{
     const done=!!taskDone[statKey(w.key)];
-    return `<label class="sd-task${done?' done':''}">
+    return `<label class="px-task${done?' done':''}">
       <input type="checkbox" ${done?'checked':''} onclick="toggleTask('${jsStr(w.key)}')">
-      <span class="sd-task-txt"><b>${w.key}</b> 연습 <span class="sd-task-gap">(내 ${w.mine} · 팀평균 ${w.avg})</span></span>
+      <span class="px-task-tag">${w.type}</span>
+      <span class="px-task-txt"><b>${w.key}</b> <span class="px-task-gap">내 ${w.mine} · ${w.type==='내 최저'?'최저':('기준 '+w.avg)}</span></span>
     </label>`;
-  }).join('') : `<div style="color:#8aa;font-size:12px;text-align:center;padding:12px;">👍 약점이 없어요! 훌륭해요.</div>`;
-  // 점수 순위 1·2·3 (이름 숨김, 내 이름만)
+  }).join('') : `<div class="px-empty">👍 약점이 없어! 완벽해.</div>`;
+  // TOP3 (점수만, 내 이름만 공개)
   const podium=rank.slice(0,3).map((r,i)=>{
     const me_=(r.name===myName);
     const medal=['🥇','🥈','🥉'][i];
     const label=me_?esc(r.name):'???';
-    return `<div class="sd-podium-row${me_?' me':''}"><span>${medal} ${label}</span><b>${r.ovr}</b></div>`;
+    return `<div class="px-podium-row${me_?' me':''}"><span>${medal} ${label}</span><b>${r.ovr}</b></div>`;
   }).join('');
-  // 내가 4위 밖이면 내 줄도 추가
   let myPodiumExtra='';
-  if(myRankIdx>=3){
-    myPodiumExtra=`<div class="sd-podium-row me"><span>${myRank}위 ${esc(myName)}</span><b>${myOvr}</b></div>`;
-  }
-  // 포지션별 점수 → 미니 경기장
+  if(myRankIdx>=3){ myPodiumExtra=`<div class="px-podium-row me"><span>${myRank}위 ${esc(myName)}</span><b>${myOvr}</b></div>`; }
   const fieldHtml=miniFieldHtml(myStats,myName);
   const posFeedback=bestPosFeedback(myStats,myName);
-  // 요약 바 (유니폼 · 레이더 · OVR · 순위)
   const jno=jerseyNoOf(myName);
-  const summaryBar=`<div class="sd-summary">
-    <div class="sd-sum-jersey">
-      ${jerseyImg(jno,54)}
-      <div class="sd-sum-name">${esc(myName)}</div>
-    </div>
-    <div class="sd-sum-radar">${hexRadarHtml(myStats,132)}</div>
-    <div class="sd-sum-nums">
-      <div class="sd-sum-ovr"><span>OVR</span><b>${myOvr}</b></div>
-      <div class="sd-sum-rank"><span>순위</span><b>${myRankIdx+1}<small>위</small></b></div>
-    </div>
-  </div>`;
-  const dashboard=`${summaryBar}<div class="sd-grid">
-    <div class="sd-card sd-small">
-      <div class="sd-label">평가지표 📊</div>
-      <div class="sd-big">${myOvr}</div>
-      <div class="sd-unit">/ 100</div>
-    </div>
-    <div class="sd-card sd-small">
-      <div class="sd-label">나의 순위 🏅</div>
-      <div class="sd-big">${myRank}<span style="font-size:16px;">위</span></div>
-      <div class="sd-unit">/ ${total}명</div>
-    </div>
-    <div class="sd-card sd-wide">
-      <div class="sd-label" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>⚽ 포지션별 종합점수</span>
-        <button class="sd-gbtn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'▶ 1-2-1로':'▶ 2-2로'}</button>
+  const badge=statStatusBadge(myName);
+  const dashboard=`<div class="px-dash">
+    <!-- 요약: 유니폼 / 레이더 / OVR / 순위 각 박스 -->
+    <div class="px-top">
+      <div class="px-box px-jersey">
+        ${jerseyImg(jno,50)}
+        <div class="px-jersey-name">${esc(myName)}${badge}</div>
       </div>
-      <div class="sd-pos-2col">
-        <div id="sdFieldBody" class="sd-pos-field">${fieldHtml}</div>
-        <div class="sd-pos-desc">${posFeedback}</div>
+      <div class="px-box px-radar">${hexRadarHtml(myStats,140)}</div>
+      <div class="px-statbox">
+        <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
+        <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
       </div>
     </div>
-    <div class="sd-card sd-wide">
-      <div class="sd-label">📝 내 과제 <span style="font-size:10px;color:#8aa;">(약점 집중 연습)</span></div>
-      <div class="sd-tasks">${taskHtml}</div>
-    </div>
-    <div class="sd-card sd-wide" id="sdGraphCard">
-      <div class="sd-label" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>📈 성장 그래프</span>
-        <button class="sd-gbtn" onclick="toggleGraphMode()">${(window._sdGraphMode==='bar')?'📉 성장추이':'📊 팀평균비교'}</button>
+    <!-- 경기장 + 피드백 -->
+    <div class="px-box px-field-box">
+      <div class="px-box-h">⚽ 포지션 <button class="px-btn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'1-2-1':'2-2'}</button></div>
+      <div class="px-field-2col">
+        <div id="sdFieldBody" class="px-field-svg">${fieldHtml}</div>
+        <div class="px-field-fb">${posFeedback}</div>
       </div>
+    </div>
+    <!-- 과제 -->
+    <div class="px-box px-task-box">
+      <div class="px-box-h">📝 내 약점 과제</div>
+      <div class="px-tasks">${taskHtml}</div>
+    </div>
+    <!-- 그래프 -->
+    <div class="px-box px-graph-box">
+      <div class="px-box-h">📊 능력 그래프 <button class="px-btn" onclick="toggleGraphMode()">${(window._sdGraphMode==='line')?'◀ 팀평균':'성장추이 ▶'}</button></div>
       <div id="sdGraphBody">${statGraphHtml(myName)}</div>
     </div>
-    <div class="sd-card sd-wide">
-      <div class="sd-label">🏆 TOP 3</div>
-      <div class="sd-podium">${podium}${myPodiumExtra}</div>
+    <!-- TOP3 -->
+    <div class="px-box px-top3-box">
+      <div class="px-box-h">🏆 TOP 3</div>
+      <div class="px-podium">${podium}${myPodiumExtra}</div>
     </div>
   </div>`;
   return `<div class="srank-wrap">${dashboard}${inputBox}</div>`;
@@ -5159,24 +5222,28 @@ function statGraphHtml(name){
     </svg>
     <div class="sd-bar-legend"><span style="color:#c9d4dc;">■</span> 팀평균(막대) &nbsp; <span style="color:#2176a8;">●</span> 나(점)</div>`;
   }
-  // line = 성장 추이
-  if(dates.length<2){
-    return `<div style="color:#8aa;font-size:12px;text-align:center;padding:20px;">📈 성장 추이는 <b>2회 이상 확정</b>되면 그려져요.<br><span style="font-size:11px;">현재 확정 ${dates.length}회 — 감독 평가에서 날짜별로 확정해 주세요.</span></div>`;
+  // line = 성장 추이 (숫자 + 화살표)
+  if(dates.length<1){
+    return `<div class="px-empty">📈 성장 추이는 감독이 <b>날짜별로 확정</b>하면 나타나. 아직 기록이 없어.</div>`;
   }
-  // 선그래프 SVG
   const pts=dates.map(d=>({d:d, ovr:(hist[d]&&hist[d].ovr)||0}));
-  const W=280,H=120,pad=24;
-  const xs=(i)=> pad + (W-2*pad)*(pts.length===1?0.5:i/(pts.length-1));
-  const maxV=Math.max.apply(null,pts.map(p=>p.ovr)), minV=Math.min.apply(null,pts.map(p=>p.ovr));
-  const range=Math.max(10,maxV-minV);
-  const ys=(v)=> H-pad - (H-2*pad)*((v-(minV-2))/(range+4));
-  const line=pts.map((p,i)=>`${xs(i)},${ys(p.ovr)}`).join(' ');
-  const dotsG=pts.map((p,i)=>`<circle cx="${xs(i)}" cy="${ys(p.ovr)}" r="3" fill="#2176a8"/><text x="${xs(i)}" y="${ys(p.ovr)-7}" text-anchor="middle" font-size="9" font-weight="700" fill="#2176a8">${p.ovr}</text>`).join('');
-  const labels=pts.map((p,i)=>`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" font-size="7" fill="#8aa">${p.d.slice(5)}</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
-    <polyline points="${line}" fill="none" stroke="#2176a8" stroke-width="2"/>
-    ${dotsG}${labels}
-  </svg>`;
+  const rows=pts.map((p,i)=>{
+    let arrow='';
+    if(i>0){
+      const diff=p.ovr-pts[i-1].ovr;
+      if(diff>0) arrow=`<span class="px-up">▲ +${diff}</span>`;
+      else if(diff<0) arrow=`<span class="px-down">▼ ${diff}</span>`;
+      else arrow=`<span class="px-same">– 0</span>`;
+    }else{
+      arrow=`<span class="px-same">시작</span>`;
+    }
+    return `<div class="px-growth-row">
+      <span class="px-growth-date">${p.d.slice(2)}</span>
+      <span class="px-growth-ovr">${p.ovr}</span>
+      ${arrow}
+    </div>`;
+  }).join('');
+  return `<div class="px-growth">${rows}</div>`;
 }
 // 내 스탯 입력 접기/펼치기
 function toggleStatInput(){
