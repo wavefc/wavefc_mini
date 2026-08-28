@@ -5110,6 +5110,9 @@ function statRankSection(){
       <div class="srank-box srank-lock">🏗️ <b>아직 평가 전이에요</b><br><span style="font-size:12px;color:#8aa;">감독님이 능력치를 평가하면 여기에 내 스탯과 순위가 나타나요!</span></div>
     </div>`;
   }
+  // ===== 대시보드 =====
+  const myRank=myRankIdx+1;
+  const total=rank.length;
   // 과제 (개선된 기준)
   const weak=statWeakness(myStats);
   const taskDone=getMyTaskDone();
