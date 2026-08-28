@@ -543,21 +543,21 @@
   .px-info-row b{color:#1a3a5c;font-weight:800;}
   .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 3px;font-size:10px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
   .px-radar{display:flex;align-items:center;justify-content:center;padding:0;min-width:100px;}
-  .px-radar svg{display:block;}
-  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;min-width:62px;}
-  .px-ovr{background:#fff3e9;border-color:#e0662b;box-shadow:3px 3px 0 #f3c3a3;}
-  .px-rank{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
-  .px-ovr span,.px-rank span{font-size:9px;font-weight:800;letter-spacing:1px;}
-  .px-ovr span{color:#e0662b;} .px-rank span{color:#2176a8;}
-  .px-ovr b{font-size:26px;color:#e0662b;line-height:1;}
-  .px-rank b{font-size:26px;color:#2176a8;line-height:1;}
-  .px-rank small{font-size:11px;color:#7fa6c4;}
-  .px-top3-box{min-width:110px;padding:8px 10px;}
-  .px-top3-h{font-size:11px;font-weight:800;color:#1a3a5c;margin-bottom:5px;}
+  .px-radar svg{display:block;width:100%;height:auto;max-height:130px;}
+  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;min-width:66px;}
+  .px-ovr{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
+  .px-rank{background:#fdeaf3;border-color:#e6197f;box-shadow:3px 3px 0 #f6bcd8;}
+  .px-ovr span,.px-rank span{font-size:10px;font-weight:800;letter-spacing:1px;}
+  .px-ovr span{color:#2176a8;} .px-rank span{color:#e6197f;}
+  .px-ovr b{font-size:34px;color:#1a6fc4;line-height:1;font-weight:900;}
+  .px-rank b{font-size:34px;color:#e6197f;line-height:1;font-weight:900;}
+  .px-rank small{font-size:12px;color:#e88bb8;}
+  .px-top3-box{min-width:120px;padding:8px 10px;background:#fffdf5;border-color:#f0c674;box-shadow:3px 3px 0 #f5e2a8;}
+  .px-top3-h{font-size:12px;font-weight:800;color:#b7791f;margin-bottom:6px;}
   /* 포메이션 | (포지션+과제) */
   .px-pos-row{display:grid;grid-template-columns:0.85fr 1.15fr;gap:10px;align-items:stretch;}
   .px-form-box{display:flex;flex-direction:column;}
-  .px-form-box .px-field-svg{flex:1;display:flex;align-items:center;justify-content:center;max-width:210px;margin:6px auto 0;width:100%;}
+  .px-form-box .px-field-svg{flex:1;display:flex;align-items:center;justify-content:center;max-width:150px;margin:6px auto 0;width:100%;}
   .px-form-box .px-field-svg svg{width:100%;height:auto;}
   .px-pos-col{display:flex;flex-direction:column;gap:10px;}
   /* 하단 2박스: 성장추이(좁게) / 능력그래프(넓게) */
@@ -588,6 +588,22 @@
   .px-task-txt b{color:#1a3a5c;}
   .px-task-gap{font-size:11px;color:#8aa;margin-left:4px;}
   .px-empty{color:#8aa;font-size:12px;text-align:center;padding:14px;line-height:1.6;}
+  /* 성장 과제 카드 */
+  .gt-card{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#2b3f4f;line-height:1.5;}
+  .gt-head{font-size:14px;color:#1a3a5c;}
+  .gt-head b{color:#d32f4a;}
+  .gt-score{font-size:11px;color:#8aa;font-weight:700;margin-left:4px;}
+  .gt-fb,.gt-point,.gt-game,.gt-pass{padding:7px 9px;background:#f6fbff;border-left:3px solid #9bc9e8;}
+  .gt-point{background:#fff7ec;border-left-color:#e0a04a;}
+  .gt-game{background:#eafaf0;border-left-color:#4fbf83;}
+  .gt-pass{background:#f4f0fb;border-left-color:#9b7fd0;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+  .gt-lbl{display:block;font-size:10px;font-weight:800;color:#5a7585;margin-bottom:2px;letter-spacing:-.3px;}
+  .gt-pass .gt-lbl{display:inline;margin:0 4px 0 0;}
+  .gt-boxes{display:inline-flex;gap:4px;}
+  .gt-box{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border:1.5px solid #b9a6e0;background:#fff;cursor:pointer;font-weight:800;color:#9b7fd0;font-size:12px;}
+  .gt-box.on{background:#9b7fd0;color:#fff;}
+  .gt-next{font-size:11px;color:#8aa;padding-top:4px;border-top:1px dashed #dbe8f2;}
+  .gt-next-item{font-weight:700;color:#5a7585;}
   /* TOP3 */
   .px-podium{display:flex;flex-direction:column;gap:4px;}
   .px-podium-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#2b3f4f;padding:5px 8px;background:#f4f9fd;border:2px solid #dbe8f2;}
@@ -3679,6 +3695,7 @@ ROOT.on('value',snap=>{
     stat_history:(v.stat_history&&typeof v.stat_history==='object'?v.stat_history:{}),
     member_tasks:(v.member_tasks&&typeof v.member_tasks==='object'?v.member_tasks:{}),
     member_cond:(v.member_cond&&typeof v.member_cond==='object'?v.member_cond:{}),
+    member_foot:(v.member_foot&&typeof v.member_foot==='object'?v.member_foot:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
@@ -4889,7 +4906,7 @@ function posScore(stats,pos){
 // 주발 기반 아라 좌우 가점: 왼발=L 유리, 오른발=R 유리, 양발=동일
 function araSide(stats,name){
   const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
-  const foot=raw._foot||'R';
+  const foot=(DATA.member_foot&&DATA.member_foot[statKey(name)])||raw._foot||'R';
   const base=posScore(stats,'아라');
   // 주발 맞는 쪽 +2, 반대쪽 -0 (양발이면 둘 다 base)
   if(foot==='B') return {L:base, R:base};
@@ -4949,7 +4966,7 @@ function jerseyNoOf(name){
 // 6각형 레이더 차트 (6그룹: SHO/PAS/DRI/DEF/PHY/GK)
 function hexRadarHtml(stats,size,compact){
   size=size||120;
-  const cx=size/2, cy=size/2, R=size/2-(compact?9:16);
+  const cx=size/2, cy=size/2, R=size/2-(compact?14:16);
   const groups=SR_GROUPS; // 6개
   const N=groups.length;
   // 각 꼭짓점 각도 (12시부터 시계방향)
@@ -4995,20 +5012,20 @@ function miniFieldHtml(stats,name){
     const s=posScores22(stats,name);
     const atk=s[0].score, def=s[1].score, gk=s[2].score;
     spots=[
-      {x:32,y:26,label:'공격',score:atk},
-      {x:68,y:26,label:'공격',score:atk},
-      {x:32,y:60,label:'수비',score:def},
-      {x:68,y:60,label:'수비',score:def},
-      {x:50,y:86,label:'GK',score:gk}
+      {x:32,y:32,label:'공격',score:atk},
+      {x:68,y:32,label:'공격',score:atk},
+      {x:32,y:80,label:'수비',score:def},
+      {x:68,y:80,label:'수비',score:def},
+      {x:50,y:120,label:'GK',score:gk}
     ];
   }else{
     const ara=araSide(stats,name);
     spots=[
-      {x:50,y:20,label:'피보',score:posScore(stats,'피보')},
-      {x:26,y:44,label:'아라L',score:ara.L},
-      {x:74,y:44,label:'아라R',score:ara.R},
-      {x:50,y:64,label:'픽소',score:posScore(stats,'픽소')},
-      {x:50,y:86,label:'GK',score:posScore(stats,'골레이로')}
+      {x:50,y:28,label:'피보',score:posScore(stats,'피보')},
+      {x:26,y:62,label:'아라L',score:ara.L},
+      {x:74,y:62,label:'아라R',score:ara.R},
+      {x:50,y:90,label:'픽소',score:posScore(stats,'픽소')},
+      {x:50,y:122,label:'GK',score:posScore(stats,'골레이로')}
     ];
   }
   // 최고 점수 자리 강조
@@ -5022,12 +5039,12 @@ function miniFieldHtml(stats,name){
     </g>`;
   }).join('');
   return `<div class="sd-field-wrap">
-    <svg viewBox="0 0 100 100" class="sd-field">
-      <rect x="2" y="2" width="96" height="96" rx="4" fill="#3f8c50" stroke="#2e6e3d" stroke-width="1"/>
-      <line x1="2" y1="50" x2="98" y2="50" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
-      <circle cx="50" cy="50" r="10" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
-      <rect x="34" y="2" width="32" height="14" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
-      <rect x="34" y="84" width="32" height="14" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+    <svg viewBox="0 0 100 140" class="sd-field" preserveAspectRatio="xMidYMid meet">
+      <rect x="2" y="2" width="96" height="136" rx="4" fill="#3f8c50" stroke="#2e6e3d" stroke-width="1"/>
+      <line x1="2" y1="70" x2="98" y2="70" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <circle cx="50" cy="70" r="11" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <rect x="32" y="2" width="36" height="18" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
+      <rect x="32" y="120" width="36" height="18" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="0.6"/>
       ${dots}
     </svg>
   </div>`;
@@ -5037,33 +5054,154 @@ function toggleFormation(){
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
 }
-// 과제: 팀평균보다 낮은 것 + 내 최저 능력치 + 불균형(같은 그룹 내 편차 큰 것)
+// 능력치별 행동 과제 사전 (대표님 제공 + 확장)
+// point=핵심 포인트(행동언어), game=경기 미션
+const TASK_DICT={
+  '위치선정':{point:'공 없는 순간 패스길 하나 새로 만들기', game:'경기당 좋은 위치로 패스 받기 3회'},
+  '시야':{point:'공 받기 전 좌우 확인 1회', game:'받기 전 고개 돌리기 매 소유마다'},
+  '정확도':{point:'가까운 패스부터 발 안쪽으로 동료 발 앞에 전달', game:'짧은패스 성공률 높이기'},
+  '볼 간수':{point:'압박 받을 때 상대 반대쪽 발에 공 두기', game:'압박 상황 공 안 뺏기기 3회'},
+  '수비 전환':{point:'공 뺏긴 즉시 3초 안에 공보다 뒤로 복귀', game:'실점 위기 없이 빠른 복귀'},
+  '대인수비':{point:'발 먼저 뻗지 않고 진행 방향부터 차단', game:'1:1 밀리지 않기'},
+  '파울 관리':{point:'뺏기보다 지연 우선, 무리한 발 뻗기 금지', game:'12분 경기 불필요한 파울 1회 이하'},
+  '체력':{point:'공격 후 걷지 않고 중앙선까지 즉시 복귀', game:'경기 끝까지 복귀 속도 유지'},
+  '콜 타이밍':{point:"동료가 공 받기 전에 '뒤/혼자/턴' 콜", game:'경기당 유효한 콜 5회'},
+  '로테이션 이해':{point:'동료가 내 자리 들어오면 빈 자리로 즉시 이동', game:'자리 겹침 없이 로테이션'},
+  '결정력':{point:'골대 앞에서 추가 터치 없이 2터치 이내 슈팅', game:'슈팅 기회에서 지체 없이 마무리'},
+  '볼컨트롤':{point:'첫 터치를 압박 없는 방향으로 가져가기', game:'첫 터치 미스 줄이기'},
+  '드리블':{point:'수비 정면 대신 첫 터치로 좌우 선택', game:'1:1 돌파 시도 성공'},
+  '등지는 플레이':{point:'수비 등지고 받은 뒤 2초 소유 또는 안전한 리턴패스', game:'등지고 공 지키기 성공'},
+  '짧은패스':{point:'가까운 동료에게 발 안쪽 정확히', game:'짧은패스 연속 성공'},
+  '원터치 패스':{point:'받는 즉시 한 번에 동료 발 앞으로', game:'원터치 연결 2회'},
+  '상황 인지':{point:'공 받기 전 수비 위치 한 번 스캔', game:'위험 상황 미리 읽고 대응'},
+  '스피드':{point:'전력 질주 타이밍 아끼고 결정적일 때 폭발', game:'역습 상황 앞서 나가기'},
+  '가속력':{point:'첫 3걸음 빠르게, 순간 속도 변화로 제치기', game:'정지→출발 순간 앞서기'},
+  '민첩성':{point:'방향 전환 시 보폭 짧게 빠르게', game:'좁은 공간 빠져나가기'},
+  '패스 스피드':{point:'약하게 굴리지 말고 동료가 편한 세기로', game:'느린 패스로 끊기지 않기'},
+  '슛파워':{point:'디딤발 단단히 딛고 발등 정확히', game:'유효 슈팅 만들기'},
+  '인사이드 슈팅':{point:'구석을 노리고 발 안쪽으로 정확히', game:'구석 슈팅 시도'},
+  '몸싸움':{point:'몸을 먼저 붙여 공길 선점', game:'몸싸움에서 공 지키기'},
+  '가로채기':{point:'패스 길목 미리 읽고 발 내밀기', game:'인터셉트 1회'},
+  '수비집중력':{point:'공 없을 때도 상대 움직임 계속 보기', game:'놓치는 마크 없이'},
+  '백코트 적극성':{point:'수비 가담 한 발 더 빠르게', game:'수비 복귀 적극적으로'}
+};
+function taskInfo(key){ return TASK_DICT[key]||{point:key+' 집중 연습', game:key+' 관련 상황에서 의식하기'}; }
+// 점수대별 톤
+function taskLevelTone(v){
+  if(v<50) return '기초부터 습관 만들기 단계야.';
+  if(v<70) return '기본 동작을 반복해서 안정시킬 때야.';
+  if(v<80) return '압박 상황에서도 쓸 수 있게 만들 때야.';
+  if(v<90) return '성공률과 일관성을 높이는 단계야.';
+  return '이미 강점이야. 유지하면서 특기로 살려봐.';
+}
+// ===== 과제 선정 로직 (포지션 핵심 + 병목) =====
+// 포지션별 핵심 능력치
+const POS_CORE={
+  '피보':['결정력','슛파워','위치선정','인사이드 슈팅','볼컨트롤','등지는 플레이','몸싸움','짧은패스','원터치 패스','상황 인지'],
+  '아라':['드리블','볼컨트롤','스피드','가속력','민첩성','짧은패스','패스 스피드','체력','위치선정','수비 전환'],
+  '픽소':['수비 전환','대인수비','가로채기','수비집중력','백코트 적극성','짧은패스','시야','정확도','콜 타이밍','상황 인지','로테이션 이해']
+};
+// 전 선수 공통 핵심 (파울 관리 = 풋살 누적파울 규칙)
+const COMMON_CORE=['파울 관리','콜 타이밍','상황 인지','로테이션 이해','체력'];
+// GK 능력치 (후순위)
+const GK_KEYS=['GK반응','GK선방','GK위치선정','GK1대1','GK발기술'];
+// 내 최적 포지션(아라L/R은 아라로 통일)
+function myBestPosKey(stats,name){
+  const all=allPosScores(stats,name);
+  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  if(best.pos.indexOf('아라')>=0) return '아라';
+  if(best.pos==='골레이로') return '골레이로';
+  return best.pos; // 피보/픽소
+}
+// 어떤 그룹에 속하는지
+function groupOfKey(key){
+  for(const g of SR_GROUPS){ if(g.keys.indexOf(key)>=0) return g; }
+  return null;
+}
+// 핵심 과제 후보 선정 → 우선순위 순 정렬된 배열 반환
+function pickTasks(stats,name){
+  const bestPos=myBestPosKey(stats,name);
+  // 후보 능력치 집합
+  let cand=[];
+  if(bestPos==='골레이로'){
+    // 전문 GK 없음 → 필드 핵심 위주로 (피보/픽소 섞어 기본 필드능력)
+    cand=Array.from(new Set(['위치선정','짧은패스','볼컨트롤','수비 전환','대인수비'].concat(COMMON_CORE)));
+  }else{
+    cand=Array.from(new Set((POS_CORE[bestPos]||[]).concat(COMMON_CORE)));
+  }
+  // 점수 있는 것만 (0=미평가 제외)
+  const teamAvg=statTeamAvgByKey();
+  const scored=cand.map(k=>{
+    const v=stats[k]||0;
+    if(v<=0) return null;
+    const g=groupOfKey(k);
+    // 병목: 같은 그룹 내 평균 대비 얼마나 처지는가
+    let groupGap=0;
+    if(g){
+      const gv=g.keys.map(kk=>stats[kk]||0).filter(x=>x>0);
+      if(gv.length>=2){ const ga=gv.reduce((a,b)=>a+b,0)/gv.length; groupGap=v-ga; }
+    }
+    const teamGap=v-(teamAvg[k]||0);
+    // 우선순위 점수(낮을수록 급함): 절대점수 + 병목(그룹처짐) 가중 + 팀평균 이하 가중
+    let priority=v;
+    if(groupGap<0) priority += groupGap*1.5;   // 강점 그룹 속 병목이면 더 급함
+    if(teamGap<0) priority += teamGap*0.5;      // 팀평균 이하면 더 급함
+    return {key:k, mine:v, teamAvg:Math.round(teamAvg[k]||0), groupGap:Math.round(groupGap), teamGap:Math.round(teamGap), priority:priority, group:g?g.label:''};
+  }).filter(Boolean);
+  scored.sort((a,b)=>a.priority-b.priority);
+  return scored;
+}
+// (구) statWeakness 호환용 — 카드에서 새 로직 사용
 function statWeakness(myStats){
-  const avg=statTeamAvgByKey();
-  const picks=[];
-  const seen={};
-  // 1) 팀평균보다 가장 많이 낮은 것
-  const below=SR_KEYS.map(k=>({key:k,mine:myStats[k]||0,avg:avg[k]||0,gap:(myStats[k]||0)-(avg[k]||0),type:'팀평균↓'}))
-    .filter(g=>g.gap<0).sort((a,b)=>a.gap-b.gap);
-  if(below[0]){ picks.push(below[0]); seen[below[0].key]=1; }
-  // 2) 내 능력 중 절대 최저값
-  const lowest=SR_KEYS.map(k=>({key:k,mine:myStats[k]||0,avg:avg[k]||0,gap:(myStats[k]||0)-(avg[k]||0),type:'내 최저'}))
-    .filter(g=>g.mine>0).sort((a,b)=>a.mine-b.mine);
-  if(lowest[0]&&!seen[lowest[0].key]){ picks.push(lowest[0]); seen[lowest[0].key]=1; }
-  // 3) 불균형: 같은 그룹 안에서 그룹평균 대비 가장 낮은 항목
-  let worstImb=null;
-  SR_GROUPS.forEach(g=>{
-    const vals=g.keys.map(k=>myStats[k]||0).filter(v=>v>0);
-    if(vals.length<2) return;
-    const gAvg=vals.reduce((a,b)=>a+b,0)/vals.length;
-    g.keys.forEach(k=>{
-      const v=myStats[k]||0; if(v<=0) return;
-      const d=v-gAvg;
-      if(d<0 && (!worstImb||d<worstImb.d)) worstImb={key:k,mine:v,avg:Math.round(gAvg),gap:Math.round(d),type:'불균형',d:d,gl:g.label};
-    });
-  });
-  if(worstImb&&!seen[worstImb.key]){ picks.push(worstImb); seen[worstImb.key]=1; }
-  return picks.slice(0,3);
+  return pickTasks(myStats, myRealName()).slice(0,3);
+}
+// 감독 피드백 문장: 강점 → 약점 → 바꿀 행동
+function coachFeedback(stats,name,task){
+  // 같은 그룹의 강점 항목 찾기
+  const g=groupOfKey(task.key);
+  let strongTxt='';
+  if(g){
+    const others=g.keys.filter(k=>k!==task.key).map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>=75).sort((a,b)=>b.v-a.v);
+    if(others.length){
+      const names=others.slice(0,2).map(o=>o.k+' '+o.v).join(', ');
+      strongTxt=`${names}처럼 ${g.label} 능력은 좋은 편이야. `;
+    }
+  }
+  const info=taskInfo(task.key);
+  const tone=taskLevelTone(task.mine);
+  return `${strongTxt}다만 <b>${task.key}</b>가 ${task.mine}점으로 아쉬워 — ${tone} ${info.point} 이걸 의식하면 지금 실력이 훨씬 안정적으로 살아나.`;
+}
+// 과제 진행도 (member_tasks/{이름}/{key}_prog = 0~3)
+function taskProgress(key){
+  const nm=myRealName();
+  const t=(DATA.member_tasks&&DATA.member_tasks[statKey(nm)])||{};
+  return parseInt(t[statKey(key)+'_prog']||0,10)||0;
+}
+function bumpTaskProgress(key){
+  const nm=myRealName(); if(!nm) return;
+  let p=taskProgress(key); p=(p+1)%4; // 0→1→2→3→0
+  ROOT.child('member_tasks/'+statKey(nm)+'/'+statKey(key)+'_prog').set(p);
+}
+// 메인 성장 과제 카드 HTML
+function growthTaskCard(stats,name){
+  const tasks=pickTasks(stats,name);
+  if(!tasks.length){
+    return `<div class="px-empty">👍 지금은 딱히 급한 약점이 없어! 강점을 더 살려봐.</div>`;
+  }
+  const main=tasks[0];
+  const info=taskInfo(main.key);
+  const fb=coachFeedback(stats,name,main);
+  const prog=taskProgress(main.key);
+  const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}')">${i<prog?'✓':'□'}</span>`).join('');
+  const next=tasks.slice(1,3).map(t=>`<span class="gt-next-item">${t.key} ${t.mine}</span>`).join(' · ');
+  return `<div class="gt-card">
+    <div class="gt-head">🔴 <b>${main.key}</b> <span class="gt-score">내 ${main.mine} · 기준 ${main.teamAvg}</span></div>
+    <div class="gt-fb"><span class="gt-lbl">👀 감독 피드백</span>${fb}</div>
+    <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${info.point}</div>
+    <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${info.game}</div>
+    <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>최근 3회 중 2회 성공 &nbsp; <span class="gt-boxes">${boxes}</span></div>
+    ${next?`<div class="gt-next">NEXT 후보: ${next}</div>`:''}
+  </div>`;
 }
 // 능력치별 팀 평균 (입력자 대상)
 function statTeamAvgByKey(){
@@ -5135,17 +5273,6 @@ function statRankSection(){
   // ===== 대시보드 =====
   const myRank=myRankIdx+1;
   const total=rank.length;
-  // 과제 (개선된 기준)
-  const weak=statWeakness(myStats);
-  const taskDone=getMyTaskDone();
-  const taskHtml = weak.length ? weak.map(w=>{
-    const done=!!taskDone[statKey(w.key)];
-    return `<label class="px-task${done?' done':''}">
-      <input type="checkbox" ${done?'checked':''} onclick="toggleTask('${jsStr(w.key)}')">
-      <span class="px-task-tag">${w.type}</span>
-      <span class="px-task-txt"><b>${w.key}</b> <span class="px-task-gap">내 ${w.mine} · ${w.type==='내 최저'?'최저':('기준 '+w.avg)}</span></span>
-    </label>`;
-  }).join('') : `<div class="px-empty">👍 약점이 없어! 완벽해.</div>`;
   // TOP3 (점수만, 내 이름만 공개)
   const podium=rank.slice(0,3).map((r,i)=>{
     const me_=(r.name===myName);
@@ -5163,7 +5290,10 @@ function statRankSection(){
   const allPos=allPosScores(myStats,myName);
   const bestP=allPos.reduce((a,b)=>b.score>a.score?b:a,allPos[0]);
   const rawMe=(DATA.member_stats2&&DATA.member_stats2[statKey(myName)])||{};
-  const footTxt=rawMe._foot==='B'?'양발':(rawMe._foot==='L'?'왼발':'오른발');
+  // 주발: 본인 저장값(member_foot) > import _foot > R
+  const savedFoot=(DATA.member_foot&&DATA.member_foot[statKey(myName)])||rawMe._foot||'R';
+  const footLabel={R:'오른발',L:'왼발',B:'양발'};
+  const footOpts=['R','L','B'].map(f=>`<option value="${f}"${f===savedFoot?' selected':''}>${footLabel[f]}</option>`).join('');
   const cond=(DATA.member_cond&&DATA.member_cond[statKey(myName)])||'보통';
   const condOpts=['굿','좋음','보통','별로','안좋음'].map(c=>`<option value="${c}"${c===cond?' selected':''}>${c}</option>`).join('');
   const dashboard=`<div class="px-dash">
@@ -5176,7 +5306,9 @@ function statRankSection(){
       <div class="px-box px-info">
         <div class="px-info-row"><span>No.</span><b>${jno||'-'}</b></div>
         <div class="px-info-row"><span>포지션</span><b>${bestP.label}</b></div>
-        <div class="px-info-row"><span>주발</span><b>${footTxt}</b></div>
+        <div class="px-info-row"><span>주발</span>
+          <select class="px-cond" onchange="setMyFoot(this.value)">${footOpts}</select>
+        </div>
         <div class="px-info-row"><span>컨디션</span>
           <select class="px-cond" onchange="setMyCond(this.value)">${condOpts}</select>
         </div>
@@ -5201,8 +5333,8 @@ function statRankSection(){
           <div class="px-field-fb">${posFeedback}</div>
         </div>
         <div class="px-box px-task-box">
-          <div class="px-box-h">📝 내 약점 과제</div>
-          <div class="px-tasks">${taskHtml}</div>
+          <div class="px-box-h">📝 이번 성장 과제</div>
+          <div>${growthTaskCard(myStats,myName)}</div>
         </div>
       </div>
     </div>
@@ -5224,6 +5356,11 @@ function statRankSection(){
 function setMyCond(val){
   const nm=myRealName(); if(!nm) return;
   ROOT.child('member_cond/'+statKey(nm)).set(val);
+}
+// 주발 저장 (본인만)
+function setMyFoot(val){
+  const nm=myRealName(); if(!nm) return;
+  ROOT.child('member_foot/'+statKey(nm)).set(val);
 }
 // 그래프 모드 전환
 function toggleGraphMode(){
