@@ -530,6 +530,32 @@
   .px-dash{display:flex;flex-direction:column;gap:10px;font-family:'DungGeunMo','Galmuri11','Pretendard','Malgun Gothic',sans-serif;}
   .px-adminbar{display:flex;align-items:center;gap:8px;background:#fff8e6;border:2px solid #f0c674;padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:700;color:#b7791f;}
   .px-adminbar select{border:1.5px solid #e0b050;border-radius:0;padding:3px 8px;font-family:inherit;font-size:12px;font-weight:700;color:#b7791f;background:#fff;cursor:pointer;}
+  /* 전체 한눈에 보기 */
+  .tov-top{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;}
+  .tov-mid{display:grid;grid-template-columns:1fr 1.3fr;gap:10px;margin-top:10px;}
+  .tov-bigrow{display:flex;gap:10px;margin-bottom:8px;}
+  .tov-big{flex:1;background:#f4f9fd;border:2px solid #dcebf5;padding:8px;text-align:center;}
+  .tov-big span{display:block;font-size:11px;color:#8aa;font-weight:700;}
+  .tov-big b{font-size:26px;color:#1a6fc4;font-weight:900;}
+  .tov-big small{font-size:12px;color:#7fa6c4;}
+  .tov-hilo{display:flex;flex-direction:column;gap:5px;font-size:13px;}
+  .tov-hi{background:#eafaf0;border-left:3px solid #1a9d5a;padding:5px 8px;}
+  .tov-lo{background:#fff4ec;border-left:3px solid #e0662b;padding:5px 8px;}
+  .tov-rec-body{font-size:12.5px;color:#2b3f4f;line-height:1.6;background:#fffdf5;border:2px solid #f0c674;padding:9px;}
+  .tov-weak{font-size:11px;color:#8aa;margin-top:6px;}
+  .tov-ranklist{display:flex;flex-direction:column;gap:3px;max-height:340px;overflow-y:auto;}
+  .tov-rankrow{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 8px;background:#f4f9fd;border:1px solid #e0ebf2;}
+  .tov-rk{flex:0 0 24px;text-align:center;font-weight:800;color:#5a7585;}
+  .tov-nm{flex:1;color:#1a3a5c;font-weight:600;}
+  .tov-beg{font-size:9px;background:#e0662b;color:#fff;padding:1px 5px;margin-left:5px;font-weight:700;}
+  .tov-ov{flex:0 0 auto;font-weight:800;color:#2176a8;font-size:15px;}
+  .tov-bars{display:flex;flex-direction:column;gap:7px;}
+  .tov-bar-row{display:flex;align-items:center;gap:8px;}
+  .tov-bar-nm{flex:0 0 56px;font-size:12px;font-weight:700;}
+  .tov-bar-track{flex:1;height:14px;background:#eef4f8;border-radius:7px;overflow:hidden;}
+  .tov-bar-fill{height:100%;border-radius:7px;}
+  .tov-bar-v{flex:0 0 26px;text-align:right;font-size:13px;font-weight:800;color:#3a5566;}
+  @media(max-width:760px){ .tov-top,.tov-mid{grid-template-columns:1fr;} }
   .px-box{background:#fff;border:2px solid #1a3a5c;border-radius:0;box-shadow:3px 3px 0 #b9cfe0;padding:12px;}
   .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
   .px-btn{background:#2176a8;color:#fff;border:2px solid #14415f;border-radius:0;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #14415f;}
@@ -551,14 +577,15 @@
   .px-info-row span{color:#8aa;font-weight:700;}
   .px-info-row b{color:#1a3a5c;font-weight:800;}
   .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 4px;font-size:11px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
-  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;}
+  .px-ovr,.px-rank{display:flex;flex-direction:column;padding:10px 12px;}
   .px-ovr{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
   .px-rank{background:#fdeaf3;border-color:#e6197f;box-shadow:3px 3px 0 #f6bcd8;}
-  .px-ovr span,.px-rank span{font-size:10px;font-weight:800;letter-spacing:1px;}
-  .px-ovr span{color:#2176a8;} .px-rank span{color:#e6197f;}
-  .px-ovr b{font-size:32px;color:#1a6fc4;line-height:1;font-weight:900;}
-  .px-rank b{font-size:32px;color:#e6197f;line-height:1;font-weight:900;}
-  .px-rank small{font-size:12px;color:#e88bb8;}
+  .px-ovr .px-box-h{color:#2176a8;} .px-rank .px-box-h{color:#e6197f;}
+  .px-statnum{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .px-statnum span{font-size:11px;font-weight:800;letter-spacing:1px;color:#9aa6ae;}
+  .px-ovr .px-statnum b{font-size:34px;color:#1a6fc4;line-height:1;font-weight:900;}
+  .px-rank .px-statnum b{font-size:34px;color:#e6197f;line-height:1;font-weight:900;}
+  .px-rank .px-statnum small{font-size:12px;color:#e88bb8;}
   .px-top3-box{min-width:120px;padding:8px 10px;background:#fffdf5;border-color:#f0c674;box-shadow:3px 3px 0 #f5e2a8;}
   .px-top3-h{font-size:12px;font-weight:800;color:#b7791f;margin-bottom:6px;}
   /* 포메이션 | (포지션+과제) */
@@ -4978,7 +5005,7 @@ function jerseyNoOf(name){
 // 6각형 레이더 차트 (6그룹: SHO/PAS/DRI/DEF/PHY/GK)
 function hexRadarHtml(stats,size,compact){
   size=size||120;
-  const cx=size/2, cy=size/2, R=size/2-(compact?14:16);
+  const cx=size/2, cy=size/2, R=size/2-(compact?24:16);
   const groups=SR_GROUPS; // 6개
   const N=groups.length;
   // 각 꼭짓점 각도 (12시부터 시계방향)
@@ -4998,9 +5025,9 @@ function hexRadarHtml(stats,size,compact){
   // 라벨
   let labels='';
   groups.forEach((g,i)=>{
-    const [x,y]=pt(i,R+(compact?5:9));
+    const [x,y]=pt(i,R+(compact?9:9));
     if(compact){
-      labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="6" font-weight="700" fill="${g.color}">${g.label}</text>`;
+      labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="800" fill="${g.color}">${g.label}</text>`;
     }else{
       const v=Math.round(groupAvgByKey(stats,g.key));
       labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="700" fill="${g.color}">${g.label}</text>
@@ -5069,33 +5096,55 @@ function toggleFormation(){
 // 능력치별 행동 과제 사전 (대표님 제공 + 확장)
 // point=핵심 포인트(행동언어), game=경기 미션
 const TASK_DICT={
-  '위치선정':{point:'공 없는 순간 패스길 하나 새로 만들기', game:'경기당 좋은 위치로 패스 받기 3회'},
-  '시야':{point:'공 받기 전 좌우 확인 1회', game:'받기 전 고개 돌리기 매 소유마다'},
-  '정확도':{point:'가까운 패스부터 발 안쪽으로 동료 발 앞에 전달', game:'짧은패스 성공률 높이기'},
+  '위치선정':{point:'공 없을 때 파포스트(먼 골대)로 침투해 자리 잡기', game:'좋은 위치로 패스 받기 3회'},
+  '시야':{point:'공 받기 전 좌우 한 번 확인', game:'받기 전 고개 돌리기 매 소유마다'},
+  '정확도':{point:'가까운 패스부터 발 안쪽으로 동료 발 앞에', game:'짧은패스 성공률 높이기'},
   '볼 간수':{point:'압박 받을 때 상대 반대쪽 발에 공 두기', game:'압박 상황 공 안 뺏기기 3회'},
-  '수비 전환':{point:'공 뺏긴 즉시 3초 안에 공보다 뒤로 복귀', game:'실점 위기 없이 빠른 복귀'},
-  '대인수비':{point:'발 먼저 뻗지 않고 진행 방향부터 차단', game:'1:1 밀리지 않기'},
-  '파울 관리':{point:'뺏기보다 지연 우선, 무리한 발 뻗기 금지', game:'12분 경기 불필요한 파울 1회 이하'},
-  '체력':{point:'공격 후 걷지 않고 중앙선까지 즉시 복귀', game:'경기 끝까지 복귀 속도 유지'},
-  '콜 타이밍':{point:"동료가 공 받기 전에 '뒤/혼자/턴' 콜", game:'경기당 유효한 콜 5회'},
-  '로테이션 이해':{point:'동료가 내 자리 들어오면 빈 자리로 즉시 이동', game:'자리 겹침 없이 로테이션'},
-  '결정력':{point:'골대 앞에서 추가 터치 없이 2터치 이내 슈팅', game:'슈팅 기회에서 지체 없이 마무리'},
-  '볼컨트롤':{point:'첫 터치를 압박 없는 방향으로 가져가기', game:'첫 터치 미스 줄이기'},
+  '수비 전환':{point:'공 뺏기면 3초 안에 공보다 뒤로("내려와")', game:'실점 위기 없이 빠른 복귀'},
+  '대인수비':{point:'발 먼저 뻗지 말고 적당한 거리로 진로부터 차단', game:'1:1 밀리지 않기'},
+  '파울 관리':{point:'뺏기보다 "지연"이 우선, 무리한 발 뻗기 금지', game:'12분 경기 불필요한 파울 1회 이하'},
+  '체력':{point:'공격 후 걷지 말고 중앙선까지 즉시 복귀', game:'경기 끝까지 복귀 속도 유지'},
+  '콜 타이밍':{point:'동료가 받기 전에 "뒤/붙어/올라가/라인으로" 콜', game:'경기당 유효한 콜 5회'},
+  '로테이션 이해':{point:'동료가 내 자리 오면 빈 자리로 즉시 이동', game:'자리 겹침 없이 로테이션'},
+  '결정력':{point:'골대 앞에선 추가 터치 없이 2터치 이내 슈팅', game:'슈팅 기회에서 지체 없이 마무리'},
+  '볼컨트롤':{point:'첫 터치를 압박 없는 방향으로 부드럽게', game:'첫 터치 미스 줄이기'},
   '드리블':{point:'수비 정면 대신 첫 터치로 좌우 선택', game:'1:1 돌파 시도 성공'},
-  '등지는 플레이':{point:'수비 등지고 받은 뒤 2초 소유 또는 안전한 리턴패스', game:'등지고 공 지키기 성공'},
-  '짧은패스':{point:'가까운 동료에게 발 안쪽 정확히', game:'짧은패스 연속 성공'},
+  '등지는 플레이':{point:'수비 등지고 받은 뒤 2초 소유 또는 안전한 리턴', game:'등지고 공 지키기 성공'},
+  '짧은패스':{point:'쉬운 곳에 먼저, 가까운 동료 발 안쪽으로', game:'짧은패스 연속 성공'},
+  '긴패스':{point:'반대쪽 빈 공간 동료에게 정확히 띄우기', game:'전환 패스 연결'},
   '원터치 패스':{point:'받는 즉시 한 번에 동료 발 앞으로', game:'원터치 연결 2회'},
-  '상황 인지':{point:'공 받기 전 수비 위치 한 번 스캔', game:'위험 상황 미리 읽고 대응'},
-  '스피드':{point:'전력 질주 타이밍 아끼고 결정적일 때 폭발', game:'역습 상황 앞서 나가기'},
-  '가속력':{point:'첫 3걸음 빠르게, 순간 속도 변화로 제치기', game:'정지→출발 순간 앞서기'},
-  '민첩성':{point:'방향 전환 시 보폭 짧게 빠르게', game:'좁은 공간 빠져나가기'},
+  '공중볼 패스':{point:'띄우는 패스는 동료 가슴·발 높이로', game:'공중볼 정확히 전달'},
+  '컷백패스':{point:'골라인 근처서 뒤로 빼주는 패스', game:'컷백 기회 만들기'},
+  '파라패스':{point:'"파라" 콜 듣고 벽 패스 후 침투', game:'2대1 파라 연결'},
   '패스 스피드':{point:'약하게 굴리지 말고 동료가 편한 세기로', game:'느린 패스로 끊기지 않기'},
+  '상황 인지':{point:'공 받기 전 수비·동료 위치 한 번 스캔', game:'위험 상황 미리 읽고 대응'},
+  '스피드':{point:'전력 질주 아끼고 역습 때 폭발', game:'역습 상황 앞서 나가기'},
+  '가속력':{point:'첫 3걸음 빠르게, 순간 속도변화로 제치기', game:'정지→출발 순간 앞서기'},
+  '민첩성':{point:'방향 전환 시 잔발로 빠르게(지그재그 스텝)', game:'좁은 공간 빠져나가기'},
   '슛파워':{point:'디딤발 단단히 딛고 발등 정확히', game:'유효 슈팅 만들기'},
+  '발리':{point:'뜬 공은 몸 앞에서 정확히 맞히기', game:'발리 시도'},
+  '아웃사이드 슈팅':{point:'발 바깥쪽으로 감아 구석 노리기', game:'아웃 슈팅 시도'},
   '인사이드 슈팅':{point:'구석을 노리고 발 안쪽으로 정확히', game:'구석 슈팅 시도'},
+  '코발 슈팅':{point:'발 앞쪽(코)으로 빠르게 툭 차기', game:'코발 슈팅 시도'},
   '몸싸움':{point:'몸을 먼저 붙여 공길 선점', game:'몸싸움에서 공 지키기'},
+  '점프':{point:'착지 시 밸런스 유지, 위로 뜨는 데 집중', game:'공중볼 경합 우위'},
   '가로채기':{point:'패스 길목 미리 읽고 발 내밀기', game:'인터셉트 1회'},
   '수비집중력':{point:'공 없을 때도 상대 움직임 계속 보기', game:'놓치는 마크 없이'},
-  '백코트 적극성':{point:'수비 가담 한 발 더 빠르게', game:'수비 복귀 적극적으로'}
+  '백코트 적극성':{point:'수비 복귀 한 발 더 빠르게("내려와")', game:'수비 복귀 적극적으로'},
+  '클리어링':{point:'위험 지역 공은 확실히 걷어내기', game:'위기 상황 클리어'},
+  '발바닥 컨트롤':{point:'발바닥으로 공 끌어 방향 바꾸기', game:'발바닥 터치 활용'},
+  '페인팅':{point:'핀타(속임) 동작으로 수비 흔들기', game:'페인팅으로 제치기'},
+  '아웃사이드 터치':{point:'발 바깥쪽으로 공 밀어 방향 전환', game:'아웃사이드 드리블'},
+  '인사이드 터치':{point:'발 안쪽으로 공 당겨 방향 잡기', game:'인사이드 컨트롤'},
+  '세트피스 킥':{point:'킥인·프리킥 시 정확히 동료에게', game:'세트피스 정확히 연결'},
+  'GK반응':{point:'슈팅 순간 빠르게 반응', game:'유효슈팅 선방'},
+  'GK선방':{point:'슈팅 간격 줄여 파워 완화', game:'선방 성공'},
+  'GK위치선정':{point:'각도 좁히는 위치 잡기', game:'좋은 위치로 실점 방어'},
+  'GK1대1':{point:'1대1에서 몸 크게 벌려 각 막기', game:'1대1 선방'},
+  'GK발기술':{point:'백패스 받아 안정적으로 연결', game:'발 빌드업 성공'},
+  '대형 조율':{point:'팀 간격 유지하도록 말로 조율', game:'대형 유지 콜'},
+  '지시 정확도':{point:'"왼쪽 아래 수비 없음"처럼 정확히 전달', game:'정확한 지시 전달'},
+  '사기 진작':{point:'패스 나가도 "아깝다, 쏘리, 수비하면 돼" 외치기', game:'팀 사기 올리는 말'}
 };
 function taskInfo(key){ return TASK_DICT[key]||{point:key+' 집중 연습', game:key+' 관련 상황에서 의식하기'}; }
 // 점수대별 톤
@@ -5106,6 +5155,15 @@ function taskLevelTone(v){
   if(v<90) return '성공률과 일관성을 높이는 단계야.';
   return '이미 강점이야. 유지하면서 특기로 살려봐.';
 }
+// 생초보 명단 — 기본기(볼터치·귀열기·수비위치) 우선
+const BEGINNERS=['안주현','장하라','김소연','장하현','조훈지','김리원'];
+// 초보 우선 과제 (고정 3종)
+const BEGINNER_TASKS=[
+  {key:'볼컨트롤', label:'볼 터치', point:'공을 발 가까이 두고 첫 터치 부드럽게', game:'연습 중 첫 터치 미스 줄이기'},
+  {key:'상황 인지', label:'귀 열기', point:'동료 콜(뒤에/붙어/올라가) 듣고 바로 반응', game:'경기 중 콜 듣고 움직이기 3회'},
+  {key:'수비 전환', label:'수비 위치', point:'공 뺏기면 내 골대 쪽으로 먼저 자리 잡기', game:'수비 시 제자리 찾아가기'}
+];
+function isBeginner(name){ return BEGINNERS.indexOf(name)>=0; }
 // ===== 과제 선정 로직 (포지션 핵심 + 병목) =====
 // 포지션별 핵심 능력치
 const POS_CORE={
@@ -5132,6 +5190,14 @@ function groupOfKey(key){
 }
 // 핵심 과제 후보 선정 → 우선순위 순 정렬된 배열 반환
 function pickTasks(stats,name){
+  // 생초보: 기본기 3종 고정 (볼터치·귀열기·수비위치)
+  if(isBeginner(name)){
+    const ta=statTeamAvgByKey();
+    return BEGINNER_TASKS.map(t=>({
+      key:t.key, mine:(stats[t.key]||0), teamAvg:Math.round((ta[t.key]||0)),
+      groupGap:0, teamGap:0, priority:0, group:'', _beginner:true, _label:t.label, _point:t.point, _game:t.game
+    }));
+  }
   const bestPos=myBestPosKey(stats,name);
   // 후보 능력치 집합
   let cand=[];
@@ -5207,6 +5273,21 @@ function growthTaskCard(stats,name){
     return `<div class="px-empty">👍 지금은 딱히 급한 약점이 없어! 강점을 더 살려봐.</div>`;
   }
   const main=tasks[0];
+  // 초보: 기본기 카드 (격려 톤)
+  if(main._beginner){
+    const prog=taskProgress(main.key);
+    const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}')">${i<prog?'✓':'□'}</span>`).join('');
+    const passed=prog>=2;
+    const next=tasks.slice(1,3).map(t=>`<span class="gt-next-item">${t._label}</span>`).join(' · ');
+    return `<div class="gt-card">
+      <div class="gt-head">🔰 <b>${main._label}</b> <span class="gt-score">기본기부터 차근차근</span></div>
+      <div class="gt-fb"><span class="gt-lbl">👀 피드백</span>지금은 어려운 기술보다 <b>기본기</b>가 먼저야. ${main._point} — 이것만 익혀도 경기가 훨씬 편해져. 조급해하지 말고 하나씩 가자!</div>
+      <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${main._point}</div>
+      <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${main._game}</div>
+      <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>3회 중 <b>${prog}회</b> 성공${passed?' <span class="gt-done">— 통과! 🎉</span>':''} &nbsp; <span class="gt-boxes">${boxes}</span></div>
+      ${next?`<div class="gt-next">다음 기본기: ${next}</div>`:''}
+    </div>`;
+  }
   const info=taskInfo(main.key);
   const fb=coachFeedback(stats,name,main);
   const prog=taskProgress(main.key);
@@ -5268,7 +5349,12 @@ function statRankSection(){
       <span>👑 관리자 보기</span>
       <select onchange="srViewAs(this.value)">${opts}</select>
       ${myName!==meName?`<button class="px-btn" onclick="srViewAs('')">내 화면으로</button>`:''}
+      <button class="px-btn" onclick="srTeamOverview()" style="margin-left:auto;background:#1a9d5a;border-color:#127a43;">📋 전체 한눈에 보기</button>
     </div>`;
+    // 전체 한눈에 보기 모드
+    if(window._srOverview){
+      return `<div class="srank-wrap">${adminBar}${teamOverviewHtml()}</div>`;
+    }
   }
   // --- 그룹별 능력치 (보기 전용) ---
   const groupHtml=SR_GROUPS.map(g=>{
@@ -5360,8 +5446,14 @@ function statRankSection(){
           </div>
         </div>
         <div class="px-sr-mid">
-          <div class="px-box px-ovr"><span>⚡ 나의 스탯</span><b>${myOvr}</b></div>
-          <div class="px-box px-rank"><span>🏅 나의 랭킹</span><b>${myRank}<small>/${total}</small></b></div>
+          <div class="px-box px-ovr">
+            <div class="px-box-h">⚡ 나의 스탯</div>
+            <div class="px-statnum"><span>OVR</span><b>${myOvr}</b></div>
+          </div>
+          <div class="px-box px-rank">
+            <div class="px-box-h">🏅 나의 랭킹</div>
+            <div class="px-statnum"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
+          </div>
           <div class="px-box px-top3-box">
             <div class="px-top3-h">🏆 TOP 3</div>
             <div class="px-podium">${podium}${myPodiumExtra}</div>
@@ -5402,8 +5494,91 @@ function statRankSection(){
 // 관리자: 선수 화면 전환
 function srViewAs(name){
   window._srViewAs = name||'';
+  window._srOverview = false;
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
+}
+// 관리자: 전체 한눈에 보기 토글
+function srTeamOverview(){
+  window._srOverview = !window._srOverview;
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 팀 전체 요약 화면
+function teamOverviewHtml(){
+  const rank=statRanking2();
+  const teamAvg=statTeamAvgByKey();
+  // 그룹별 팀 평균
+  const groupAvgs=SR_GROUPS.map(g=>{
+    let s=0,c=0; g.keys.forEach(k=>{ const a=teamAvg[k]||0; if(a>0){s+=a;c++;} });
+    return {label:g.label, color:g.color, avg:c?Math.round(s/c):0};
+  });
+  const sortedG=[...groupAvgs].sort((a,b)=>b.avg-a.avg);
+  const best=sortedG[0], worst=sortedG[sortedG.length-1];
+  // 항목별 팀 최저 3개 (팀 공통 약점)
+  const keyAvgs=SR_KEYS.map(k=>({k:k, avg:teamAvg[k]||0})).filter(x=>x.avg>0).sort((a,b)=>a.avg-b.avg);
+  const teamWeak=keyAvgs.slice(0,5);
+  // 순위표
+  const rows=rank.map((r,i)=>{
+    const medal=i<3?['🥇','🥈','🥉'][i]:`${i+1}`;
+    const beg=isBeginner(r.name)?'<span class="tov-beg">초보</span>':'';
+    return `<div class="tov-rankrow">
+      <span class="tov-rk">${medal}</span>
+      <span class="tov-nm">${esc(r.name)}${beg}</span>
+      <span class="tov-ov">${r.ovr}</span>
+    </div>`;
+  }).join('');
+  // 팀 평균 막대
+  const teamOvr=rank.length?Math.round(rank.reduce((a,r)=>a+r.ovr,0)/rank.length):0;
+  const groupBars=groupAvgs.map(g=>`
+    <div class="tov-bar-row">
+      <span class="tov-bar-nm" style="color:${g.color};">${g.label}</span>
+      <div class="tov-bar-track"><div class="tov-bar-fill" style="width:${g.avg}%;background:${g.color};"></div></div>
+      <span class="tov-bar-v">${g.avg}</span>
+    </div>`).join('');
+  // 추천 훈련
+  let trainRec='';
+  if(worst.label==='수비'||worst.label==='의사소통'){
+    trainRec='수비 위치·콜 타이밍이 약해. <b>공격vs수비 훈련</b>으로 수비 자리잡기와 "내려와/붙어" 콜을 반복하면 좋아. 초보가 많으니 멈춤 지시 후 위치 설명을 곁들여.';
+  }else if(worst.label==='패스'){
+    trainRec='패스 정확도가 약해. <b>파라패스+트래핑패스, 패스 후 자리이동</b> 드릴로 "쉬운 곳에 먼저" 습관을 들이자.';
+  }else if(worst.label==='드리블'||worst.label==='기술·특기'){
+    trainRec='볼 마스터리가 약해. <b>로테이션 몸풀기</b>(8자 드리블, 발바닥 터치, 사이드 스텝)로 기본기를 반복하자.';
+  }else if(worst.label==='피지컬'){
+    trainRec='체력·순발력이 약해. <b>가로 러닝, 1분 싸이클링, 지그재그 스텝</b>으로 호흡을 끌어올리자.';
+  }else{
+    trainRec=`${worst.label}이 팀 전체 약점이야. 관련 기본 드릴을 반복 훈련으로 넣자.`;
+  }
+  return `<div class="px-dash">
+    <div class="tov-top">
+      <div class="px-box tov-summary">
+        <div class="px-box-h">📊 팀 요약</div>
+        <div class="tov-bigrow">
+          <div class="tov-big"><span>팀 평균 OVR</span><b>${teamOvr}</b></div>
+          <div class="tov-big"><span>인원</span><b>${rank.length}<small>명</small></b></div>
+        </div>
+        <div class="tov-hilo">
+          <div class="tov-hi">💪 강점 <b style="color:${best.color};">${best.label}</b> ${best.avg}</div>
+          <div class="tov-lo">🔧 약점 <b style="color:${worst.color};">${worst.label}</b> ${worst.avg}</div>
+        </div>
+      </div>
+      <div class="px-box tov-rec">
+        <div class="px-box-h">🎯 추천 훈련</div>
+        <div class="tov-rec-body">${trainRec}</div>
+        <div class="tov-weak">팀 공통 약점 항목: ${teamWeak.map(w=>`${w.k} ${w.avg}`).join(' · ')}</div>
+      </div>
+    </div>
+    <div class="tov-mid">
+      <div class="px-box tov-rankbox">
+        <div class="px-box-h">🏆 전체 순위 (${rank.length}명)</div>
+        <div class="tov-ranklist">${rows}</div>
+      </div>
+      <div class="px-box tov-graphbox">
+        <div class="px-box-h">📈 팀 능력 분포</div>
+        <div class="tov-bars">${groupBars}</div>
+      </div>
+    </div>
+  </div>`;
 }
 // 현재 조작 대상(관리자가 보는 선수 or 본인)
 function srTargetName(){
