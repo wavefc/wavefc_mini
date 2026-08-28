@@ -532,13 +532,17 @@
   .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
   .px-btn{background:#2176a8;color:#fff;border:2px solid #14415f;border-radius:0;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #14415f;}
   .px-btn:active{transform:translate(2px,2px);box-shadow:none;}
-  /* 상단 3분할: 유니폼 / 레이더 / 스탯 */
-  .px-top{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:stretch;}
-  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:78px;}
+  /* 상단 5칸: 유니폼/정보/레이더/OVR/RANK */
+  .px-top5{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:8px;align-items:stretch;}
+  .px-jersey{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px;}
   .px-jersey-name{font-size:12px;font-weight:800;color:#1a3a5c;text-align:center;}
-  .px-radar{display:flex;align-items:center;justify-content:center;padding:6px;}
-  .px-statbox{display:flex;flex-direction:column;gap:10px;min-width:74px;}
-  .px-ovr,.px-rank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;}
+  .px-info{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:96px;}
+  .px-info-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;align-items:center;}
+  .px-info-row span{color:#8aa;font-weight:700;}
+  .px-info-row b{color:#1a3a5c;font-weight:800;}
+  .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 4px;font-size:11px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
+  .px-radar{display:flex;align-items:center;justify-content:center;padding:4px;min-width:120px;}
+  .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 12px;min-width:70px;}
   .px-ovr{background:#fff3e9;border-color:#e0662b;box-shadow:3px 3px 0 #f3c3a3;}
   .px-rank{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
   .px-ovr span,.px-rank span{font-size:10px;font-weight:800;letter-spacing:1px;}
@@ -577,8 +581,8 @@
   .px-growth-ovr{flex:1;font-weight:800;color:#1a3a5c;font-size:16px;}
   .px-up{color:#1a9d5a;font-weight:800;} .px-down{color:#e0662b;font-weight:800;} .px-same{color:#9aa6ae;}
   @media(max-width:760px){
-    .px-top{grid-template-columns:1fr;}
-    .px-statbox{flex-direction:row;}
+    .px-top5{grid-template-columns:1fr 1fr;}
+    .px-radar{grid-column:1 / -1;}
     .px-field-2col{flex-direction:column;}
     .px-field-svg{flex:none;width:60%;margin:0 auto;}
   }
@@ -3661,6 +3665,7 @@ ROOT.on('value',snap=>{
     member_stats2:(v.member_stats2&&typeof v.member_stats2==='object'?v.member_stats2:{}),
     stat_history:(v.stat_history&&typeof v.stat_history==='object'?v.stat_history:{}),
     member_tasks:(v.member_tasks&&typeof v.member_tasks==='object'?v.member_tasks:{}),
+    member_cond:(v.member_cond&&typeof v.member_cond==='object'?v.member_cond:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
@@ -5137,18 +5142,31 @@ function statRankSection(){
   const posFeedback=bestPosFeedback(myStats,myName);
   const jno=jerseyNoOf(myName);
   const badge=statStatusBadge(myName);
+  // 정보박스용: 최적 포지션, 주발, 컨디션
+  const allPos=allPosScores(myStats,myName);
+  const bestP=allPos.reduce((a,b)=>b.score>a.score?b:a,allPos[0]);
+  const rawMe=(DATA.member_stats2&&DATA.member_stats2[statKey(myName)])||{};
+  const footTxt=rawMe._foot==='B'?'양발':(rawMe._foot==='L'?'왼발':'오른발');
+  const cond=(DATA.member_cond&&DATA.member_cond[statKey(myName)])||'보통';
+  const condOpts=['굿','좋음','보통','별로','안좋음'].map(c=>`<option value="${c}"${c===cond?' selected':''}>${c}</option>`).join('');
   const dashboard=`<div class="px-dash">
-    <!-- 요약: 유니폼 / 레이더 / OVR / 순위 각 박스 -->
-    <div class="px-top">
+    <!-- 상단 5칸: 유니폼 / 정보 / 레이더 / OVR / RANK -->
+    <div class="px-top5">
       <div class="px-box px-jersey">
-        ${jerseyImg(jno,50)}
+        ${jerseyImg(jno,48)}
         <div class="px-jersey-name">${esc(myName)}${badge}</div>
       </div>
-      <div class="px-box px-radar">${hexRadarHtml(myStats,140)}</div>
-      <div class="px-statbox">
-        <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
-        <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
+      <div class="px-box px-info">
+        <div class="px-info-row"><span>No.</span><b>${jno||'-'}</b></div>
+        <div class="px-info-row"><span>포지션</span><b>${bestP.label}</b></div>
+        <div class="px-info-row"><span>주발</span><b>${footTxt}</b></div>
+        <div class="px-info-row"><span>컨디션</span>
+          <select class="px-cond" onchange="setMyCond(this.value)">${condOpts}</select>
+        </div>
       </div>
+      <div class="px-box px-radar">${hexRadarHtml(myStats,130)}</div>
+      <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
+      <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
     </div>
     <!-- 경기장 + 피드백 -->
     <div class="px-box px-field-box">
@@ -5175,6 +5193,11 @@ function statRankSection(){
     </div>
   </div>`;
   return `<div class="srank-wrap">${dashboard}${inputBox}</div>`;
+}
+// 컨디션 저장 (본인만)
+function setMyCond(val){
+  const nm=myRealName(); if(!nm) return;
+  ROOT.child('member_cond/'+statKey(nm)).set(val);
 }
 // 그래프 모드 전환
 function toggleGraphMode(){
