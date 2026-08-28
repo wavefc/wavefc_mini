@@ -498,6 +498,12 @@
   .srank-toggle:hover{color:#3aa0d8;}
   .srank-arrow{font-size:12px;color:#7b9cc4;font-weight:600;}
   .sr-collapse{margin-top:12px;}
+  /* 보기 전용 능력치 바 */
+  .srv-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
+  .srv-name{flex:0 0 60px;font-size:12px;color:#3a5566;}
+  .srv-bar{flex:1;height:8px;background:#eef4f8;border-radius:5px;overflow:hidden;}
+  .srv-fill{display:block;height:100%;border-radius:5px;}
+  .srv-val{flex:0 0 26px;text-align:right;font-size:12px;font-weight:700;color:#2176a8;}
   .srank-sub{font-size:11px;font-weight:400;color:#8aa;margin-left:4px;}
   .srank-in-row{display:flex;align-items:center;gap:8px;margin:7px 0;}
   .srank-in-name{flex:0 0 52px;font-size:13px;color:#3a5566;font-weight:600;}
@@ -553,7 +559,12 @@
   .sr-badge.honor{background:#eae4ff;color:#6b4fbb;border:1px solid #cfc2f0;}
   /* 정밀 스탯 입력 (그룹/슬라이더/숫자) */
   .sr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;}
-  .sr-grid2{grid-template-columns:repeat(2,1fr)!important;}
+  .sr-grid2{grid-template-columns:repeat(2,1fr)!important;gap:8px 12px!important;}
+  .sr-grid2 .sr-row{gap:3px;}
+  .sr-grid2 .sr-name{flex:0 0 46px;font-size:11px;}
+  .sr-grid2 .sr-btn{width:20px;height:20px;font-size:12px;}
+  .sr-grid2 .sr-slider{min-width:0;flex:1 1 20px;}
+  .sr-grid2 .sr-num{flex:0 0 36px;width:36px;font-size:11.5px;}
   .ev-xbtn{background:#eaf4fb;border:1px solid #9bc9e8;color:#2176a8;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
   .ev-xbtn:hover{background:#d7ebf9;}
   .sr-group{margin:4px 0;}
@@ -1927,10 +1938,12 @@ function renderEvalEditor(){
     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #cfe6f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <label style="font-size:12px;color:#5a7585;">확정 날짜(훈련일)</label>
       <input type="date" id="evalDate" value="${ymd}" style="padding:6px;border:1px solid #cfe6f5;border-radius:6px;font-family:inherit;">
-      <button class="qna-send" onclick="evalConfirm()" style="padding:9px 18px;">✅ 확정 저장</button>
-      <span style="font-size:11px;color:#8aa;">지금까지 확정 ${histCnt}회</span>
+      <button class="qna-send" onclick="evalConfirm()" style="padding:9px 18px;">✅ 이 선수 확정</button>
+      <button class="ev-xbtn" onclick="evalConfirmAll()" style="padding:9px 14px;">📋 전체 일괄 확정</button>
+      <span style="font-size:11px;color:#8aa;">확정 ${histCnt}회</span>
     </div>
-    <div style="font-size:11px;color:#8aa;margin-top:8px;line-height:1.6;">※ 확정하면 이 날짜의 총점(OVR)과 22항목이 기록돼요. 같은 날짜에 다시 확정하면 덮어써요.<br>※ 슬라이더만 조정하고 확정 안 하면 그래프엔 안 남고, 현재 스탯만 바뀝니다.</div>`;
+    <div id="evalMsg" style="margin-top:8px;"></div>
+    <div style="font-size:11px;color:#8aa;margin-top:8px;line-height:1.6;">※ 확정하면 그 날짜의 총점(OVR)이 기록돼 <b>성장 그래프에 점으로 남아요</b>. 같은 날짜엔 덮어써요.<br>※ '전체 일괄 확정'은 모든 선수의 현재 스탯을 이 날짜로 한 번에 기록해요(훈련 후 정리용).</div>`;
 }
 // 감독 평가값 저장 (member_stats2에 즉시 반영 = 공식 스탯)
 function evalSaveStat(key,val){
@@ -1958,10 +1971,32 @@ function evalConfirm(){
   const snap={ovr:ovr};
   SR_KEYS.forEach(k=>{ snap[k]=st[k]||0; });
   snap._ts=Date.now();
+  const msg=document.getElementById('evalMsg');
+  if(msg) msg.innerHTML='<span style="color:#8aa;font-size:12px;">저장 중…</span>';
   ROOT.child('stat_history/'+statKey(nm)+'/'+date).set(snap).then(()=>{
-    alert(nm+' 선수의 '+date+' 평가를 확정했어요! (OVR '+ovr+')');
-    renderEvalEditor();
-  }).catch(err=>{ alert('저장 오류: '+(err&&err.message||err)); });
+    if(msg) msg.innerHTML='<div style="background:#eafaf0;border:1px solid #7fd3a3;color:#1a7d4a;border-radius:7px;padding:8px 12px;font-size:13px;">✅ <b>'+esc(nm)+'</b> · '+date+' 확정 완료! (OVR '+ovr+') — 성장 그래프에 기록됐어요.</div>';
+    const hist=(DATA.stat_history&&DATA.stat_history[statKey(nm)])||{};
+  }).catch(err=>{ if(msg) msg.innerHTML='<span style="color:#c0392b;font-size:12px;">저장 오류: '+esc(String(err&&err.message||err))+'</span>'; });
+}
+// 전체 일괄 확정: 모든 평가대상의 현재 스탯을 이 날짜로 기록
+function evalConfirmAll(){
+  const dEl=document.getElementById('evalDate'); const date=dEl?dEl.value:'';
+  if(!date){ alert('확정 날짜를 먼저 선택해 주세요.'); return; }
+  const names=evalTargetNames().filter(nm=>hasAnyStat2(getStats2(nm))); // 스탯 있는 사람만
+  if(!names.length){ alert('확정할 스탯이 없어요.'); return; }
+  if(!confirm(names.length+'명 전원을 '+date+' 날짜로 일괄 확정할까요?')) return;
+  const msg=document.getElementById('evalMsg');
+  if(msg) msg.innerHTML='<span style="color:#8aa;font-size:12px;">'+names.length+'명 저장 중…</span>';
+  const proms=names.map(nm=>{
+    const st=getStats2(nm);
+    const snap={ovr:statOVR2(st)};
+    SR_KEYS.forEach(k=>{ snap[k]=st[k]||0; });
+    snap._ts=Date.now();
+    return ROOT.child('stat_history/'+statKey(nm)+'/'+date).set(snap);
+  });
+  Promise.all(proms).then(()=>{
+    if(msg) msg.innerHTML='<div style="background:#eafaf0;border:1px solid #7fd3a3;color:#1a7d4a;border-radius:7px;padding:8px 12px;font-size:13px;">✅ 전원 확정 완료! <b>'+names.length+'명</b>의 '+date+' 기록이 저장됐어요.</div>';
+  }).catch(err=>{ if(msg) msg.innerHTML='<span style="color:#c0392b;font-size:12px;">저장 오류: '+esc(String(err&&err.message||err))+'</span>'; });
 }
 // --- 스탯 관리 탭 ---
 function adminToolsStatHtml(){
@@ -4804,20 +4839,16 @@ function statRankSection(){
   const rank=statRanking2();
   const myRankIdx=rank.findIndex(r=>r.name===myName);
   const myOvr=statOVR2(myStats);
-  // --- 그룹별 입력 UI ---
+  // --- 그룹별 능력치 (보기 전용) ---
   const groupHtml=SR_GROUPS.map(g=>{
     const ga=groupAvg2(myStats,g);
     const rows=g.keys.map(k=>{
       const v=myStats[k]||0;
-      const safe=jsStr(k);
-      return `<div class="sr-row" data-key="${esc(k)}">
-        <span class="sr-name">${k}</span>
-        <button class="sr-btn" onclick="statAdjust2('${safe}',-1)">－</button>
-        <input class="sr-slider" type="range" min="0" max="100" value="${v}"
-               oninput="statSlide('${safe}',this.value)" onchange="statSlideEnd('${safe}',this.value)">
-        <button class="sr-btn" onclick="statAdjust2('${safe}',1)">＋</button>
-        <input class="sr-num" type="number" min="0" max="100" value="${v}"
-               onchange="statSetNum('${safe}',this.value)">
+      const pct=Math.round(v/SR_MAX*100);
+      return `<div class="srv-row">
+        <span class="srv-name">${k}</span>
+        <span class="srv-bar"><span class="srv-fill" style="width:${pct}%;background:${g.color};"></span></span>
+        <span class="srv-val">${v}</span>
       </div>`;
     }).join('');
     return `<div class="sr-group">
@@ -4828,23 +4859,19 @@ function statRankSection(){
       ${rows}
     </div>`;
   }).join('');
-  const open = (typeof window._srInputOpen!=='undefined') ? window._srInputOpen : !entered;
+  const open = (typeof window._srInputOpen!=='undefined') ? window._srInputOpen : false;
   const inputBox=`<div class="srank-box">
     <div class="srank-h srank-toggle" onclick="toggleStatInput()">
-      <span>📝 내 스탯 입력 <span class="srank-sub">(0~100 · 본인만 수정)</span></span>
-      <span class="srank-arrow">${open?'▲':'▼ 펼치기'}</span>
+      <span>📋 내 세부 능력치 <span class="srank-sub">(감독 평가 기준)</span></span>
+      <span class="srank-arrow">${open?'▲ 접기':'▼ 펼치기'}</span>
     </div>
     <div class="sr-collapse" style="${open?'':'display:none;'}">
       <div class="sr-grid">${groupHtml}</div>
-      <div class="srank-myovr">내 종합점수(OVR) <b>${myOvr}</b> / 100</div>
-      ${entered?`<div class="srank-fb">${statFeedback2(myOvr)}</div>`:''}
     </div>
-    ${open?'':`<div class="srank-myovr" style="margin-top:6px;padding-top:0;border:none;">내 OVR <b>${myOvr}</b> / 100 ${entered?'· 눌러서 수정':''}</div>`}
   </div>`;
   if(!entered){
     return `<div class="srank-wrap">
-      ${inputBox}
-      <div class="srank-box srank-lock">🏆 <b>내 스탯을 추가해야 실시간 순위가 보여요!</b><br><span style="font-size:12px;color:#8aa;">위 22개 항목을 입력해 주세요. 슬라이더를 드래그하거나 숫자를 바로 쳐도 돼요.</span></div>
+      <div class="srank-box srank-lock">🏗️ <b>아직 평가 전이에요</b><br><span style="font-size:12px;color:#8aa;">감독님이 능력치를 평가하면 여기에 내 스탯과 순위가 나타나요!</span></div>
     </div>`;
   }
   // ===== 대시보드 카드 =====
