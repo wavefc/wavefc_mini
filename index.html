@@ -499,12 +499,11 @@
   .srank-arrow{font-size:12px;color:#7b9cc4;font-weight:600;}
   .sr-collapse{margin-top:12px;}
   /* 보기 전용 능력치 바 */
-  .srv-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
-  .srv-row{display:flex;align-items:center;gap:6px;margin:5px 0;}
-  .srv-name{flex:0 0 96px;font-size:11px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .srv-bar{flex:0 1 90px;height:8px;background:#eef4f8;border-radius:5px;overflow:hidden;}
+  .srv-row{display:flex;align-items:center;gap:6px;margin:6px 0;}
+  .srv-name{flex:0 0 112px;font-size:13px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+  .srv-bar{flex:0 1 84px;height:9px;background:#eef4f8;border-radius:5px;overflow:hidden;}
   .srv-fill{display:block;height:100%;border-radius:5px;}
-  .srv-val{flex:0 0 26px;text-align:right;font-size:12px;font-weight:700;color:#2176a8;}
+  .srv-val{flex:0 0 30px;text-align:right;font-size:13px;font-weight:800;color:#2176a8;}
   .srank-sub{font-size:11px;font-weight:400;color:#8aa;margin-left:4px;}
   .srank-in-row{display:flex;align-items:center;gap:8px;margin:7px 0;}
   .srank-in-name{flex:0 0 52px;font-size:13px;color:#3a5566;font-weight:600;}
@@ -1230,6 +1229,7 @@
       <div class="more-wrap" id="moreWrap">
         <button class="tab-btn" data-page="diary" onclick="go('diary',this)" style="display:none;">훈련일지<span class="lock" id="lk1">🔒</span></button>
         <button class="tab-btn" id="tabStat" data-page="rule" onclick="go('rule',this)">스탯/순위</button>
+        <button class="tab-btn" id="tabFutsalRule" data-page="futsalrule" onclick="go('futsalrule',this)" style="display:none;">풋살규칙</button>
         <button class="tab-btn" data-page="video" onclick="go('video',this)">참고영상</button>
         <button class="tab-btn" data-page="member" onclick="go('member',this)">멤버현황<span class="lock" id="lk3">🔒</span></button>
         <button class="tab-btn" data-page="snap" onclick="go('snap',this)">파도스냅</button>
@@ -4075,6 +4075,7 @@ function updateLocks(){
   const lk4=document.getElementById('lk4'); if(lk4) lk4.style.display=canViewAttend()?'none':'inline';
   // ⏸ 스탯/순위: 완성 전까지 관리자(대표)에게만 노출
   const tabStat=document.getElementById('tabStat'); if(tabStat) tabStat.style.display=(adminLevel()===1)?'':'none';
+  const tabFR=document.getElementById('tabFutsalRule'); if(tabFR) tabFR.style.display=(adminLevel()===1)?'':'none';
 }
 
 // 사용자가 지금 글을 입력하는 중인지 감지 (입력 중이면 자동 재렌더를 미뤄 글 유실 방지)
@@ -4379,7 +4380,9 @@ function renderPage(page){
      || (page==='activity'&&!isApproved())
      || (page==='attend'&&!canViewAttend())){c.innerHTML=lockedView();return;}
   if(page==='home')c.innerHTML=pageHome();
-  else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; }
+  else if(page==='rule'){ try{ c.innerHTML=pageRule(); }catch(e){ c.innerHTML='<div class="page-h">📊 스탯 / 순위</div><div style="padding:16px;color:#c0392b;">페이지를 표시하는 중 오류가 발생했어요. 새로고침(Ctrl+Shift+R) 후에도 계속되면 알려주세요.<br><span style="font-size:11px;color:#999;">'+esc(String(e.message||e))+'</span></div>'; }
+  }
+  else if(page==='futsalrule'){ try{ c.innerHTML=pageFutsalRule(); }catch(e){ c.innerHTML='<div class="page-h">📖 풋살규칙</div><div style="padding:16px;color:#c0392b;">페이지 오류: '+esc(String(e.message||e))+'</div>'; }
     try{ if(document.getElementById('ruleText')) snapDecorateGroups('ruleText',{noRep:true}); if(document.getElementById('ruleEditText')) snapDecorateGroups('ruleEditText',{noRep:true}); }catch(e){}
     try{ bindRuleDetailBody(); }catch(e){}
   }
@@ -5357,8 +5360,8 @@ function statRankSection(){
           </div>
         </div>
         <div class="px-sr-mid">
-          <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
-          <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
+          <div class="px-box px-ovr"><span>⚡ 나의 스탯</span><b>${myOvr}</b></div>
+          <div class="px-box px-rank"><span>🏅 나의 랭킹</span><b>${myRank}<small>/${total}</small></b></div>
           <div class="px-box px-top3-box">
             <div class="px-top3-h">🏆 TOP 3</div>
             <div class="px-podium">${podium}${myPodiumExtra}</div>
@@ -5463,7 +5466,7 @@ function statGrowthHtml(name){
   const hist=(DATA.stat_history&&DATA.stat_history[statKey(name)])||{};
   const dates=Object.keys(hist).filter(k=>k!=='_ts').sort();
   if(dates.length<1){
-    return `<div class="px-empty">📈 감독이 <b>날짜별로 확정</b>하면 성장 기록이 쌓여. 아직 없어.</div>`;
+    return `<div class="px-empty">📈 훈련을 진행할수록 성장 기록이 쌓여. 앞으로 어떻게 성장해나가는지 지켜볼게!</div>`;
   }
   const pts=dates.map(d=>({d:d, ovr:(hist[d]&&hist[d].ovr)||0}));
   const rows=pts.map((p,i)=>{
@@ -5529,15 +5532,25 @@ function pageRule(){
         <span style="font-size:13px;color:#8aa;">더 멋지게 만들고 있어요. 곧 공개할게요!</span>
       </div>`;
   }
-  const statSec=`<div class="page-h">📊 스탯 / 순위</div>${statRankSection()}
-    <div class="srank-divider"></div>
-    <div class="page-h" style="margin-top:18px;">📖 풋살력 테스트</div>`;
+  // 스탯/순위 페이지 = 스탯 대시보드만 (풋살력테스트·규칙은 별도 게시판으로 이동)
+  return `<div class="page-h">📊 스탯 / 순위</div>${statRankSection()}`;
+}
+// 풋살규칙 게시판 (풋살력 테스트 + 풋살 규칙) — 관리자 전용
+function pageFutsalRule(){
+  if(adminLevel()!==1){
+    return `<div class="page-h">📖 풋살규칙</div>
+      <div style="padding:40px 20px;text-align:center;color:#7b9cc4;line-height:1.8;">
+        🔒 <b>관리자 전용이에요</b><br>
+        <span style="font-size:13px;color:#8aa;">이 게시판은 관리자만 볼 수 있어요.</span>
+      </div>`;
+  }
+  const head=`<div class="page-h">📖 풋살력 테스트</div>`;
   if(ruleOpen!==null && ruleEditing===null){
     const dh=ruleDetailHtml();
-    if(dh) return `${statSec}${dh}`;
+    if(dh) return `${head}${dh}`;
     ruleOpen=null;
   }
-  return `${statSec}${pageRuleList()}`;
+  return `${head}${pageRuleList()}`;
 }
 function pageRuleList(){
   try{ if(ruleWriting || ruleEditing!==null) ruleCaptureDraft(); }catch(e){}
