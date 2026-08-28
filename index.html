@@ -500,8 +500,9 @@
   .sr-collapse{margin-top:12px;}
   /* 보기 전용 능력치 바 */
   .srv-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
-  .srv-name{flex:0 0 60px;font-size:12px;color:#3a5566;}
-  .srv-bar{flex:1;height:8px;background:#eef4f8;border-radius:5px;overflow:hidden;}
+  .srv-row{display:flex;align-items:center;gap:6px;margin:5px 0;}
+  .srv-name{flex:0 0 96px;font-size:11px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .srv-bar{flex:0 1 90px;height:8px;background:#eef4f8;border-radius:5px;overflow:hidden;}
   .srv-fill{display:block;height:100%;border-radius:5px;}
   .srv-val{flex:0 0 26px;text-align:right;font-size:12px;font-weight:700;color:#2176a8;}
   .srank-sub{font-size:11px;font-weight:400;color:#8aa;margin-left:4px;}
@@ -541,7 +542,8 @@
   .px-info-row span{color:#8aa;font-weight:700;}
   .px-info-row b{color:#1a3a5c;font-weight:800;}
   .px-cond{border:1.5px solid #cfe0ee;border-radius:0;padding:1px 3px;font-size:10px;font-family:inherit;font-weight:700;color:#2176a8;background:#f4f9fd;cursor:pointer;}
-  .px-radar{display:flex;align-items:center;justify-content:center;padding:2px;min-width:100px;}
+  .px-radar{display:flex;align-items:center;justify-content:center;padding:0;min-width:100px;}
+  .px-radar svg{display:block;}
   .px-ovr,.px-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;min-width:62px;}
   .px-ovr{background:#fff3e9;border-color:#e0662b;box-shadow:3px 3px 0 #f3c3a3;}
   .px-rank{background:#eaf3fb;border-color:#2176a8;box-shadow:3px 3px 0 #b9cfe0;}
@@ -552,17 +554,20 @@
   .px-rank small{font-size:11px;color:#7fa6c4;}
   .px-top3-box{min-width:110px;padding:8px 10px;}
   .px-top3-h{font-size:11px;font-weight:800;color:#1a3a5c;margin-bottom:5px;}
-  /* 포지션 2박스 가로 */
-  .px-pos-row{display:grid;grid-template-columns:0.9fr 1.1fr;gap:10px;}
-  .px-form-box .px-field-svg{max-width:170px;margin:6px auto 0;}
-  /* 하단 3박스 가로 */
-  .px-bottom3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:start;}
+  /* 포메이션 | (포지션+과제) */
+  .px-pos-row{display:grid;grid-template-columns:0.85fr 1.15fr;gap:10px;align-items:stretch;}
+  .px-form-box{display:flex;flex-direction:column;}
+  .px-form-box .px-field-svg{flex:1;display:flex;align-items:center;justify-content:center;max-width:210px;margin:6px auto 0;width:100%;}
+  .px-form-box .px-field-svg svg{width:100%;height:auto;}
+  .px-pos-col{display:flex;flex-direction:column;gap:10px;}
+  /* 하단 2박스: 성장추이(좁게) / 능력그래프(넓게) */
+  .px-bottom2{display:grid;grid-template-columns:0.8fr 2fr;gap:10px;align-items:start;}
   @media(max-width:760px){
     .px-top6{grid-template-columns:1fr 1fr;}
     .px-radar{grid-column:1 / -1;}
     .px-top3-box{grid-column:1 / -1;}
     .px-pos-row{grid-template-columns:1fr;}
-    .px-bottom3{grid-template-columns:1fr;}
+    .px-bottom2{grid-template-columns:1fr;}
   }
   /* 경기장 2단 */
   .px-field-2col{display:flex;gap:12px;align-items:stretch;}
@@ -4942,9 +4947,9 @@ function jerseyNoOf(name){
   return '';
 }
 // 6각형 레이더 차트 (6그룹: SHO/PAS/DRI/DEF/PHY/GK)
-function hexRadarHtml(stats,size){
+function hexRadarHtml(stats,size,compact){
   size=size||120;
-  const cx=size/2, cy=size/2, R=size/2-16;
+  const cx=size/2, cy=size/2, R=size/2-(compact?9:16);
   const groups=SR_GROUPS; // 6개
   const N=groups.length;
   // 각 꼭짓점 각도 (12시부터 시계방향)
@@ -4964,10 +4969,14 @@ function hexRadarHtml(stats,size){
   // 라벨
   let labels='';
   groups.forEach((g,i)=>{
-    const [x,y]=pt(i,R+9);
-    const v=Math.round(groupAvgByKey(stats,g.key));
-    labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="700" fill="${g.color}">${g.label}</text>
-      <text x="${x}" y="${y+7}" text-anchor="middle" dominant-baseline="middle" font-size="6.5" fill="#8aa">${v}</text>`;
+    const [x,y]=pt(i,R+(compact?5:9));
+    if(compact){
+      labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="6" font-weight="700" fill="${g.color}">${g.label}</text>`;
+    }else{
+      const v=Math.round(groupAvgByKey(stats,g.key));
+      labels+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="700" fill="${g.color}">${g.label}</text>
+        <text x="${x}" y="${y+7}" text-anchor="middle" dominant-baseline="middle" font-size="6.5" fill="#8aa">${v}</text>`;
+    }
   });
   return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
     ${grid}${axes}
@@ -5111,7 +5120,7 @@ function statRankSection(){
   const open = (typeof window._srInputOpen!=='undefined') ? window._srInputOpen : false;
   const inputBox=`<div class="srank-box">
     <div class="srank-h srank-toggle" onclick="toggleStatInput()">
-      <span>📋 내 세부 능력치 <span class="srank-sub">(감독 평가 기준)</span></span>
+      <span>📋 내 세부 능력치 <span class="srank-sub">(풋살 훈련 기준)</span></span>
       <span class="srank-arrow">${open?'▲ 접기':'▼ 펼치기'}</span>
     </div>
     <div class="sr-collapse" style="${open?'':'display:none;'}">
@@ -5161,7 +5170,7 @@ function statRankSection(){
     <!-- 상단 6칸: 유니폼 / 정보 / 레이더 / OVR / RANK / TOP3 -->
     <div class="px-top6">
       <div class="px-box px-jersey">
-        ${jerseyImg(jno,44)}
+        ${jerseyImg(jno,68)}
         <div class="px-jersey-name">${esc(myName)}${badge}</div>
       </div>
       <div class="px-box px-info">
@@ -5172,7 +5181,7 @@ function statRankSection(){
           <select class="px-cond" onchange="setMyCond(this.value)">${condOpts}</select>
         </div>
       </div>
-      <div class="px-box px-radar">${hexRadarHtml(myStats,120)}</div>
+      <div class="px-box px-radar">${hexRadarHtml(myStats,116,true)}</div>
       <div class="px-box px-ovr"><span>OVR</span><b>${myOvr}</b></div>
       <div class="px-box px-rank"><span>RANK</span><b>${myRank}<small>/${total}</small></b></div>
       <div class="px-box px-top3-box">
@@ -5180,19 +5189,25 @@ function statRankSection(){
         <div class="px-podium">${podium}${myPodiumExtra}</div>
       </div>
     </div>
-    <!-- 포메이션 + 포지션 (2박스 가로) -->
+    <!-- 포메이션 + (포지션 + 약점과제) -->
     <div class="px-pos-row">
       <div class="px-box px-form-box">
         <div class="px-box-h">🔃 포메이션 <button class="px-btn" onclick="toggleFormation()">${(window._sdFormation==='2-2')?'1-2-1':'2-2'}</button></div>
         <div id="sdFieldBody" class="px-field-svg">${fieldHtml}</div>
       </div>
-      <div class="px-box px-posfb-box">
-        <div class="px-box-h">⚽ 포지션</div>
-        <div class="px-field-fb">${posFeedback}</div>
+      <div class="px-pos-col">
+        <div class="px-box px-posfb-box">
+          <div class="px-box-h">⚽ 포지션</div>
+          <div class="px-field-fb">${posFeedback}</div>
+        </div>
+        <div class="px-box px-task-box">
+          <div class="px-box-h">📝 내 약점 과제</div>
+          <div class="px-tasks">${taskHtml}</div>
+        </div>
       </div>
     </div>
-    <!-- 하단 3박스 가로: 성장추이 / 능력그래프 / 약점과제 -->
-    <div class="px-bottom3">
+    <!-- 하단 2박스: 성장추이 / 능력그래프(넓게) -->
+    <div class="px-bottom2">
       <div class="px-box px-growth-box">
         <div class="px-box-h">📈 성장추이</div>
         <div>${statGrowthHtml(myName)}</div>
@@ -5200,10 +5215,6 @@ function statRankSection(){
       <div class="px-box px-graph-box">
         <div class="px-box-h">📊 능력그래프</div>
         <div>${statBarChart(myName)}</div>
-      </div>
-      <div class="px-box px-task-box">
-        <div class="px-box-h">📝 내 약점 과제</div>
-        <div class="px-tasks">${taskHtml}</div>
       </div>
     </div>
   </div>`;
