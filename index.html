@@ -4975,27 +4975,31 @@ function posScores22(stats,name){
     {pos:'GK',  label:'골레이로',score:gk}
   ];
 }
-// 최적 포지션 피드백 (반말 · 개별 항목 강점/약점)
+// 최적 포지션 피드백 (반말 · 강점 2 + 해야할 것 2 = 과제와 통일)
 function bestPosFeedback(stats,name){
   const all=allPosScores(stats,name);
   const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
-  // 개별 항목: 강점 = 점수 높은 것 top, 약점 = (낮은 점수 × 중요도) 큰 것
-  const items=SR_KEYS.map(k=>({k:k,v:stats[k]||0,imp:abilityImp(k)})).filter(x=>x.v>0);
+  // 강점: 개별 항목 점수 높은 2개
+  const items=SR_KEYS.map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0);
   const strong=[...items].sort((a,b)=>b.v-a.v).slice(0,2);
-  // 약점: 중요도 2 이상만, urgency=(100-v)*imp 큰 것
-  const weakCand=items.filter(x=>x.imp>=2).map(x=>({...x,urg:(100-x.v)*x.imp}));
-  weakCand.sort((a,b)=>b.urg-a.urg);
-  const weak=weakCand[0];
+  // 해야 할 것: 과제 후보(pickTasks)의 1·2순위 → 아래 과제 박스와 통일
+  const tasks=pickTasks(stats,name);
   let posTip='';
   if(best.pos==='피보') posTip='슛 결정력이 좋아서 최전방에서 골 넣는 자리야.';
   else if(best.pos.indexOf('아라')>=0) posTip='드리블·스피드가 좋아서 측면을 휘젓는 자리야.';
   else if(best.pos==='픽소') posTip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리야.';
   else if(best.pos==='골레이로') posTip='필드 기본기를 더 키우면 어디서든 쓸 수 있어.';
   const strongTxt=strong.map(s=>`${s.k} ${s.v}`).join(', ');
+  // 초보는 기본기 라벨 사용
+  const todo=tasks.slice(0,2).map(t=>{
+    if(t._beginner) return t._label;
+    return `${t.key} ${t.mine}`;
+  });
+  const todoTxt=todo.join(', ');
   return `<div class="pxfb-pos">너는 <b>${best.label}</b>가 최적이야! <span class="pxfb-score">${best.score}</span></div>
     <div class="pxfb-line">${posTip}</div>
     <div class="pxfb-good">💪 <b>${strongTxt}</b>가 강해. 이게 네 무기야.</div>
-    ${weak?`<div class="pxfb-bad">🔧 근데 <b>${weak.k} ${weak.v}</b>이(가) 아쉬워. 여길 집중해서 올려보자.</div>`:''}`;
+    ${todoTxt?`<div class="pxfb-bad">🔧 이걸 올려보자: <b>${todoTxt}</b></div>`:''}`;
 }
 // 등번호 찾기: member_stats2._no → users의 number
 function jerseyNoOf(name){
