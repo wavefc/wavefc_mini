@@ -563,6 +563,9 @@
   .tov-trow.done{background:#eafaf0;border-color:#7fd3a3;}
   .tov-tnm{flex:0 0 90px;font-weight:700;color:#1a3a5c;}
   .tov-ttask{flex:1;color:#2b3f4f;}
+  .tov-tgame{font-size:11px;color:#8aa;}
+  .tov-tnum{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:1px 6px;margin-right:5px;font-weight:700;border-radius:2px;}
+  .tov-tprev{display:inline-block;font-size:10px;color:#a9b6be;margin-left:6px;}
   .tov-tdots{flex:0 0 auto;letter-spacing:2px;color:#9b7fd0;}
   .tov-dot{color:#d0c4ea;} .tov-dot.on{color:#9b7fd0;}
   .tov-tstat{flex:0 0 50px;text-align:right;font-size:12px;font-weight:700;color:#5a7585;}
@@ -3746,6 +3749,7 @@ ROOT.on('value',snap=>{
     member_cond:(v.member_cond&&typeof v.member_cond==='object'?v.member_cond:{}),
     member_foot:(v.member_foot&&typeof v.member_foot==='object'?v.member_foot:{}),
     member_active_task:(v.member_active_task&&typeof v.member_active_task==='object'?v.member_active_task:{}),
+    member_task_history:(v.member_task_history&&typeof v.member_task_history==='object'?v.member_task_history:{}),
     score_adj:(v.score_adj&&typeof v.score_adj==='object'?v.score_adj:{}),
     activity_msgs:(v.activity_msgs&&typeof v.activity_msgs==='object'?v.activity_msgs:{}),
     board_react:(v.board_react&&typeof v.board_react==='object'?v.board_react:{}),
@@ -4956,15 +4960,31 @@ function posScore(stats,pos){
   Object.keys(w).forEach(gk=>{ sum += groupAvgByKey(stats,gk)*w[gk]; });
   return Math.round(sum);
 }
-// 주발 기반 아라 좌우 가점: 왼발=L 유리, 오른발=R 유리, 양발=동일
+// 아라 좌우 판정 (대표님 규칙)
+// - 아웃사이드 터치가 강하면 주발 '반대쪽' 아라에 가점 (인버티드 윙어: 안쪽으로 감아차기/파고들기 유리)
+//   오른발+아웃사이드 강 → 왼쪽 아라(L) / 왼발+아웃사이드 강 → 오른쪽 아라(R)
+// - 아웃사이드가 약하면 주발과 '같은 쪽'이 자연스러움 (정통 윙어)
 function araSide(stats,name){
   const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
   const foot=(DATA.member_foot&&DATA.member_foot[statKey(name)])||raw._foot||'R';
   const base=posScore(stats,'아라');
-  // 주발 맞는 쪽 +2, 반대쪽 -0 (양발이면 둘 다 base)
-  if(foot==='B') return {L:base, R:base};
-  if(foot==='L') return {L:base+2, R:base};
-  return {L:base, R:base+2}; // 오른발
+  const outside=stats['아웃사이드 터치']||0;
+  const inside=stats['인사이드 터치']||0;
+  let L=base, R=base;
+  if(foot==='B'){
+    // 양발: 아웃사이드 강한 쪽 살짝, 대칭
+    L=base+2; R=base+2;
+  }else{
+    const strongOut = outside>=70 && outside>inside; // 아웃사이드 특기
+    if(foot==='R'){
+      if(strongOut){ L=base+4; R=base+1; } // 오른발+아웃 강 → 왼쪽 아라
+      else { L=base; R=base+3; }            // 정통 오른쪽
+    }else{ // 왼발
+      if(strongOut){ R=base+4; L=base+1; } // 왼발+아웃 강 → 오른쪽 아라
+      else { R=base; L=base+3; }            // 정통 왼쪽
+    }
+  }
+  return {L:L, R:R};
 }
 // 전체 포지션 점수 세트
 function allPosScores(stats,name){
@@ -5193,6 +5213,13 @@ function nextTask(){
   const stats=getStats2(nm);
   const cur=getActiveTask(nm);
   const tasks=pickTasks(stats,nm);
+  // 통과한 현재 과제를 이력에 기록 (3회 통과했을 때만)
+  if(cur){
+    const curProg=(function(){ const t=(DATA.member_tasks&&DATA.member_tasks[statKey(nm)])||{}; return parseInt(t[statKey(cur.key)+'_prog']||0,10)||0; })();
+    if(curProg>=3){
+      recordTaskDone(nm, cur.key);
+    }
+  }
   let nextKey=null;
   if(isBeginner(nm)){
     const idx=BEGINNER_TASKS.findIndex(t=>t.key===(cur&&cur.key));
@@ -5210,6 +5237,34 @@ function nextTask(){
   }
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
+}
+// 완료 과제를 이력 + 성장일지에 기록
+function recordTaskDone(name, taskKey){
+  const now=new Date();
+  const ymd=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  let label=taskKey, game='';
+  const bt=BEGINNER_TASKS.find(t=>t.key===taskKey);
+  if(bt){ label=bt.label; game=bt.game; }
+  else { game=taskInfo(taskKey).game; }
+  const histRef=ROOT.child('member_task_history/'+statKey(name)).push();
+  const entry={key:taskKey, label:label, game:game, date:ymd, ts:Date.now()};
+  histRef.set(entry);
+  if(!DATA.member_task_history) DATA.member_task_history={};
+  if(!DATA.member_task_history[statKey(name)]) DATA.member_task_history[statKey(name)]={};
+  DATA.member_task_history[statKey(name)][histRef.key]=entry;
+  autoWriteGrowthLog(name, label, game, ymd);
+}
+// 성장기록일지 자동 작성 (feedbacks/{이름} 배열에 push)
+function autoWriteGrowthLog(name, label, game, ymd){
+  const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
+  fb[name]=fb[name]||[];
+  const title=`✅ '${label}' 과제 통과!`;
+  const text=`<b>${ymd}</b><br>이번 성장 과제 <b>「${label}」</b>를 완료했어요! 🎉<br>`
+    + (game?`경기 미션: ${game}<br>`:'')
+    + `이 과제를 숙지하고 3회 통과했어요. 다음 과제로 넘어갑니다. 계속 성장하는 중! 💪`;
+  fb[name].push({id:'f'+Date.now(), title:title, text:text, ts:Date.now(), by:'system', comments:[], likedBy:[], views:0, _autoTask:true});
+  DATA.feedbacks=fb;
+  ROOT.child('feedbacks').set(fb);
 }
 // ===== 능력치 중요도 등급 (5=최최최최우선 ~ 1=최하) =====
 const ABILITY_IMPORTANCE={
@@ -5674,23 +5729,39 @@ function memberTaskRows(){
     const nm=r.name;
     const stats=getStats2(nm);
     let active=getActiveTask(nm);
-    let taskKey, taskLabel;
+    let taskKey, taskLabel, taskGame;
     if(active){
       taskKey=active.key;
-      if(isBeginner(nm)){ const bt=BEGINNER_TASKS.find(t=>t.key===active.key); taskLabel=bt?bt.label:active.key; }
-      else taskLabel=active.key;
+      if(isBeginner(nm)){
+        const bt=BEGINNER_TASKS.find(t=>t.key===active.key);
+        taskLabel=bt?bt.label:active.key; taskGame=bt?bt.game:'';
+      }else{
+        taskLabel=active.key; taskGame=taskInfo(active.key).game;
+      }
     }else{
       const tasks=pickTasks(stats,nm);
-      if(tasks.length){ taskKey=tasks[0].key; taskLabel=tasks[0]._beginner?tasks[0]._label:tasks[0].key; }
+      if(tasks.length){
+        taskKey=tasks[0].key;
+        taskLabel=tasks[0]._beginner?tasks[0]._label:tasks[0].key;
+        taskGame=tasks[0]._beginner?tasks[0]._game:taskInfo(tasks[0].key).game;
+      }
     }
     if(!taskKey) return `<div class="tov-trow"><span class="tov-tnm">${esc(nm)}</span><span class="tov-tno">과제 없음</span></div>`;
     const prog=(function(){ const t=(DATA.member_tasks&&DATA.member_tasks[statKey(nm)])||{}; return parseInt(t[statKey(taskKey)+'_prog']||0,10)||0; })();
     const passed=prog>=3;
     const dots=[0,1,2].map(i=>`<span class="tov-dot${i<prog?' on':''}">${i<prog?'●':'○'}</span>`).join('');
     const beg=isBeginner(nm)?'<span class="tov-beg">초보</span>':'';
+    // 과제 이력 (완료 개수 → 몇 번째 과제인지, 직전 과제)
+    const hist=(DATA.member_task_history&&DATA.member_task_history[statKey(nm)])||{};
+    const histArr=Object.values(hist).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const doneCount=histArr.length;
+    const taskNo=doneCount+1; // 현재는 (완료+1)번째 과제
+    const prevTask=doneCount>0?histArr[histArr.length-1].label:null;
+    const noBadge=`<span class="tov-tnum">${taskNo}번째</span>`;
+    const prevTxt=prevTask?`<span class="tov-tprev">이전: ${esc(prevTask)}</span>`:'';
     return `<div class="tov-trow${passed?' done':''}">
       <span class="tov-tnm">${esc(nm)}${beg}</span>
-      <span class="tov-ttask">${esc(taskLabel)}</span>
+      <span class="tov-ttask">${noBadge}<b>${esc(taskLabel)}</b>${taskGame?` <span class="tov-tgame">${esc(taskGame)}</span>`:''}${prevTxt}</span>
       <span class="tov-tdots">${dots}</span>
       <span class="tov-tstat">${passed?'✅ 통과':prog+'/3'}</span>
     </div>`;
