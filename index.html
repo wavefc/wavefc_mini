@@ -4978,7 +4978,9 @@ function posScores22(stats,name){
 // 최적 포지션 피드백 (반말 · 강점 2 + 해야할 것 2 = 과제와 통일)
 function bestPosFeedback(stats,name){
   const all=allPosScores(stats,name);
-  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  // 골레이로 제외 (전문 GK 없는 팀) — 필드 포지션 중 최적
+  const field=all.filter(p=>p.pos!=='골레이로');
+  const best=field.reduce((a,b)=>b.score>a.score?b:a,field[0]);
   // 강점: 개별 항목 점수 높은 2개
   const items=SR_KEYS.map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0);
   const strong=[...items].sort((a,b)=>b.v-a.v).slice(0,2);
@@ -5198,12 +5200,11 @@ const POS_CORE={
 const COMMON_CORE=['파울 관리','콜 타이밍','상황 인지','로테이션 이해','체력'];
 // GK 능력치 (후순위)
 const GK_KEYS=['GK반응','GK선방','GK위치선정','GK1대1','GK발기술'];
-// 내 최적 포지션(아라L/R은 아라로 통일)
+// 내 최적 포지션(아라L/R은 아라로 통일 · 골레이로 제외)
 function myBestPosKey(stats,name){
-  const all=allPosScores(stats,name);
+  const all=allPosScores(stats,name).filter(p=>p.pos!=='골레이로');
   const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
   if(best.pos.indexOf('아라')>=0) return '아라';
-  if(best.pos==='골레이로') return '골레이로';
   return best.pos; // 피보/픽소
 }
 // 어떤 그룹에 속하는지
@@ -5420,7 +5421,7 @@ function statRankSection(){
   const jno=jerseyNoOf(myName);
   const badge=statStatusBadge(myName);
   // 정보박스용: 최적 포지션, 주발, 컨디션
-  const allPos=allPosScores(myStats,myName);
+  const allPos=allPosScores(myStats,myName).filter(p=>p.pos!=='골레이로');
   const bestP=allPos.reduce((a,b)=>b.score>a.score?b:a,allPos[0]);
   const rawMe=(DATA.member_stats2&&DATA.member_stats2[statKey(myName)])||{};
   // 주발: 본인 저장값(member_foot) > import _foot > R
