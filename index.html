@@ -4975,23 +4975,27 @@ function posScores22(stats,name){
     {pos:'GK',  label:'골레이로',score:gk}
   ];
 }
-// 최적 포지션 피드백 (반말 · 장점 + 훈련할 점)
+// 최적 포지션 피드백 (반말 · 개별 항목 강점/약점)
 function bestPosFeedback(stats,name){
   const all=allPosScores(stats,name);
   const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
-  // 최고 그룹 / 최저 그룹
-  const gs=SR_GROUPS.map(g=>({label:g.label,v:groupAvgByKey(stats,g.key)})).filter(x=>x.v>0);
-  gs.sort((a,b)=>b.v-a.v);
-  const top=gs[0], low=gs[gs.length-1];
+  // 개별 항목: 강점 = 점수 높은 것 top, 약점 = (낮은 점수 × 중요도) 큰 것
+  const items=SR_KEYS.map(k=>({k:k,v:stats[k]||0,imp:abilityImp(k)})).filter(x=>x.v>0);
+  const strong=[...items].sort((a,b)=>b.v-a.v).slice(0,2);
+  // 약점: 중요도 2 이상만, urgency=(100-v)*imp 큰 것
+  const weakCand=items.filter(x=>x.imp>=2).map(x=>({...x,urg:(100-x.v)*x.imp}));
+  weakCand.sort((a,b)=>b.urg-a.urg);
+  const weak=weakCand[0];
   let posTip='';
   if(best.pos==='피보') posTip='슛 결정력이 좋아서 최전방에서 골 넣는 자리야.';
   else if(best.pos.indexOf('아라')>=0) posTip='드리블·스피드가 좋아서 측면을 휘젓는 자리야.';
   else if(best.pos==='픽소') posTip='수비·패스가 안정적이라 뒤에서 팀을 조율하는 자리야.';
-  else if(best.pos==='골레이로') posTip='반응·선방이 좋아서 골문을 지키는 자리야.';
+  else if(best.pos==='골레이로') posTip='필드 기본기를 더 키우면 어디서든 쓸 수 있어.';
+  const strongTxt=strong.map(s=>`${s.k} ${s.v}`).join(', ');
   return `<div class="pxfb-pos">너는 <b>${best.label}</b>가 최적이야! <span class="pxfb-score">${best.score}</span></div>
     <div class="pxfb-line">${posTip}</div>
-    <div class="pxfb-good">💪 <b>${top.label}</b>(${Math.round(top.v)})가 제일 강해. 이게 네 무기야.</div>
-    <div class="pxfb-bad">🔧 근데 <b>${low.label}</b>(${Math.round(low.v)})이 제일 아쉬워. 여길 집중해서 올려보자.</div>`;
+    <div class="pxfb-good">💪 <b>${strongTxt}</b>가 강해. 이게 네 무기야.</div>
+    ${weak?`<div class="pxfb-bad">🔧 근데 <b>${weak.k} ${weak.v}</b>이(가) 아쉬워. 여길 집중해서 올려보자.</div>`:''}`;
 }
 // 등번호 찾기: member_stats2._no → users의 number
 function jerseyNoOf(name){
@@ -5155,6 +5159,21 @@ function taskLevelTone(v){
   if(v<90) return '성공률과 일관성을 높이는 단계야.';
   return '이미 강점이야. 유지하면서 특기로 살려봐.';
 }
+// ===== 능력치 중요도 등급 (5=최최최최우선 ~ 1=최하) =====
+const ABILITY_IMPORTANCE={
+  // 🔴 최최최최우선 (5)
+  '볼컨트롤':5,'짧은패스':5,'정확도':5,'상황 인지':5,'콜 타이밍':5,'대인수비':5,'시야':5,
+  // 🟠 최우선 (4)
+  '발바닥 컨트롤':4,'수비 전환':4,'볼 간수':4,'결정력':4,'수비집중력':4,'백코트 적극성':4,'원터치 패스':4,'아웃사이드 터치':4,'인사이드 터치':4,'민첩성':4,'몸싸움':4,'위치선정':4,
+  // 🟡 보통 (3)
+  '체력':3,'드리블':3,'스피드':3,'패스 스피드':3,'사기 진작':3,'등지는 플레이':3,
+  // 🟢 보조 (2)
+  '로테이션 이해':2,'가로채기':2,'가속력':2,'긴패스':2,'컷백패스':2,'파라패스':2,'공중볼 패스':2,'클리어링':2,'페인팅':2,'슛파워':2,'인사이드 슈팅':2,'아웃사이드 슈팅':2,
+  // ⚪ 최하 (1)
+  '파울 관리':1,'점프':1,'발리':1,'코발 슈팅':1,'세트피스 킥':1,'대형 조율':1,'지시 정확도':1,
+  'GK반응':1,'GK선방':1,'GK위치선정':1,'GK1대1':1,'GK발기술':1
+};
+function abilityImp(key){ return ABILITY_IMPORTANCE[key]||2; }
 // 생초보 명단 — 기본기(볼터치·귀열기·수비위치) 우선
 const BEGINNERS=['안주현','장하라','김소연','장하현','조훈지','김리원'];
 // 초보 우선 과제 (고정 3종)
@@ -5188,9 +5207,9 @@ function groupOfKey(key){
   for(const g of SR_GROUPS){ if(g.keys.indexOf(key)>=0) return g; }
   return null;
 }
-// 핵심 과제 후보 선정 → 우선순위 순 정렬된 배열 반환
+// 핵심 과제 후보 선정 → 우선순위 순 정렬
 function pickTasks(stats,name){
-  // 생초보: 기본기 3종 고정 (볼터치·귀열기·수비위치)
+  // 생초보: 기본기 3종 고정
   if(isBeginner(name)){
     const ta=statTeamAvgByKey();
     return BEGINNER_TASKS.map(t=>({
@@ -5199,51 +5218,40 @@ function pickTasks(stats,name){
     }));
   }
   const bestPos=myBestPosKey(stats,name);
-  // 후보 능력치 집합
-  let cand=[];
+  // 후보: 포지션 핵심 + 공통 (GK는 제외)
+  let cand;
   if(bestPos==='골레이로'){
-    // 전문 GK 없음 → 필드 핵심 위주로 (피보/픽소 섞어 기본 필드능력)
     cand=Array.from(new Set(['위치선정','짧은패스','볼컨트롤','수비 전환','대인수비'].concat(COMMON_CORE)));
   }else{
     cand=Array.from(new Set((POS_CORE[bestPos]||[]).concat(COMMON_CORE)));
   }
-  // 점수 있는 것만 (0=미평가 제외)
   const teamAvg=statTeamAvgByKey();
   const scored=cand.map(k=>{
     const v=stats[k]||0;
-    if(v<=0) return null;
-    const g=groupOfKey(k);
-    // 병목: 같은 그룹 내 평균 대비 얼마나 처지는가
-    let groupGap=0;
-    if(g){
-      const gv=g.keys.map(kk=>stats[kk]||0).filter(x=>x>0);
-      if(gv.length>=2){ const ga=gv.reduce((a,b)=>a+b,0)/gv.length; groupGap=v-ga; }
-    }
+    if(v<=0) return null;            // 미평가 제외
+    if(abilityImp(k)<=1) return null; // 최하 등급(파울관리·GK 등)은 핵심 과제서 제외
+    const imp=abilityImp(k);
     const teamGap=v-(teamAvg[k]||0);
-    // 우선순위 점수(낮을수록 급함): 절대점수 + 병목(그룹처짐) 가중 + 팀평균 이하 가중
-    let priority=v;
-    if(groupGap<0) priority += groupGap*1.5;   // 강점 그룹 속 병목이면 더 급함
-    if(teamGap<0) priority += teamGap*0.5;      // 팀평균 이하면 더 급함
-    return {key:k, mine:v, teamAvg:Math.round(teamAvg[k]||0), groupGap:Math.round(groupGap), teamGap:Math.round(teamGap), priority:priority, group:g?g.label:''};
+    // 우선순위 점수(작을수록 급함): 낮은 점수일수록·중요할수록 급함
+    // (100-점수) × 중요도 → 클수록 급함이므로 음수로 뒤집어 정렬
+    let urgency=(100-v)*imp;
+    if(teamGap<0) urgency += (-teamGap)*1.0; // 팀평균 이하 가산
+    return {key:k, mine:v, teamAvg:Math.round(teamAvg[k]||0), imp:imp, teamGap:Math.round(teamGap), priority:-urgency};
   }).filter(Boolean);
-  scored.sort((a,b)=>a.priority-b.priority);
+  scored.sort((a,b)=>a.priority-b.priority); // priority 작을수록(=urgency 클수록) 앞
   return scored;
 }
 // (구) statWeakness 호환용 — 카드에서 새 로직 사용
 function statWeakness(myStats){
   return pickTasks(myStats, myRealName()).slice(0,3);
 }
-// 감독 피드백 문장: 강점 → 약점 → 바꿀 행동
+// 피드백 문장: 강점(개별 항목) → 약점 → 바꿀 행동
 function coachFeedback(stats,name,task){
-  // 같은 그룹의 강점 항목 찾기
-  const g=groupOfKey(task.key);
+  // 전체에서 강점 항목 (점수 높은 것 2개)
+  const items=SR_KEYS.map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
   let strongTxt='';
-  if(g){
-    const others=g.keys.filter(k=>k!==task.key).map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>=75).sort((a,b)=>b.v-a.v);
-    if(others.length){
-      const names=others.slice(0,2).map(o=>o.k+' '+o.v).join(', ');
-      strongTxt=`${names}처럼 ${g.label} 능력은 좋은 편이야. `;
-    }
+  if(items.length>=2){
+    strongTxt=`${items[0].k} ${items[0].v}, ${items[1].k} ${items[1].v}는 좋은 편이야. `;
   }
   const info=taskInfo(task.key);
   const tone=taskLevelTone(task.mine);
@@ -5508,16 +5516,17 @@ function srTeamOverview(){
 function teamOverviewHtml(){
   const rank=statRanking2();
   const teamAvg=statTeamAvgByKey();
-  // 그룹별 팀 평균
-  const groupAvgs=SR_GROUPS.map(g=>{
+  // 그룹별 팀 평균 (능력 분포 막대용 — GK 제외)
+  const groupAvgs=SR_GROUPS.filter(g=>g.key!=='GK').map(g=>{
     let s=0,c=0; g.keys.forEach(k=>{ const a=teamAvg[k]||0; if(a>0){s+=a;c++;} });
     return {label:g.label, color:g.color, avg:c?Math.round(s/c):0};
   });
-  const sortedG=[...groupAvgs].sort((a,b)=>b.avg-a.avg);
-  const best=sortedG[0], worst=sortedG[sortedG.length-1];
-  // 항목별 팀 최저 3개 (팀 공통 약점)
-  const keyAvgs=SR_KEYS.map(k=>({k:k, avg:teamAvg[k]||0})).filter(x=>x.avg>0).sort((a,b)=>a.avg-b.avg);
-  const teamWeak=keyAvgs.slice(0,5);
+  // 강점/약점 = 개별 항목 (중요도 2 이상만, GK·최하 제외)
+  const items=SR_KEYS.map(k=>({k:k, avg:teamAvg[k]||0, imp:abilityImp(k)})).filter(x=>x.avg>0 && x.imp>=2);
+  const strongItems=[...items].sort((a,b)=>b.avg-a.avg).slice(0,3);
+  // 약점: (100-평균)×중요도 큰 것
+  const weakItems=items.map(x=>({...x,urg:(100-x.avg)*x.imp})).sort((a,b)=>b.urg-a.urg).slice(0,5);
+  const best=strongItems[0], worst=weakItems[0];
   // 순위표
   const rows=rank.map((r,i)=>{
     const medal=i<3?['🥇','🥈','🥉'][i]:`${i+1}`;
@@ -5528,7 +5537,6 @@ function teamOverviewHtml(){
       <span class="tov-ov">${r.ovr}</span>
     </div>`;
   }).join('');
-  // 팀 평균 막대
   const teamOvr=rank.length?Math.round(rank.reduce((a,r)=>a+r.ovr,0)/rank.length):0;
   const groupBars=groupAvgs.map(g=>`
     <div class="tov-bar-row">
@@ -5536,18 +5544,21 @@ function teamOverviewHtml(){
       <div class="tov-bar-track"><div class="tov-bar-fill" style="width:${g.avg}%;background:${g.color};"></div></div>
       <span class="tov-bar-v">${g.avg}</span>
     </div>`).join('');
-  // 추천 훈련
+  // 추천 훈련 — 팀 약점 항목(중요도 반영) 기준
+  const wk=worst?worst.k:'';
   let trainRec='';
-  if(worst.label==='수비'||worst.label==='의사소통'){
-    trainRec='수비 위치·콜 타이밍이 약해. <b>공격vs수비 훈련</b>으로 수비 자리잡기와 "내려와/붙어" 콜을 반복하면 좋아. 초보가 많으니 멈춤 지시 후 위치 설명을 곁들여.';
-  }else if(worst.label==='패스'){
-    trainRec='패스 정확도가 약해. <b>파라패스+트래핑패스, 패스 후 자리이동</b> 드릴로 "쉬운 곳에 먼저" 습관을 들이자.';
-  }else if(worst.label==='드리블'||worst.label==='기술·특기'){
-    trainRec='볼 마스터리가 약해. <b>로테이션 몸풀기</b>(8자 드리블, 발바닥 터치, 사이드 스텝)로 기본기를 반복하자.';
-  }else if(worst.label==='피지컬'){
-    trainRec='체력·순발력이 약해. <b>가로 러닝, 1분 싸이클링, 지그재그 스텝</b>으로 호흡을 끌어올리자.';
+  if(['상황 인지','콜 타이밍','수비 전환','대인수비','수비집중력','백코트 적극성'].indexOf(wk)>=0){
+    trainRec=`<b>${wk}</b>이(가) 팀 공통 약점이야. <b>공격vs수비 훈련</b>으로 수비 자리잡기와 "내려와/붙어" 콜을 반복하자. 멈춤 지시 후 위치 설명을 곁들이면 초보도 이해가 빨라.`;
+  }else if(['짧은패스','정확도','원터치 패스','시야','패스 스피드'].indexOf(wk)>=0){
+    trainRec=`<b>${wk}</b>이(가) 약해. <b>파라패스+트래핑패스, 패스 후 자리이동</b> 드릴로 "쉬운 곳에 먼저" 습관을 들이자.`;
+  }else if(['볼컨트롤','드리블','발바닥 컨트롤','민첩성','볼 간수','인사이드 터치','아웃사이드 터치'].indexOf(wk)>=0){
+    trainRec=`<b>${wk}</b>이(가) 약해. <b>로테이션 몸풀기</b>(8자 드리블, 발바닥 터치, 사이드 스텝)로 볼 마스터리를 반복하자.`;
+  }else if(['체력','스피드','가속력','몸싸움'].indexOf(wk)>=0){
+    trainRec=`<b>${wk}</b>이(가) 약해. <b>가로 러닝, 1분 싸이클링, 지그재그 스텝</b>으로 호흡과 순발력을 끌어올리자.`;
+  }else if(['결정력','위치선정'].indexOf(wk)>=0){
+    trainRec=`<b>${wk}</b>이(가) 약해. <b>파포스트 침투 + 2터치 슈팅</b> 드릴로 골 결정력을 높이자.`;
   }else{
-    trainRec=`${worst.label}이 팀 전체 약점이야. 관련 기본 드릴을 반복 훈련으로 넣자.`;
+    trainRec=`<b>${wk}</b>이(가) 팀 약점이야. 관련 기본 드릴을 반복 훈련으로 넣자.`;
   }
   return `<div class="px-dash">
     <div class="tov-top">
@@ -5558,14 +5569,13 @@ function teamOverviewHtml(){
           <div class="tov-big"><span>인원</span><b>${rank.length}<small>명</small></b></div>
         </div>
         <div class="tov-hilo">
-          <div class="tov-hi">💪 강점 <b style="color:${best.color};">${best.label}</b> ${best.avg}</div>
-          <div class="tov-lo">🔧 약점 <b style="color:${worst.color};">${worst.label}</b> ${worst.avg}</div>
+          <div class="tov-hi">💪 강점 ${strongItems.map(s=>`<b>${s.k}</b> ${s.avg}`).join(', ')}</div>
+          <div class="tov-lo">🔧 약점 ${weakItems.slice(0,3).map(w=>`<b>${w.k}</b> ${w.avg}`).join(', ')}</div>
         </div>
       </div>
       <div class="px-box tov-rec">
         <div class="px-box-h">🎯 추천 훈련</div>
         <div class="tov-rec-body">${trainRec}</div>
-        <div class="tov-weak">팀 공통 약점 항목: ${teamWeak.map(w=>`${w.k} ${w.avg}`).join(' · ')}</div>
       </div>
     </div>
     <div class="tov-mid">
@@ -5574,7 +5584,7 @@ function teamOverviewHtml(){
         <div class="tov-ranklist">${rows}</div>
       </div>
       <div class="px-box tov-graphbox">
-        <div class="px-box-h">📈 팀 능력 분포</div>
+        <div class="px-box-h">📈 팀 능력 분포 <span style="font-size:9px;color:#a9b6be;font-weight:400;">*골레이로 제외</span></div>
         <div class="tov-bars">${groupBars}</div>
       </div>
     </div>
