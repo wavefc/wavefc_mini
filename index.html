@@ -8,6 +8,12 @@
   @import url('https://fonts.googleapis.com/css2?family=Galmuri11&family=Galmuri9&family=Galmuri14&display=swap');
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
   @font-face {
+    font-family: 'DosStory';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+  }
+  @font-face {
     font-family: 'Tangba';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-4@1.1/Tangba12.woff2') format('woff2');
     font-weight: normal;
@@ -561,8 +567,8 @@
   .tov-tasklist{display:flex;flex-direction:column;gap:3px;}
   .tov-trow{display:flex;flex-direction:column;gap:5px;font-size:13px;padding:9px 11px;background:#f4f9fd;border:1px solid #e0ebf2;}
   .tov-trow.done{background:#eafaf0;border-color:#7fd3a3;}
-  .tov-trow-top{display:flex;align-items:center;gap:8px;}
-  .tov-tnm{font-weight:800;color:#1a3a5c;font-size:14px;}
+  .tov-trow-top{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #dbe8f2;padding-bottom:4px;}
+  .tov-tnm{font-weight:800;color:#1a3a5c;font-size:15px;}
   .tov-tnum{font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;}
   .tov-tstat{margin-left:auto;font-size:12px;font-weight:800;color:#5a7585;}
   .tov-trow-mid{display:flex;align-items:center;gap:8px;padding-left:2px;}
@@ -644,6 +650,10 @@
   .gt-head{font-size:14px;color:#1a3a5c;}
   .gt-head b{color:#d32f4a;}
   .gt-num{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;vertical-align:middle;}
+  /* 코치_NPC 성장일지 (도스폰트) */
+  .dos-log{font-family:'DosStory','DungGeunMo',monospace;font-size:14px;line-height:1.9;color:#2b3f4f;letter-spacing:0.2px;}
+  .dos-log b{color:#1a6fc4;}
+  .dos-sign{color:#8a7fd0;font-size:13px;font-weight:700;}
   .gt-score{font-size:11px;color:#8aa;font-weight:700;margin-left:4px;}
   .gt-fb,.gt-point,.gt-game,.gt-pass{padding:7px 9px;background:#f6fbff;border-left:3px solid #9bc9e8;}
   .gt-point{background:#fff7ec;border-left-color:#e0a04a;}
@@ -5012,6 +5022,26 @@ function allPosScores(stats,name){
     {pos:'골레이로',label:'골레이로',score:posScore(stats,'골레이로')}
   ];
 }
+// 최적 포지션 결정 (골레이로 제외 · 아라는 base로 경쟁 후 방향 결정)
+// 반환: {pos:'피보'|'아라'|'픽소', label, score, side:'L'|'R'|null}
+function resolveBestPos(stats,name){
+  const fibo=posScore(stats,'피보');
+  const araBase=posScore(stats,'아라');   // 방향 가점 없는 순수 아라 점수
+  const pixo=posScore(stats,'픽소');
+  const cands=[
+    {pos:'피보', label:'피보', score:fibo, side:null},
+    {pos:'아라', label:'아라', score:araBase, side:null},
+    {pos:'픽소', label:'픽소', score:pixo, side:null}
+  ];
+  const best=cands.reduce((a,b)=>b.score>a.score?b:a,cands[0]);
+  // 아라가 최적이면 방향(L/R) 결정
+  if(best.pos==='아라'){
+    const ara=araSide(stats,name);
+    if(ara.L>=ara.R){ best.side='L'; best.label='아라(L)'; best.score=ara.L; }
+    else { best.side='R'; best.label='아라(R)'; best.score=ara.R; }
+  }
+  return best;
+}
 // 2-2 포메이션: 공격수·수비수·GK (공격=피보/아라 최고값, 수비=픽소)
 function posScores22(stats,name){
   const ara=araSide(stats,name);
@@ -5026,10 +5056,7 @@ function posScores22(stats,name){
 }
 // 최적 포지션 피드백 (반말 · 강점 2 + 해야할 것 2 = 과제와 통일)
 function bestPosFeedback(stats,name){
-  const all=allPosScores(stats,name);
-  // 골레이로 제외 (전문 GK 없는 팀) — 필드 포지션 중 최적
-  const field=all.filter(p=>p.pos!=='골레이로');
-  const best=field.reduce((a,b)=>b.score>a.score?b:a,field[0]);
+  const best=resolveBestPos(stats,name);
   // 강점: 개별 항목 점수 높은 2개 (GK 능력치 제외 — 전문 GK 없음)
   const items=SR_KEYS.filter(k=>k.indexOf('GK')!==0).map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0);
   const strong=[...items].sort((a,b)=>b.v-a.v).slice(0,2);
@@ -5263,8 +5290,7 @@ function recordTaskDone(name, taskKey){
   else { const info=taskInfo(taskKey); game=info.game; point=info.point; }
   const stats=getStats2(name);
   // 포지션 · 강점 · 현재 과제 스탯
-  const all=allPosScores(stats,name).filter(p=>p.pos!=='골레이로');
-  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  const best=resolveBestPos(stats,name);
   const items=SR_KEYS.filter(k=>k.indexOf('GK')!==0).map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
   const strong=items.slice(0,2).map(s=>`${s.k} ${s.v}`).join(', ');
   const taskVal=stats[taskKey]||0;
@@ -5276,19 +5302,25 @@ function recordTaskDone(name, taskKey){
   DATA.member_task_history[statKey(name)][histRef.key]=entry;
   autoWriteGrowthLog(name, {label:label, game:game, point:point, pos:(best?best.label:''), posScore:(best?best.score:0), strong:strong, taskVal:taskVal, ymd:ymd});
 }
-// 성장기록일지 자동 작성 (feedbacks/{이름} 배열에 push)
+// 성장기록일지 자동 작성 (코치_NPC · 닌텐도 번역체 · 도스폰트)
 function autoWriteGrowthLog(name, d){
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[name]=fb[name]||[];
-  const title=`✅ '${d.label}' 과제 통과!`;
-  const text=`<b>📅 ${d.ymd}</b><br><br>`
-    + `🎯 <b>포지션</b>: ${d.pos}${d.posScore?` (${d.posScore})`:''}<br>`
-    + `💪 <b>강점</b>: ${d.strong}<br>`
-    + `📝 <b>완료 과제</b>: 「${d.label}」${d.taskVal?` (당시 ${d.taskVal}점)`:''}<br>`
-    + (d.point?`&nbsp;&nbsp;└ 핵심: ${d.point}<br>`:'')
-    + (d.game?`&nbsp;&nbsp;└ 경기 미션: ${d.game}<br>`:'')
-    + `<br>이 과제를 <b>3회 통과</b>했어요! 🎉 다음 과제로 넘어갑니다. 계속 성장하는 중! 💪`;
-  fb[name].push({id:'f'+Date.now(), title:title, text:text, ts:Date.now(), by:'system', comments:[], likedBy:[], views:0, _autoTask:true});
+  const title=`▶ ${name}, '${d.label}' 과제를 통과했다!`;
+  // 닌텐도 일본 번역체 톤
+  const text=`<div class="dos-log">`
+    + `<b>『${d.label}』</b> 과제를 완수했다! ❗<br><br>`
+    + `${name}은(는) <b>${d.pos}</b> 자리에서 싸우는 선수다.<br>`
+    + `${d.strong ? `${d.strong}… 이것이 ${name}의 강점이다!<br>` : ''}`
+    + `이번에 갈고닦은 것은 <b>「${d.label}」</b>${d.taskVal?`(당시 ${d.taskVal})`:''}!<br>`
+    + (d.point?`&nbsp;&nbsp;▸ ${d.point} … 이것을 몸에 새겼다!<br>`:'')
+    + (d.game?`&nbsp;&nbsp;▸ ${d.game} … 이것을 해냈다!<br>`:'')
+    + `<br>${name}은(는) 3번의 시험을 모두 통과했다‼<br>`
+    + `성장의 증표가 기록되었다. 다음 과제로 나아간다!<br>`
+    + `…계속 성장하도록! 👏`
+    + `<br><br><span class="dos-sign">— 코치_NPC (${d.ymd})</span>`
+    + `</div>`;
+  fb[name].push({id:'f'+Date.now(), title:title, text:text, ts:Date.now(), by:'코치_NPC', comments:[], likedBy:[], views:0, _autoTask:true});
   DATA.feedbacks=fb;
   ROOT.child('feedbacks').set(fb);
 }
@@ -5329,10 +5361,7 @@ const COMMON_CORE=['파울 관리','콜 타이밍','상황 인지','로테이션
 const GK_KEYS=['GK반응','GK선방','GK위치선정','GK1대1','GK발기술'];
 // 내 최적 포지션(아라L/R은 아라로 통일 · 골레이로 제외)
 function myBestPosKey(stats,name){
-  const all=allPosScores(stats,name).filter(p=>p.pos!=='골레이로');
-  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
-  if(best.pos.indexOf('아라')>=0) return '아라';
-  return best.pos; // 피보/픽소
+  return resolveBestPos(stats,name).pos; // 피보/아라/픽소
 }
 // 어떤 그룹에 속하는지
 function groupOfKey(key){
@@ -5574,8 +5603,7 @@ function statRankSection(){
   const jno=jerseyNoOf(myName);
   const badge=statStatusBadge(myName);
   // 정보박스용: 최적 포지션, 주발, 컨디션
-  const allPos=allPosScores(myStats,myName).filter(p=>p.pos!=='골레이로');
-  const bestP=allPos.reduce((a,b)=>b.score>a.score?b:a,allPos[0]);
+  const bestP=resolveBestPos(myStats,myName);
   const rawMe=(DATA.member_stats2&&DATA.member_stats2[statKey(myName)])||{};
   // 주발: 본인 저장값(member_foot) > import _foot > R
   const savedFoot=(DATA.member_foot&&DATA.member_foot[statKey(myName)])||rawMe._foot||'R';
