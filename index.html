@@ -559,16 +559,19 @@
   /* 멤버별 과제 현황 */
   .tov-taskbox{margin-top:10px;}
   .tov-tasklist{display:flex;flex-direction:column;gap:3px;}
-  .tov-trow{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;background:#f4f9fd;border:1px solid #e0ebf2;}
+  .tov-trow{display:flex;flex-direction:column;gap:5px;font-size:13px;padding:9px 11px;background:#f4f9fd;border:1px solid #e0ebf2;}
   .tov-trow.done{background:#eafaf0;border-color:#7fd3a3;}
-  .tov-tnm{flex:0 0 90px;font-weight:700;color:#1a3a5c;}
-  .tov-ttask{flex:1;color:#2b3f4f;}
-  .tov-tgame{font-size:11px;color:#8aa;}
-  .tov-tnum{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:1px 6px;margin-right:5px;font-weight:700;border-radius:2px;}
-  .tov-tprev{display:inline-block;font-size:10px;color:#a9b6be;margin-left:6px;}
-  .tov-tdots{flex:0 0 auto;letter-spacing:2px;color:#9b7fd0;}
+  .tov-trow-top{display:flex;align-items:center;gap:8px;}
+  .tov-tnm{font-weight:800;color:#1a3a5c;font-size:14px;}
+  .tov-tnum{font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;}
+  .tov-tstat{margin-left:auto;font-size:12px;font-weight:800;color:#5a7585;}
+  .tov-trow-mid{display:flex;align-items:center;gap:8px;padding-left:2px;}
+  .tov-ttask{flex:1;color:#2b3f4f;line-height:1.4;}
+  .tov-tgame{font-size:12px;color:#8aa;}
+  .tov-tdots{flex:0 0 auto;letter-spacing:2px;color:#9b7fd0;font-size:13px;}
   .tov-dot{color:#d0c4ea;} .tov-dot.on{color:#9b7fd0;}
-  .tov-tstat{flex:0 0 50px;text-align:right;font-size:12px;font-weight:700;color:#5a7585;}
+  .tov-trow-bot{font-size:11px;color:#a9b6be;padding-left:2px;}
+  .tov-beg{font-size:9px;background:#e0662b;color:#fff;padding:1px 5px;margin-left:5px;font-weight:700;}
   .tov-tno{color:#b0bcc4;font-size:12px;}
   .px-box{background:#fff;border:2px solid #1a3a5c;border-radius:0;box-shadow:3px 3px 0 #b9cfe0;padding:12px;}
   .px-box-h{font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.5px;}
@@ -640,6 +643,7 @@
   .gt-card{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#2b3f4f;line-height:1.5;}
   .gt-head{font-size:14px;color:#1a3a5c;}
   .gt-head b{color:#d32f4a;}
+  .gt-num{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;vertical-align:middle;}
   .gt-score{font-size:11px;color:#8aa;font-weight:700;margin-left:4px;}
   .gt-fb,.gt-point,.gt-game,.gt-pass{padding:7px 9px;background:#f6fbff;border-left:3px solid #9bc9e8;}
   .gt-point{background:#fff7ec;border-left-color:#e0a04a;}
@@ -4953,11 +4957,22 @@ const POS_WEIGHTS={
   '픽소':   {DEF:0.40, PAS:0.30, PHY:0.20, SHO:0.10, DRI:0,   GK:0},
   '골레이로':{GK:0.80, PHY:0.10, PAS:0.10, SHO:0,    DRI:0,   DEF:0}
 };
-// 한 포지션의 점수
+// 한 포지션의 점수 (그룹 가중 70% + 핵심 항목 30% 보너스)
+const POS_CORE_BONUS={
+  '피보':['결정력','위치선정','볼 간수','등지는 플레이','인사이드 슈팅'],
+  '아라':['드리블','스피드','민첩성','볼컨트롤'],
+  '픽소':['대인수비','수비 전환','수비집중력','시야','정확도','콜 타이밍']
+};
 function posScore(stats,pos){
   const w=POS_WEIGHTS[pos]; if(!w) return 0;
   let sum=0;
   Object.keys(w).forEach(gk=>{ sum += groupAvgByKey(stats,gk)*w[gk]; });
+  // 핵심 항목 보너스 (피보/아라/픽소만)
+  const core=POS_CORE_BONUS[pos];
+  if(core){
+    const vs=core.map(k=>stats[k]||0).filter(x=>x>0);
+    if(vs.length){ const ca=vs.reduce((a,b)=>a+b,0)/vs.length; sum=sum*0.7+ca*0.3; }
+  }
   return Math.round(sum);
 }
 // 아라 좌우 판정 (대표님 규칙)
@@ -5242,26 +5257,37 @@ function nextTask(){
 function recordTaskDone(name, taskKey){
   const now=new Date();
   const ymd=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  let label=taskKey, game='';
+  let label=taskKey, game='', point='';
   const bt=BEGINNER_TASKS.find(t=>t.key===taskKey);
-  if(bt){ label=bt.label; game=bt.game; }
-  else { game=taskInfo(taskKey).game; }
+  if(bt){ label=bt.label; game=bt.game; point=bt.point; }
+  else { const info=taskInfo(taskKey); game=info.game; point=info.point; }
+  const stats=getStats2(name);
+  // 포지션 · 강점 · 현재 과제 스탯
+  const all=allPosScores(stats,name).filter(p=>p.pos!=='골레이로');
+  const best=all.reduce((a,b)=>b.score>a.score?b:a,all[0]);
+  const items=SR_KEYS.filter(k=>k.indexOf('GK')!==0).map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+  const strong=items.slice(0,2).map(s=>`${s.k} ${s.v}`).join(', ');
+  const taskVal=stats[taskKey]||0;
   const histRef=ROOT.child('member_task_history/'+statKey(name)).push();
-  const entry={key:taskKey, label:label, game:game, date:ymd, ts:Date.now()};
+  const entry={key:taskKey, label:label, game:game, date:ymd, ts:Date.now(), pos:(best?best.label:''), taskVal:taskVal};
   histRef.set(entry);
   if(!DATA.member_task_history) DATA.member_task_history={};
   if(!DATA.member_task_history[statKey(name)]) DATA.member_task_history[statKey(name)]={};
   DATA.member_task_history[statKey(name)][histRef.key]=entry;
-  autoWriteGrowthLog(name, label, game, ymd);
+  autoWriteGrowthLog(name, {label:label, game:game, point:point, pos:(best?best.label:''), posScore:(best?best.score:0), strong:strong, taskVal:taskVal, ymd:ymd});
 }
 // 성장기록일지 자동 작성 (feedbacks/{이름} 배열에 push)
-function autoWriteGrowthLog(name, label, game, ymd){
+function autoWriteGrowthLog(name, d){
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[name]=fb[name]||[];
-  const title=`✅ '${label}' 과제 통과!`;
-  const text=`<b>${ymd}</b><br>이번 성장 과제 <b>「${label}」</b>를 완료했어요! 🎉<br>`
-    + (game?`경기 미션: ${game}<br>`:'')
-    + `이 과제를 숙지하고 3회 통과했어요. 다음 과제로 넘어갑니다. 계속 성장하는 중! 💪`;
+  const title=`✅ '${d.label}' 과제 통과!`;
+  const text=`<b>📅 ${d.ymd}</b><br><br>`
+    + `🎯 <b>포지션</b>: ${d.pos}${d.posScore?` (${d.posScore})`:''}<br>`
+    + `💪 <b>강점</b>: ${d.strong}<br>`
+    + `📝 <b>완료 과제</b>: 「${d.label}」${d.taskVal?` (당시 ${d.taskVal}점)`:''}<br>`
+    + (d.point?`&nbsp;&nbsp;└ 핵심: ${d.point}<br>`:'')
+    + (d.game?`&nbsp;&nbsp;└ 경기 미션: ${d.game}<br>`:'')
+    + `<br>이 과제를 <b>3회 통과</b>했어요! 🎉 다음 과제로 넘어갑니다. 계속 성장하는 중! 💪`;
   fb[name].push({id:'f'+Date.now(), title:title, text:text, ts:Date.now(), by:'system', comments:[], likedBy:[], views:0, _autoTask:true});
   DATA.feedbacks=fb;
   ROOT.child('feedbacks').set(fb);
@@ -5411,13 +5437,17 @@ function growthTaskCard(stats,name){
   }
   const prog=taskProgress(main.key);
   const passed=prog>=3;
+  // 몇 번째 과제인지
+  const hist=(DATA.member_task_history&&DATA.member_task_history[statKey(name)])||{};
+  const doneCnt=Object.keys(hist).length;
+  const taskNoBadge=`<span class="gt-num">${doneCnt+1}번째 과제</span>`;
   const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}',${i+1})">${i<prog?'✓':'□'}</span>`).join('');
   const nextBtn=passed?`<button class="gt-nextbtn" onclick="nextTask()">🎉 통과! 다음 과제 받기 →</button>`:'';
   // 초보 카드
   if(main._beginner){
     const next=tasks.slice(0,3).filter(t=>t.key!==main.key).slice(0,2).map(t=>`<span class="gt-next-item">${t._label||t.key}</span>`).join(' · ');
     return `<div class="gt-card">
-      <div class="gt-head">🔰 <b>${main._label||main.key}</b> <span class="gt-score">기본기부터 차근차근</span></div>
+      <div class="gt-head">🔰 <b>${main._label||main.key}</b> ${taskNoBadge} <span class="gt-score">기본기부터 차근차근</span></div>
       <div class="gt-fb"><span class="gt-lbl">👀 피드백</span>지금은 어려운 기술보다 <b>기본기</b>가 먼저야. ${main._point||''} — 이것만 익혀도 경기가 훨씬 편해져. 조급해하지 말고 하나씩 가자!</div>
       <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${main._point||''}</div>
       <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${main._game||''}</div>
@@ -5430,7 +5460,7 @@ function growthTaskCard(stats,name){
   const fb=coachFeedback(stats,name,main);
   const next=tasks.filter(t=>t.key!==main.key).slice(0,2).map(t=>`<span class="gt-next-item">${t.key} ${t.mine}</span>`).join(' · ');
   return `<div class="gt-card">
-    <div class="gt-head">🔴 <b>${main.key}</b> <span class="gt-score">내 ${main.mine} · 기준 ${main.teamAvg}</span></div>
+    <div class="gt-head">🔴 <b>${main.key}</b> ${taskNoBadge} <span class="gt-score">내 ${main.mine} · 기준 ${main.teamAvg}</span></div>
     <div class="gt-fb"><span class="gt-lbl">👀 피드백</span>${fb}</div>
     <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${info.point}</div>
     <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${info.game}</div>
@@ -5757,13 +5787,17 @@ function memberTaskRows(){
     const doneCount=histArr.length;
     const taskNo=doneCount+1; // 현재는 (완료+1)번째 과제
     const prevTask=doneCount>0?histArr[histArr.length-1].label:null;
-    const noBadge=`<span class="tov-tnum">${taskNo}번째</span>`;
-    const prevTxt=prevTask?`<span class="tov-tprev">이전: ${esc(prevTask)}</span>`:'';
     return `<div class="tov-trow${passed?' done':''}">
-      <span class="tov-tnm">${esc(nm)}${beg}</span>
-      <span class="tov-ttask">${noBadge}<b>${esc(taskLabel)}</b>${taskGame?` <span class="tov-tgame">${esc(taskGame)}</span>`:''}${prevTxt}</span>
-      <span class="tov-tdots">${dots}</span>
-      <span class="tov-tstat">${passed?'✅ 통과':prog+'/3'}</span>
+      <div class="tov-trow-top">
+        <span class="tov-tnm">${esc(nm)}${beg}</span>
+        <span class="tov-tnum">${taskNo}번째 과제</span>
+        <span class="tov-tstat">${passed?'✅ 통과':prog+'/3'}</span>
+      </div>
+      <div class="tov-trow-mid">
+        <span class="tov-ttask"><b>${esc(taskLabel)}</b>${taskGame?` — <span class="tov-tgame">${esc(taskGame)}</span>`:''}</span>
+        <span class="tov-tdots">${dots}</span>
+      </div>
+      ${prevTask?`<div class="tov-trow-bot">이전 과제: ${esc(prevTask)}</div>`:''}
     </div>`;
   }).join('');
 }
