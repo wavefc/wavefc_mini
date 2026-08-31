@@ -651,7 +651,7 @@
   .gt-head b{color:#d32f4a;}
   .gt-num{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;vertical-align:middle;}
   /* 코치_NPC 성장일지 (도스폰트) */
-  .dos-log{font-family:'DosStory','DungGeunMo',monospace;font-size:14px;line-height:1.9;color:#2b3f4f;letter-spacing:0.2px;}
+  .fb-body .dos-log, .dos-log{font-family:'DosStory','DungGeunMo',monospace !important;font-size:15px;line-height:2;color:#2b3f4f;letter-spacing:0.3px;}
   .dos-log b{color:#1a6fc4;}
   .dos-sign{color:#8a7fd0;font-size:13px;font-weight:700;}
   .gt-score{font-size:11px;color:#8aa;font-weight:700;margin-left:4px;}
@@ -669,6 +669,8 @@
   .gt-done{color:#1a9d5a;font-weight:800;}
   .gt-nextbtn{width:100%;margin-top:4px;background:#1a9d5a;color:#fff;border:2px solid #127a43;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #127a43;}
   .gt-nextbtn:active{transform:translate(2px,2px);box-shadow:none;}
+  .gt-resetbtn{width:100%;margin-top:6px;background:#fff;color:#b7791f;border:2px dashed #e0b050;border-radius:0;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .gt-resetbtn:hover{background:#fff8e6;}
   /* TOP3 */
   .px-podium{display:flex;flex-direction:column;gap:4px;}
   .px-podium-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#2b3f4f;padding:5px 8px;background:#f4f9fd;border:2px solid #dbe8f2;}
@@ -4985,11 +4987,27 @@ function posScore(stats,pos){
   }
   return Math.round(sum);
 }
-// 아라 좌우 판정 (대표님 규칙)
-// - 아웃사이드 터치가 강하면 주발 '반대쪽' 아라에 가점 (인버티드 윙어: 안쪽으로 감아차기/파고들기 유리)
-//   오른발+아웃사이드 강 → 왼쪽 아라(L) / 왼발+아웃사이드 강 → 오른쪽 아라(R)
-// - 아웃사이드가 약하면 주발과 '같은 쪽'이 자연스러움 (정통 윙어)
+// 아라 좌우 판정 (대표님 규칙) — 방향만 정하고 점수는 base 유지(다른 포지션 왜곡 방지)
+// - 아웃사이드 터치가 강하면 주발 '반대쪽' 아라 (인버티드 윙어)
+//   오른발+아웃 강 → 왼쪽(L) / 왼발+아웃 강 → 오른쪽(R)
+// - 아웃사이드가 약하면 주발과 '같은 쪽'
+// L/R 점수는 동일(=base). 방향은 side()로 구분.
 function araSide(stats,name){
+  const base=posScore(stats,'아라');
+  return {L:base, R:base};
+}
+// 아라 방향(L/R)만 반환
+function araDir(stats,name){
+  const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
+  const foot=(DATA.member_foot&&DATA.member_foot[statKey(name)])||raw._foot||'R';
+  const outside=stats['아웃사이드 터치']||0;
+  const inside=stats['인사이드 터치']||0;
+  const strongOut = outside>=70 && outside>inside;
+  if(foot==='B') return 'L'; // 양발 기본 L
+  if(foot==='R') return strongOut?'L':'R';
+  return strongOut?'R':'L'; // 왼발
+}
+function araSide_OLD(stats,name){
   const raw=(DATA.member_stats2&&DATA.member_stats2[statKey(name)])||{};
   const foot=(DATA.member_foot&&DATA.member_foot[statKey(name)])||raw._foot||'R';
   const base=posScore(stats,'아라');
@@ -4997,10 +5015,9 @@ function araSide(stats,name){
   const inside=stats['인사이드 터치']||0;
   let L=base, R=base;
   if(foot==='B'){
-    // 양발: 아웃사이드 강한 쪽 살짝, 대칭
     L=base+2; R=base+2;
   }else{
-    const strongOut = outside>=70 && outside>inside; // 아웃사이드 특기
+    const strongOut = outside>=70 && outside>inside;
     if(foot==='R'){
       if(strongOut){ L=base+4; R=base+1; } // 오른발+아웃 강 → 왼쪽 아라
       else { L=base; R=base+3; }            // 정통 오른쪽
@@ -5034,11 +5051,10 @@ function resolveBestPos(stats,name){
     {pos:'픽소', label:'픽소', score:pixo, side:null}
   ];
   const best=cands.reduce((a,b)=>b.score>a.score?b:a,cands[0]);
-  // 아라가 최적이면 방향(L/R) 결정
+  // 아라가 최적이면 방향(L/R) 결정 (점수는 base 그대로)
   if(best.pos==='아라'){
-    const ara=araSide(stats,name);
-    if(ara.L>=ara.R){ best.side='L'; best.label='아라(L)'; best.score=ara.L; }
-    else { best.side='R'; best.label='아라(R)'; best.score=ara.R; }
+    const dir=araDir(stats,name);
+    best.side=dir; best.label='아라('+dir+')';
   }
   return best;
 }
@@ -5307,22 +5323,39 @@ function autoWriteGrowthLog(name, d){
   const fb=JSON.parse(JSON.stringify(DATA.feedbacks||{}));
   fb[name]=fb[name]||[];
   const title=`▶ ${name}, '${d.label}' 과제를 통과했다!`;
-  // 닌텐도 일본 번역체 톤
-  const text=`<div class="dos-log">`
-    + `<b>『${d.label}』</b> 과제를 완수했다! ❗<br><br>`
-    + `${name}은(는) <b>${d.pos}</b> 자리에서 싸우는 선수다.<br>`
+  const DOS=`font-family:'DosStory','DungGeunMo',monospace;font-size:15px;line-height:2;letter-spacing:0.3px;`;
+  const BL=`color:#1a6fc4;font-weight:bold;`;
+  const text=`<div style="${DOS}color:#2b3f4f;">`
+    + `<span style="${BL}">『${d.label}』</span> 과제를 완수했다! ❗<br><br>`
+    + `${name}은(는) <span style="${BL}">${d.pos}</span> 자리에서 싸우는 선수다.<br>`
     + `${d.strong ? `${d.strong}… 이것이 ${name}의 강점이다!<br>` : ''}`
-    + `이번에 갈고닦은 것은 <b>「${d.label}」</b>${d.taskVal?`(당시 ${d.taskVal})`:''}!<br>`
+    + `이번에 갈고닦은 것은 <span style="${BL}">「${d.label}」</span>${d.taskVal?`(당시 ${d.taskVal})`:''}!<br>`
     + (d.point?`&nbsp;&nbsp;▸ ${d.point} … 이것을 몸에 새겼다!<br>`:'')
     + (d.game?`&nbsp;&nbsp;▸ ${d.game} … 이것을 해냈다!<br>`:'')
     + `<br>${name}은(는) 3번의 시험을 모두 통과했다‼<br>`
     + `성장의 증표가 기록되었다. 다음 과제로 나아간다!<br>`
     + `…계속 성장하도록! 👏`
-    + `<br><br><span class="dos-sign">— 코치_NPC (${d.ymd})</span>`
+    + `<br><br><span style="color:#8a7fd0;font-weight:bold;">— 코치_NPC (${d.ymd})</span>`
     + `</div>`;
   fb[name].push({id:'f'+Date.now(), title:title, text:text, ts:Date.now(), by:'코치_NPC', comments:[], likedBy:[], views:0, _autoTask:true});
   DATA.feedbacks=fb;
   ROOT.child('feedbacks').set(fb);
+}
+// 관리자: 과제를 첫 과제로 리셋 (발급 과제·진행도 초기화)
+function resetTask(){
+  const nm=srTargetName(); if(!nm) return;
+  if(!confirm(nm+'님의 과제를 첫 번째 과제로 리셋할까요?\n(진행도와 발급 과제가 초기화됩니다. 성장일지 글은 남아요.)')) return;
+  // 발급 과제 삭제
+  ROOT.child('member_active_task/'+statKey(nm)).remove();
+  if(DATA.member_active_task) delete DATA.member_active_task[statKey(nm)];
+  // 모든 진행도 삭제
+  ROOT.child('member_tasks/'+statKey(nm)).remove();
+  if(DATA.member_tasks) delete DATA.member_tasks[statKey(nm)];
+  // 과제 이력도 삭제 (다시 1번째부터)
+  ROOT.child('member_task_history/'+statKey(nm)).remove();
+  if(DATA.member_task_history) delete DATA.member_task_history[statKey(nm)];
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
 }
 // ===== 능력치 중요도 등급 (5=최최최최우선 ~ 1=최하) =====
 const ABILITY_IMPORTANCE={
@@ -5472,6 +5505,9 @@ function growthTaskCard(stats,name){
   const taskNoBadge=`<span class="gt-num">${doneCnt+1}번째 과제</span>`;
   const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}',${i+1})">${i<prog?'✓':'□'}</span>`).join('');
   const nextBtn=passed?`<button class="gt-nextbtn" onclick="nextTask()">🎉 통과! 다음 과제 받기 →</button>`:'';
+  // 관리자 전용 리셋 버튼
+  const isAdmin=(typeof adminLevel==='function' && adminLevel()===1);
+  const resetBtn=isAdmin?`<button class="gt-resetbtn" onclick="resetTask()">🔄 과제 리셋 (첫 과제로)</button>`:'';
   // 초보 카드
   if(main._beginner){
     const next=tasks.slice(0,3).filter(t=>t.key!==main.key).slice(0,2).map(t=>`<span class="gt-next-item">${t._label||t.key}</span>`).join(' · ');
@@ -5481,7 +5517,7 @@ function growthTaskCard(stats,name){
       <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${main._point||''}</div>
       <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${main._game||''}</div>
       <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>3회 중 <b>${prog}회</b> 성공${passed?' <span class="gt-done">— 통과! 🎉</span>':''} &nbsp; <span class="gt-boxes">${boxes}</span></div>
-      ${nextBtn}
+      ${nextBtn}${resetBtn}
       ${next?`<div class="gt-next">다음 기본기: ${next}</div>`:''}
     </div>`;
   }
@@ -5494,7 +5530,7 @@ function growthTaskCard(stats,name){
     <div class="gt-point"><span class="gt-lbl">🎯 핵심 포인트</span>${info.point}</div>
     <div class="gt-game"><span class="gt-lbl">⚽ 경기 미션</span>${info.game}</div>
     <div class="gt-pass"><span class="gt-lbl">✅ 통과 조건</span>3회 중 <b>${prog}회</b> 성공${passed?' <span class="gt-done">— 통과! 🎉</span>':''} &nbsp; <span class="gt-boxes">${boxes}</span></div>
-    ${nextBtn}
+    ${nextBtn}${resetBtn}
     ${next?`<div class="gt-next">NEXT 후보: ${next}</div>`:''}
   </div>`;
 }
