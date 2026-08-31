@@ -9,7 +9,8 @@
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
   @font-face {
     font-family: 'DosStory';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2'),
+         url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
     font-weight: normal;
     font-display: swap;
   }
@@ -8589,8 +8590,8 @@ function pageFeedback(){
               ${canWrite?`<span class="fb-del" onclick="delFeedback('${jsStr(target)}','${f.id}')">삭제</span>`:''}
             </span>
           </div>
-          ${f.title?`<div class="fb-title-txt">${esc(f.title)}</div>`:''}
-          <div class="fb-body">${snapViewBody(f.text||'')}</div>
+          ${f.title?`<div class="fb-title-txt"${f._autoTask?` style="font-family:'DosStory','DungGeunMo',monospace;"`:''}>${esc(f.title)}</div>`:''}
+          <div class="fb-body"${f._autoTask?` style="font-family:'DosStory','DungGeunMo',monospace;font-size:15px;line-height:2;letter-spacing:0.3px;"`:''}>${snapViewBody(f.text||'')}</div>
           <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmtTotal(cmts)}</span></div>
           ${likedByRow}
           <div class="fb-cmt-list">${cmtHtml}</div>
