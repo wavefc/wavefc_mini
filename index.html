@@ -642,6 +642,12 @@
   .botn-write input{ flex:1; border:2px solid #1a3a5c; border-radius:0; padding:6px 8px; font-family:inherit; font-size:13px; }
   .botn-write button{ border:2px solid #1a3a5c; border-radius:0; background:#e0662b; color:#fff; font-weight:800; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 #b9cfe0; font-family:inherit; }
   .botn-write button:active{ transform:translate(2px,2px); box-shadow:none; }
+  /* 공휴일·위치 안내 버튼 */
+  .game-skin .cal-cell.holiday .cal-d{ color:#e6197f; font-weight:800; }
+  .cal-holi{ font-size:9px; color:#e6197f; font-weight:700; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .game-skin .place-toggle{ display:block; width:100%; border:2px solid #1a3a5c; border-radius:0; background:#fffdf5; color:#b7791f; font-weight:800; padding:8px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:13px; margin-bottom:10px; }
+  .game-skin .place-toggle:active{ transform:translate(3px,3px); box-shadow:none; }
+  .game-skin .place-info{ margin-bottom:10px; }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -7511,12 +7517,30 @@ function openImgSrc(src){ // 임의 이미지 확대
 function closeImgModal(){ document.getElementById('imgModalOverlay').style.display='none'; }
 
 /* ===== 일정공지 (달력) ===== */
+// 한국 공휴일 (양력 고정 + 주요 음력/대체공휴일)
+const KR_HOLIDAYS={
+  '1-1':'신정','3-1':'삼일절','5-5':'어린이날','6-6':'현충일',
+  '8-15':'광복절','10-3':'개천절','10-9':'한글날','12-25':'크리스마스',
+  '2026-2-16':'설날','2026-2-17':'설날','2026-2-18':'설날',
+  '2026-5-24':'부처님오신날','2026-6-3':'지방선거','2026-9-24':'추석','2026-9-25':'추석','2026-9-26':'추석',
+  '2025-1-28':'설날','2025-1-29':'설날','2025-1-30':'설날',
+  '2025-5-5':'부처님오신날','2025-10-5':'추석','2025-10-6':'추석','2025-10-7':'추석','2025-10-8':'대체공휴일',
+  '2027-2-6':'설날','2027-2-7':'설날','2027-2-8':'설날',
+  '2027-5-13':'부처님오신날','2027-9-14':'추석','2027-9-15':'추석','2027-9-16':'추석'
+};
+function holidayName(y,m,d){
+  const full=`${y}-${m}-${d}`;
+  if(KR_HOLIDAYS[full]) return KR_HOLIDAYS[full];
+  const md=`${m}-${d}`;
+  if(KR_HOLIDAYS[md]) return KR_HOLIDAYS[md];
+  return null;
+}
 const ETYPES=[
-  {k:'정기훈련',c:'#3aa0d8'},
-  {k:'친선경기',c:'#ff1493'},
-  {k:'특별훈련',c:'#8e44ad'},
-  {k:'대회',c:'#e02b2b'},
-  {k:'회식',c:'#e6c200'},
+  {k:'정기훈련',c:'#2176a8'},
+  {k:'친선경기',c:'#e6197f'},
+  {k:'특별훈련',c:'#7c5cd0'},
+  {k:'대회',c:'#d64545'},
+  {k:'회식',c:'#d97706'},
   {k:'기타',c:'#5a7585'}
 ];
 function etypeColor(t){const e=ETYPES.find(x=>x.k===t);return e?e.c:'#5a7585';}
@@ -7524,7 +7548,9 @@ function etypeColor(t){const e=ETYPES.find(x=>x.k===t);return e?e.c:'#5a7585';}
 function eventColor(e){
   const place=(e.place||'').replace(/\s/g,'');
   if(/BJ/i.test(place)) return '#2e8b3d';      // BJ풋살장 = 초록
-  if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#e84a8a'; // FC스퀘어 = 핑크
+  if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#e6197f'; // FC스퀘어 = 핑크
+  if(/내서/.test(place)) return '#2176a8';      // 내서 = 파랑
+  if(/석전/.test(place)) return '#d97706';      // 석전 = 주황
   return etypeColor(e.etype);
 }
 // 시간 표시 축약: "20:00-22:00" → "8-10시", "20:00" → "8시"
@@ -7547,6 +7573,7 @@ function shortPlace(p){
   const s=String(p).replace(/\s/g,'');
   if(/^BJ/i.test(s)) return 'BJ';
   if(/내서/.test(s)) return '내서';
+  if(/석전/.test(s)) return '석전';
   if(/원계/.test(s)) return '원계';
   if(/스퀘어|FC스퀘/i.test(s)) return '스퀘어';
   return s.slice(0,3);
@@ -7597,15 +7624,18 @@ function pageCalendar(){
     const evs=byDay[key]||[];
     const dLogs=diaryMap[key]||[];
     const dow=new Date(y,m,d).getDay();
-    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(e.time)+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(e.place)+'</span>':''}${isExec?` <span class="cal-ev-x" onclick="event.stopPropagation();delCalEvent(${e._i})">×</span>`:''}</div>`).join('');
+    const holi=holidayName(y,m+1,d);
+    const isRed=(dow===0)||!!holi; // 일요일 or 공휴일 = 빨강/분홍
+    const evHtml=evs.map(e=>`<div class="cal-ev" style="background:${eventColor(e)}" title="${esc(e.etype)} ${esc(e.time||'')} ${esc(e.place||'')} ${esc(e.memo||'')}">${e.time?'<span class="cal-time">'+esc(shortTime(e.time))+'</span> ':''}${esc(e.etype)}${e.place?'<br><span class="cal-place">📍'+esc(shortPlace(e.place))+'</span>':''}${isExec?` <span class="cal-ev-x" onclick="event.stopPropagation();delCalEvent(${e._i})">×</span>`:''}</div>`).join('');
     // 그 날 일지가 있으면 📝 배지 — 클릭 시 아래 일지로 이동/펼침
     const diaryBadge=dLogs.length
       ? `<div class="cal-diary-badge" title="이 날 훈련일지 보기" onclick="event.stopPropagation();openDiaryOnCal(${dLogs[0]._i})">📝 일지${dLogs.length>1?' '+dLogs.length:''}</div>`
       : '';
+    const holiBadge=holi?`<div class="cal-holi">${esc(holi)}</div>`:'';
     // 날짜 셀 클릭: 일지가 있으면 누구나 그 날 일지로 이동
     const cellClick = dLogs.length ? `onclick="openDiaryOnCal(${dLogs[0]._i})" style="cursor:pointer;"` : '';
-    cells+=`<div class="cal-cell ${dow===0?'sun':''} ${dow===6?'sat':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
-      <div class="cal-d">${d}</div>${evHtml}${diaryBadge}</div>`;
+    cells+=`<div class="cal-cell ${isRed?'sun':''} ${dow===6?'sat':''} ${holi?'holiday':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
+      <div class="cal-d">${d}</div>${holiBadge}${evHtml}${diaryBadge}</div>`;
   }
 
   const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
@@ -7621,20 +7651,23 @@ function pageCalendar(){
     </div>
     <div class="cal-legend">${legend}
       <div style="margin-top:4px;">📍장소색:
-        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2e8b3d;display:inline-block;"></i>BJ풋살장</span>
-        <span style="display:inline-flex;align-items:center;gap:3px;"><i style="width:11px;height:11px;background:#e84a8a;display:inline-block;"></i>FC스퀘어</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2e8b3d;display:inline-block;"></i>BJ</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2176a8;display:inline-block;"></i>내서</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#d97706;display:inline-block;"></i>석전</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;"><i style="width:11px;height:11px;background:#e6197f;display:inline-block;"></i>스퀘어</span>
       </div>
     </div>
     <div class="cal-grid">
       <div class="cal-h sun">일</div><div class="cal-h">월</div><div class="cal-h">화</div><div class="cal-h">수</div><div class="cal-h">목</div><div class="cal-h">금</div><div class="cal-h sat">토</div>
       ${cells}
     </div>
-    <div class="place-info">
-      <div class="place-info-h">📍 풋살장 위치 안내</div>
+    <div class="place-info" id="placeInfoBox" style="display:none;">
       <div class="place-row"><b style="color:#2e8b3d;">BJ풋살장</b> 마산회원구 삼호천길 352</div>
       <div class="place-row"><b style="color:#2176a8;">내서스포츠</b> 마산회원구 내서읍 호원로 177</div>
-      <div class="place-row"><b style="color:#e84a8a;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
+      <div class="place-row"><b style="color:#d97706;">석전동풋살장</b> 마산회원구 석전북3길 83</div>
+      <div class="place-row"><b style="color:#e6197f;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
     </div>
+    <button class="place-toggle" onclick="var b=document.getElementById('placeInfoBox');b.style.display=b.style.display==='none'?'block':'none';this.textContent=(b.style.display==='none'?'📍 풋살장 위치 안내 보기':'📍 위치 안내 닫기');">📍 풋살장 위치 안내 보기</button>
     <div class="board-react-wrap botn-wrap"><div class="board-react-h">📢 일정 공지</div>${botNoticeBox()}</div>
     <div class="cal-diary-section" id="calDiarySection">
       <div class="page-h" style="margin-top:22px;">📝 훈련 일지</div>
