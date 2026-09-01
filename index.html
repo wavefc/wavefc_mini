@@ -728,14 +728,13 @@
   /* ===== 깜짝퀴즈 게임 스탯 패널 ===== */
   .quiz-skin{ margin-bottom:14px; }
   .qz-stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
-  .qz-stat-card{ background:#fff; border:2px solid #1a3a5c; border-radius:0; box-shadow:3px 3px 0 #b9cfe0; padding:12px 10px; text-align:center; display:flex; flex-direction:column; align-items:center; min-height:104px; }
-  .qz-stat-t{ font-size:12px; font-weight:800; color:#5a7585; margin-bottom:0; flex:0 0 auto; }
-  .qz-stat-v{ font-size:28px; font-weight:900; color:#1a3a5c; line-height:1.05; flex:1 1 auto; display:flex; align-items:center; justify-content:center; }
-  .qz-stat-v.rank{ font-size:20px; }
-  .qz-stat-u{ font-size:13px; font-weight:800; margin-left:2px; }
-  .qz-bar{ margin-top:8px; height:12px; width:100%; background:#eaf3fb; border:2px solid #1a3a5c; overflow:hidden; flex:0 0 auto; box-sizing:border-box; }
+  .qz-stat-card{ background:#fff; border:2px solid #1a3a5c; border-radius:0; box-shadow:3px 3px 0 #b9cfe0; padding:14px 10px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:96px; }
+  .qz-stat-t{ font-size:12px; font-weight:800; color:#5a7585; margin-bottom:8px; }
+  .qz-stat-v{ font-size:40px; font-weight:900; color:#1a3a5c; line-height:1; }
+  .qz-stat-v.rank{ font-size:26px; }
+  .qz-stat-u{ font-size:16px; font-weight:800; margin-left:3px; }
+  .qz-bar{ margin-top:8px; height:12px; background:#eaf3fb; border:2px solid #1a3a5c; overflow:hidden; }
   .qz-bar-fill{ height:100%; background:repeating-linear-gradient(90deg,#1a9d5a 0,#1a9d5a 8px,#22b86a 8px,#22b86a 10px); transition:width .5s ease; }
-  .qz-bar-spacer{ margin-top:8px; height:12px; width:100%; border:2px solid transparent; box-sizing:border-box; flex:0 0 auto; }
   .qz-board{ background:#fff; border:2px solid #1a3a5c; border-radius:0; box-shadow:3px 3px 0 #b9cfe0; padding:12px 14px; }
   .qz-board-h{ font-size:14px; font-weight:800; color:#1a3a5c; margin-bottom:8px; }
   .qz-board-sub{ font-size:11px; font-weight:700; color:#8aa; }
@@ -746,16 +745,10 @@
   .qz-rank-name{ flex:1 1 auto; font-weight:700; color:#2b3f4f; }
   .qz-rank-rate{ flex:0 0 auto; font-weight:900; color:#1a9d5a; }
   .qz-rank-cnt{ flex:0 0 auto; font-size:11px; color:#8aa; min-width:44px; text-align:right; }
-  .qz-board-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .qz-wrong-row{ display:flex; align-items:flex-start; gap:8px; padding:5px 6px; border-bottom:1px dashed #d4e2ef; font-size:13px; }
-  .qz-wrong-row:last-child{ border-bottom:0; }
-  .qz-wrong-no{ flex:0 0 20px; text-align:center; font-weight:900; color:#e0503a; }
-  .qz-wrong-q{ flex:1 1 auto; color:#2b3f4f; line-height:1.4; }
-  .qz-wrong-rate{ flex:0 0 auto; font-weight:900; color:#e0503a; min-width:38px; text-align:right; }
   @media(max-width:640px){
-    .qz-board-row{ grid-template-columns:1fr; }
     .qz-stat-grid{ grid-template-columns:1fr 1fr; }
-    .qz-stat-v{ font-size:26px; }
+    .qz-stat-v{ font-size:36px; }
+    .qz-stat-v.rank{ font-size:24px; }
   }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
@@ -1775,8 +1768,6 @@ function canManage(){ return rankOf(me)==='exec' || adminLevel()===1; }
 // 일정 추가·삭제 / 출석일 추가·삭제·수정 전용 권한: 지정된 임원 4명 또는 관리자1
 const SCHEDULE_ADMINS=['박지예','김서영','장윤ㅎ','조은비'];
 function canManageSchedule(){ return SCHEDULE_ADMINS.includes(me) || adminLevel()===1; }
-// 깜짝퀴즈 출제자: 문제를 내는 사람이라 정답률 랭킹에서 제외
-const QUIZ_SETTERS=['박지예'];
 // 출석현황 이름 풀표시: 임원·멤버·관리자1 (새내기는 마스킹)
 function attendUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||adminLevel()===1; }
 function rankImg(rank,size){
@@ -3175,15 +3166,14 @@ function pageQuiz(){
   const myChrono=(DATA.quiz_records||[]).filter(r=>r&&r.user===me).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
   let myCombo=0, _cur=0;
   myChrono.forEach(r=>{ if(r.correct){ _cur++; if(_cur>myCombo)myCombo=_cur; } else _cur=0; });
-  // 랭킹: 15회 이상 참여자만, 정답률 순(동점이면 정답 수 많은 순). 출제자는 제외.
+  // 랭킹: 15회 이상 참여자만, 정답률 순(동점이면 정답 수 많은 순)
   const MIN_Q=15;
   const rankArr=Object.keys(qByUser)
-    .filter(u=>qByUser[u].t>=MIN_Q && !QUIZ_SETTERS.includes(u))
+    .filter(u=>qByUser[u].t>=MIN_Q)
     .map(u=>({u, t:qByUser[u].t, o:qByUser[u].o, rate:Math.round(qByUser[u].o/qByUser[u].t*100)}))
     .sort((a,b)=> b.rate-a.rate || b.o-a.o);
-  const iAmSetter=QUIZ_SETTERS.includes(me);
   const myRankIdx=rankArr.findIndex(x=>x.u===me);
-  const myRankTxt = iAmSetter ? '-' : (myT<MIN_Q ? `${MIN_Q}회+부터` : (myRankIdx>=0?`${myRankIdx+1}위 / ${rankArr.length}명`:'-'));
+  const myRankTxt = myT<MIN_Q ? `${MIN_Q}회+부터` : (myRankIdx>=0?`${myRankIdx+1}위 / ${rankArr.length}명`:'-');
   // 랭킹보드 TOP5
   const medal=['🥇','🥈','🥉','4','5'];
   const boardHtml = rankArr.slice(0,5).map((x,i)=>`
@@ -3194,44 +3184,17 @@ function pageQuiz(){
       <span class="qz-rank-cnt">${x.o}/${x.t}</span>
     </div>`).join('') || `<div style="color:#8aa;font-size:12px;padding:8px;">아직 랭킹이 없어요 (${MIN_Q}회 이상 참여 필요).</div>`;
 
-  // 오답률 가장 높은 질문 TOP5 (응답 5개 이상인 문제만)
-  const qStat={};
-  (DATA.quiz_records||[]).forEach(r=>{
-    if(!r||!r.q) return;
-    const s=(qStat[r.q]=qStat[r.q]||{t:0,w:0});
-    s.t++; if(!r.correct) s.w++;
-  });
-  const wrongArr=Object.keys(qStat)
-    .filter(q=>qStat[q].t>=5)
-    .map(q=>({q, t:qStat[q].t, w:qStat[q].w, rate:Math.round(qStat[q].w/qStat[q].t*100)}))
-    .sort((a,b)=> b.rate-a.rate || b.w-a.w)
-    .slice(0,5);
-  const wrongHtml = wrongArr.map((x,i)=>`
-    <div class="qz-wrong-row">
-      <span class="qz-wrong-no">${i+1}</span>
-      <span class="qz-wrong-q">${esc(x.q)}</span>
-      <span class="qz-wrong-rate">${x.rate}%</span>
-    </div>`).join('') || '<div style="color:#8aa;font-size:12px;padding:8px;">아직 데이터가 부족해요.</div>';
-
   const gamePanel=`
     <div class="quiz-skin game-skin">
       <div class="qz-stat-grid">
-        <div class="qz-stat-card"><div class="qz-stat-t">🎯 내 참여</div><div class="qz-stat-v">${myT}<span class="qz-stat-u">회</span></div><div class="qz-bar-spacer"></div></div>
-        <div class="qz-stat-card"><div class="qz-stat-t">✅ 정답률</div><div class="qz-stat-v" style="color:#1a9d5a;">${myRate}<span class="qz-stat-u">%</span></div>
-          <div class="qz-bar"><div class="qz-bar-fill" style="width:${myRate}%;"></div></div>
-        </div>
-        <div class="qz-stat-card"><div class="qz-stat-t">🏆 내 랭킹</div><div class="qz-stat-v rank" style="color:#b7791f;">${myRankTxt}</div><div class="qz-bar-spacer"></div></div>
-        <div class="qz-stat-card"><div class="qz-stat-t">🔥 최고 연속정답</div><div class="qz-stat-v" style="color:#e0503a;">${myCombo}<span class="qz-stat-u">콤보</span></div><div class="qz-bar-spacer"></div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">🎯 내 참여</div><div class="qz-stat-v">${myT}<span class="qz-stat-u">회</span></div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">✅ 정답률</div><div class="qz-stat-v" style="color:#1a9d5a;">${myRate}<span class="qz-stat-u">%</span></div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">🏆 내 랭킹</div><div class="qz-stat-v rank" style="color:#b7791f;">${myRankTxt}</div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">🔥 최고 연속정답</div><div class="qz-stat-v" style="color:#e0503a;">${myCombo}<span class="qz-stat-u">콤보</span></div></div>
       </div>
-      <div class="qz-board-row">
-        <div class="qz-board">
-          <div class="qz-board-h">🏅 정답률 랭킹 TOP5 <span class="qz-board-sub">(${MIN_Q}회 이상 참여)</span></div>
-          ${boardHtml}
-        </div>
-        <div class="qz-board">
-          <div class="qz-board-h">😵 오답률 높은 질문 <span class="qz-board-sub">(응답 5회+)</span></div>
-          ${wrongHtml}
-        </div>
+      <div class="qz-board">
+        <div class="qz-board-h">🏅 정답률 랭킹 TOP5 <span class="qz-board-sub">(${MIN_Q}회 이상 참여)</span></div>
+        ${boardHtml}
       </div>
     </div>`;
 
