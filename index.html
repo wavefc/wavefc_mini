@@ -659,6 +659,21 @@
   .cal-bottom-col{ flex:1; min-width:0; }
   .cal-bottom-col.place-col{ display:flex; flex-direction:column; }
   @media (max-width:520px){ .cal-bottom-row{ flex-direction:column; } }
+  /* 훈련 일지 보러가기 버튼 (일정 하단) */
+  .diary-goto-btn{ display:block; width:100%; margin-top:14px; border:2px solid #1a3a5c; border-radius:0; background:#eaf3fb; color:#1a3a5c; font-weight:800; padding:12px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:15px; letter-spacing:0.5px; }
+  .diary-goto-btn:hover{ background:#dceaf7; }
+  .diary-goto-btn:active{ transform:translate(3px,3px); box-shadow:none; }
+  /* ===== 훈련일지 페이지 게임 스킨 ===== */
+  .diary-skin .diary-item{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; background:#fff; }
+  .diary-skin .diary-item.editing{ border:2px solid #1a3a5c !important; }
+  .diary-skin .diary-head:hover{ background:#eaf3fb; }
+  .diary-skin .diary-arrow{ color:#1a3a5c; }
+  .diary-skin .diary-title{ color:#1a3a5c; font-weight:800; }
+  .diary-skin .qna-ask{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; }
+  .diary-skin .qna-input{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  .diary-skin .qna-send{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; font-weight:800; }
+  .diary-skin .qna-send:active{ transform:translate(2px,2px); box-shadow:none; }
+  .diary-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -4488,7 +4503,7 @@ function go(page,btn){
   currentPage=page;
   noticeEditing=null;
   diaryEditing=null;
-  if(page==='diary'||page==='cal'){ diaryOpen=null; diaryPage=1; } // 훈련일지 진입 시 모두 접힌 상태·1페이지로 시작
+  if(page==='diary'||page==='cal'){ if(_diaryJump){ _diaryJump=false; } else { diaryOpen=null; diaryPage=1; } } // 훈련일지 진입 시 모두 접힌 상태·1페이지로 시작 (배지 클릭 점프는 유지)
   qnaEditing=null; qnaAnsEditing=null;
   if(page==='snap'){ snapWriting=false; snapEditing=null; snapOpen=null; }
   if(page==='qna') qnaPage=-1; // 진입 시 마지막(최신) 페이지로
@@ -4498,7 +4513,8 @@ function go(page,btn){
   if(page==='quiz'){ quizPage=-1; quizPageLocked=false; quizMyPage=-1; quizMyPageLocked=false; } // 깜짝퀴즈 진입 시 최신 페이지로
   if(page==='feedback'){ fbWriting=false; fbOpen=null; fbEditing=null; fbProfEditing=null; fbPage=9999; } // 진입 시 최신 페이지(clamp)
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+  if(page==='diary'){ const c=document.querySelector('[data-page="cal"]'); if(c)c.classList.add('active'); } // 훈련일지는 일정/기록 탭 계열
+  else if(btn) btn.classList.add('active');
   else {const t=document.querySelector('[data-page="'+page+'"]');if(t)t.classList.add('active');}
   document.getElementById('urlAddr').textContent='http://www.cyworld.com/wave_fc/'+page;
   renderPage(page);
@@ -7218,6 +7234,7 @@ function delNoticeBoard(i){
   const a=DATA.notices.slice();a.splice(i,1);ROOT.child('notices').set(a);
 }
 var diaryOpen=null;     // 펼쳐진 일지 인덱스
+var _diaryJump=false;   // 달력 배지 클릭으로 특정 글 펼치며 diary 페이지 진입 중이면 true
 var DIARY_PER=10;       // 훈련일지 한 페이지당 글 수
 var diaryPage=1;        // 훈련일지 목록 페이지 (1페이지=최신 10개)
 // 현재 사용자가 볼 수 있는 훈련일지 목록(최신순, 원본 인덱스 _i 보존)
@@ -7232,7 +7249,7 @@ function diaryPageOf(i){
   const pos=diaryVisibleList().findIndex(l=>l._i===i);
   return pos<0?1:Math.floor(pos/DIARY_PER)+1;
 }
-function goDiaryPage(p){ diaryPage=p; diaryOpen=null; renderPage('cal'); scrollToPageTop(); }
+function goDiaryPage(p){ diaryPage=p; diaryOpen=null; renderDiaryHost(); scrollToPageTop(); }
 var diaryWriting=false; // 글쓰기 폼 펼침 여부
 var diaryEditing=null;  // 인라인 편집 중인 일지 인덱스
 var _diaryFiles=[];// 첨부 이미지 base64 배열(최대 4)
@@ -7243,15 +7260,14 @@ function diaryImgs(l){
   return [];
 }
 function pageDiary(){
-  // 훈련일지는 일정 페이지에 통합됨 — 직접 진입 시 일정 페이지로 안내
-  return `<div class="page-h">📝 훈련 일지</div>
-    <div style="padding:16px;line-height:1.7;color:#5a7585;">
-      훈련일지는 <b>일정/기록</b> 페이지로 합쳐졌어요.<br>
-      달력에서 <b>📝 표시된 날</b>을 누르면 그 날 일지가 열려요.
-      <div style="margin-top:10px;">
-        <button class="qna-send sm" onclick="go('cal', document.querySelector('[data-page=\\'cal\\']'))">일정/기록으로 가기</button>
-      </div>
-    </div>`;
+  // 훈련일지 전용 페이지 (게임 스킨). 목록 본문은 pageDiaryBody() 재사용.
+  return `<div class="diary-skin game-skin">
+    <div class="page-h">📝 훈련 일지</div>
+    <div style="text-align:left;margin:4px 0 12px;">
+      <button class="place-toggle" style="width:auto;display:inline-block;padding:8px 14px;" onclick="go('cal')">◀ 일정/기록으로 돌아가기</button>
+    </div>
+    ${pageDiaryBody()}
+  </div>`;
 }
 // 훈련일지 목록 본문 (일정 페이지 하단에 그대로 삽입)
 function pageDiaryBody(){
@@ -7354,9 +7370,9 @@ function pageDiaryBody(){
     <div class="diary-list">${items||'<div style=\"color:#8aa;padding:16px;\">등록된 훈련일지가 없어요.</div>'}</div>
     ${diaryPager}`;
 }
-function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderPage('cal'); }
-function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderPage('cal'); }
-function toggleDiarySecret(i){ if(!canManage())return; const a=JSON.parse(JSON.stringify(DATA.logs)); a[i].secret=!a[i].secret; DATA.logs=a; ROOT.child('logs').set(a); renderPage('cal'); }
+function toggleDiaryWrite(){ diaryWriting=!diaryWriting; diaryEditing=null; _diaryFiles=[]; renderDiaryHost(); }
+function toggleDiary(i){ diaryOpen = (diaryOpen===i)?null:i; renderDiaryHost(); }
+function toggleDiarySecret(i){ if(!canManage())return; const a=JSON.parse(JSON.stringify(DATA.logs)); a[i].secret=!a[i].secret; DATA.logs=a; ROOT.child('logs').set(a); renderDiaryHost(); }
 function onDiaryFile(ev){
   const files=Array.from(ev.target.files||[]);
   if(!files.length)return;
@@ -7474,11 +7490,11 @@ function addDiary(){
   diaryEditing=null;
   DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
-  renderPage('cal');         // 저장 직후 화면 즉시 갱신
+  renderDiaryHost();         // 저장 직후 화면 즉시 갱신
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function editDiary(i){ if(!canManage())return; diaryEditing=i; _diaryFiles=[]; renderPage('cal'); }
-function cancelDiary(){ diaryEditing=null; _diaryFiles=[]; renderPage('cal'); }
+function editDiary(i){ if(!canManage())return; diaryEditing=i; _diaryFiles=[]; renderDiaryHost(); }
+function cancelDiary(){ diaryEditing=null; _diaryFiles=[]; renderDiaryHost(); }
 function saveDiary(i){
   if(!canManage()) return;
   const a=JSON.parse(JSON.stringify(DATA.logs));
@@ -7493,7 +7509,7 @@ function saveDiary(i){
   diaryEditing=null; _diaryFiles=[];
   DATA.logs=a;                 // 즉시 반영
   ROOT.child('logs').set(a);
-  renderPage('cal');         // 저장 직후 화면 즉시 갱신(편집폼 닫고 결과 표시)
+  renderDiaryHost();         // 저장 직후 화면 즉시 갱신(편집폼 닫고 결과 표시)
 }
 function removeDiaryImgAt(i,k){
   if(!canManage()) return;
@@ -7675,19 +7691,24 @@ function pageCalendar(){
       </div>
     </div>
     <div class="cal-diary-section" id="calDiarySection">
-      <div class="page-h" style="margin-top:22px;">📝 훈련 일지</div>
-      ${pageDiaryBody()}
+      <button class="diary-goto-btn" onclick="go('diary')">📝 훈련 일지 보러가기 ▶</button>
     </div></div>`;
 }
-// 달력에서 일지 배지 클릭 → 아래 일지 목록에서 해당 글 펼치고 스크롤
+// 일지 조작 후 현재 보고 있는 화면(일정 or 훈련일지)을 그대로 다시 그림
+function renderDiaryHost(){
+  const p=(currentPage==='diary')?'diary':'cal';
+  renderPage(p);
+}
+// 달력에서 일지 배지 클릭 → 훈련일지 페이지로 이동해 해당 글 펼치고 스크롤
 function openDiaryOnCal(i){
   diaryOpen=i;
   diaryPage=diaryPageOf(i);
-  renderPage('cal');
+  _diaryJump=true;
+  go('diary');
   setTimeout(()=>{
-    const el=document.getElementById('diaryItem_'+i)||document.getElementById('calDiarySection');
+    const el=document.getElementById('diaryItem_'+i);
     if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-  },60);
+  },80);
 }
 function calNav(delta){
   calMonth+=delta;
