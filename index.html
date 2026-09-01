@@ -9,8 +9,7 @@
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
   @font-face {
     font-family: 'DosStory';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2'),
-         url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.woff') format('woff');
     font-weight: normal;
     font-display: swap;
   }
@@ -4922,10 +4921,13 @@ function statStatusBadge(name){
   return '';
 }
 // OVR: 22항목 중 입력된(>0) 항목만 평균 (0~99)
+// OVR = 각 포지션 점수 중 최고점 (골레이로 제외 · 피보/아라/픽소 중 max)
 function statOVR2(stats){
-  let sum=0,cnt=0;
-  SR_KEYS.forEach(k=>{ const v=parseInt(stats[k]||0,10)||0; if(v>0){ sum+=v; cnt++; } });
-  return cnt? Math.round(sum/cnt) : 0;
+  if(!hasAnyStat2(stats)) return 0;
+  const fibo=posScore(stats,'피보');
+  const ara=posScore(stats,'아라');
+  const pixo=posScore(stats,'픽소');
+  return Math.max(fibo,ara,pixo);
 }
 // 그룹 평균 (0~99)
 function groupAvg2(stats,g){
@@ -4973,18 +4975,18 @@ const POS_WEIGHTS={
 // 한 포지션의 점수 (그룹 가중 70% + 핵심 항목 30% 보너스)
 const POS_CORE_BONUS={
   '피보':['결정력','위치선정','볼 간수','등지는 플레이','인사이드 슈팅'],
-  '아라':['드리블','스피드','민첩성','볼컨트롤'],
+  '아라':['드리블','스피드','민첩성','볼컨트롤','발바닥 컨트롤','페인팅'],
   '픽소':['대인수비','수비 전환','수비집중력','시야','정확도','콜 타이밍']
 };
 function posScore(stats,pos){
   const w=POS_WEIGHTS[pos]; if(!w) return 0;
   let sum=0;
   Object.keys(w).forEach(gk=>{ sum += groupAvgByKey(stats,gk)*w[gk]; });
-  // 핵심 항목 보너스 (피보/아라/픽소만)
+  // 핵심 항목 보너스 (피보/아라/픽소만) — 아라는 윙어 특성 반영 위해 비중 상향
   const core=POS_CORE_BONUS[pos];
   if(core){
     const vs=core.map(k=>stats[k]||0).filter(x=>x>0);
-    if(vs.length){ const ca=vs.reduce((a,b)=>a+b,0)/vs.length; sum=sum*0.7+ca*0.3; }
+    if(vs.length){ const ca=vs.reduce((a,b)=>a+b,0)/vs.length; const b=(pos==='아라')?0.35:0.30; sum=sum*(1-b)+ca*b; }
   }
   return Math.round(sum);
 }
