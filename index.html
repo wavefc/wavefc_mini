@@ -594,6 +594,37 @@
   .adj-manual{background:#fffdf5;border:2px solid #f0c674;padding:8px;margin-bottom:10px;}
   .adj-manual-h{font-size:12px;font-weight:800;color:#b7791f;margin-bottom:4px;}
   .adj-manual-body{font-size:12px;color:#2b3f4f;line-height:1.6;}
+  .adj-taskinfo{background:#eef6fc;border:2px solid #a9d0ea;padding:8px;margin-bottom:10px;}
+  .adj-task-h{font-size:12px;font-weight:800;color:#2176a8;margin-bottom:4px;}
+  .adj-tasknum{font-size:10px;background:#5a9bd4;color:#fff;padding:1px 6px;font-weight:700;border-radius:2px;margin-left:4px;}
+  .adj-task-name{font-size:14px;color:#1a3a5c;margin-bottom:3px;}
+  .adj-task-val{font-size:11px;color:#8aa;font-weight:700;}
+  .adj-task-game{font-size:12px;color:#4a6575;margin-bottom:3px;}
+  .adj-task-prog{font-size:12px;color:#5a7585;font-weight:700;}
+  .adj-dots{letter-spacing:2px;color:#9b7fd0;}
+  .adj-dot{color:#d0c4ea;} .adj-dot.on{color:#9b7fd0;}
+  .adj-task-none{font-size:12px;color:#b0bcc4;text-align:center;padding:6px;}
+  /* ===== 게임 스킨 (재사용) — 각진 테두리 + 도트 그림자 ===== */
+  .game-skin .cal-bar,
+  .game-skin .cal-grid,
+  .game-skin .place-info,
+  .game-skin .board-react-wrap,
+  .game-skin .diary-card,
+  .game-skin .cal-diary-section .diary-item{
+    border-radius:0 !important;
+    border:2px solid #2176a8 !important;
+    box-shadow:3px 3px 0 #b9cfe0 !important;
+  }
+  .game-skin .cal-grid{ padding:0; gap:2px; background:#2176a8; }
+  .game-skin .cal-h{ border-radius:0 !important; border:1px solid #2176a8; font-weight:800; }
+  .game-skin .cal-cell{ border-radius:0 !important; }
+  .game-skin .cal-bar{ background:#eaf3fb; padding:8px 12px; }
+  .game-skin .cal-bar button{ border-radius:0 !important; border:2px solid #2176a8 !important; box-shadow:2px 2px 0 #b9cfe0; background:#fff; cursor:pointer; }
+  .game-skin .place-info{ background:#fffdf5; }
+  .game-skin .place-info-h{ font-weight:800; color:#b7791f; }
+  .game-skin .page-h{ letter-spacing:0.5px; }
+  /* 게임 스킨 배지/버튼 공통 */
+  .game-skin .diary-item{ border-radius:0 !important; border:2px solid #7fb0d0 !important; box-shadow:2px 2px 0 #d3e2ee !important; }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -5368,12 +5399,12 @@ function autoWriteGrowthLog(name, d){
   const BL=`color:#1a6fc4;font-weight:bold;`;
   const text=`<div style="${DOS}color:#2b3f4f;">`
     + `<span style="${BL}">『${d.label}』</span> 과제를 완수했다! ❗<br><br>`
-    + `${name}은(는) <span style="${BL}">${d.pos}</span> 자리에서 싸우는 선수다.<br>`
+    + `${name}${josa(name,'은','는')} <span style="${BL}">${d.pos}</span> 자리에서 싸우는 선수다.<br>`
     + `${d.strong ? `${d.strong}… 이것이 ${name}의 강점이다!<br>` : ''}`
     + `이번에 갈고닦은 것은 <span style="${BL}">「${d.label}」</span>${d.taskVal?`(당시 ${d.taskVal})`:''}!<br>`
     + (d.point?`&nbsp;&nbsp;▸ ${d.point} … 이것을 몸에 새겼다!<br>`:'')
     + (d.game?`&nbsp;&nbsp;▸ ${d.game} … 이것을 해냈다!<br>`:'')
-    + `<br>${name}은(는) 3번의 시험을 모두 통과했다‼<br>`
+    + `<br>${name}${josa(name,'은','는')} 3번의 시험을 모두 통과했다‼<br>`
     + `성장의 증표가 기록되었다. 다음 과제로 나아간다!<br>`
     + `…계속 성장하도록! 👏`
     + `<br><br><span style="color:#8a7fd0;font-weight:bold;">— 코치_NPC (${d.ymd})</span>`
@@ -5490,7 +5521,7 @@ function coachFeedback(stats,name,task){
   }
   const info=taskInfo(task.key);
   const tone=taskLevelTone(task.mine);
-  return `${strongTxt}다만 <b>${task.key}</b>가 ${task.mine}점으로 아쉬워 — ${tone} ${info.point} 이걸 의식하면 지금 실력이 훨씬 안정적으로 살아나.`;
+  return `${strongTxt}다만 <b>${task.key}</b>${josa(task.key,'이','가')} ${task.mine}점으로 아쉬워 — ${tone} ${info.point} 이걸 의식하면 지금 실력이 훨씬 안정적으로 살아나.`;
 }
 // 과제 진행도 (member_tasks/{이름}/{key}_prog = 0~3)
 function taskProgress(key){
@@ -5703,7 +5734,7 @@ function statRankSection(){
       <div class="px-summary-right">
         <div class="px-sr-top">
           <div class="px-box px-jersey">
-            <div class="px-box-h">🔢 백넘버</div>
+            <div class="px-box-h">🔢 등번호</div>
             <div class="px-jersey-in">
               ${jerseyImg(jno,50)}
               <div class="px-jersey-name">${esc(myName)}${badge}</div>
@@ -5830,17 +5861,17 @@ function teamOverviewHtml(){
   const wk=worst?worst.k:'';
   let trainRec='';
   if(['상황 인지','콜 타이밍','수비 전환','대인수비','수비집중력','백코트 적극성'].indexOf(wk)>=0){
-    trainRec=`<b>${wk}</b>이(가) 팀 공통 약점이야. <b>공격vs수비 훈련</b>으로 수비 자리잡기와 "내려와/붙어" 콜을 반복하자. 멈춤 지시 후 위치 설명을 곁들이면 초보도 이해가 빨라.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 팀 공통 약점이야. <b>공격vs수비 훈련</b>으로 수비 자리잡기와 "내려와/붙어" 콜을 반복하자. 멈춤 지시 후 위치 설명을 곁들이면 초보도 이해가 빨라.`;
   }else if(['짧은패스','정확도','원터치 패스','시야','패스 스피드'].indexOf(wk)>=0){
-    trainRec=`<b>${wk}</b>이(가) 약해. <b>파라패스+트래핑패스, 패스 후 자리이동</b> 드릴로 "쉬운 곳에 먼저" 습관을 들이자.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 약해. <b>파라패스+트래핑패스, 패스 후 자리이동</b> 드릴로 "쉬운 곳에 먼저" 습관을 들이자.`;
   }else if(['볼컨트롤','드리블','발바닥 컨트롤','민첩성','볼 간수','인사이드 터치','아웃사이드 터치'].indexOf(wk)>=0){
-    trainRec=`<b>${wk}</b>이(가) 약해. <b>로테이션 몸풀기</b>(8자 드리블, 발바닥 터치, 사이드 스텝)로 볼 마스터리를 반복하자.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 약해. <b>로테이션 몸풀기</b>(8자 드리블, 발바닥 터치, 사이드 스텝)로 볼 마스터리를 반복하자.`;
   }else if(['체력','스피드','가속력','몸싸움'].indexOf(wk)>=0){
-    trainRec=`<b>${wk}</b>이(가) 약해. <b>가로 러닝, 1분 싸이클링, 지그재그 스텝</b>으로 호흡과 순발력을 끌어올리자.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 약해. <b>가로 러닝, 1분 싸이클링, 지그재그 스텝</b>으로 호흡과 순발력을 끌어올리자.`;
   }else if(['결정력','위치선정'].indexOf(wk)>=0){
-    trainRec=`<b>${wk}</b>이(가) 약해. <b>파포스트 침투 + 2터치 슈팅</b> 드릴로 골 결정력을 높이자.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 약해. <b>파포스트 침투 + 2터치 슈팅</b> 드릴로 골 결정력을 높이자.`;
   }else{
-    trainRec=`<b>${wk}</b>이(가) 팀 약점이야. 관련 기본 드릴을 반복 훈련으로 넣자.`;
+    trainRec=`<b>${wk}</b>${josa(wk,'이','가')} 팀 약점이야. 관련 기본 드릴을 반복 훈련으로 넣자.`;
   }
   return `<div class="px-dash">
     <div class="tov-top">
@@ -5993,6 +6024,7 @@ function statAdjustHtml(){
             ${posLine('아라','아라')}
             ${posLine('픽소','픽소')}
           </div>
+          <div class="adj-taskinfo">${adjTaskInfo(cur,orig)}</div>
           <div class="adj-manual">
             <div class="adj-manual-h">💡 조정 가이드</div>
             <div class="adj-manual-body">${adjManual(cur,orig)}</div>
@@ -6005,6 +6037,33 @@ function statAdjustHtml(){
       </div>
     </div>
   </div>`;
+}
+// 조정 화면용 과제 정보 (어떤 과제·몇 번째·진행률)
+function adjTaskInfo(name,stats){
+  const active=getActiveTask(name);
+  const tasks=pickTasks(stats,name);
+  let taskKey,taskLabel,taskGame;
+  if(active){
+    taskKey=active.key;
+    const bt=BEGINNER_TASKS.find(t=>t.key===active.key);
+    if(bt){ taskLabel=bt.label; taskGame=bt.game; }
+    else { taskLabel=active.key; taskGame=taskInfo(active.key).game; }
+  }else if(tasks.length){
+    taskKey=tasks[0].key;
+    taskLabel=tasks[0]._beginner?tasks[0]._label:tasks[0].key;
+    taskGame=tasks[0]._beginner?tasks[0]._game:taskInfo(tasks[0].key).game;
+  }
+  if(!taskKey) return `<div class="adj-task-none">발급된 과제 없음</div>`;
+  const hist=(DATA.member_task_history&&DATA.member_task_history[statKey(name)])||{};
+  const taskNo=Object.keys(hist).length+1;
+  const t=(DATA.member_tasks&&DATA.member_tasks[statKey(name)])||{};
+  const prog=parseInt(t[statKey(taskKey)+'_prog']||0,10)||0;
+  const dots=[0,1,2].map(i=>`<span class="adj-dot${i<prog?' on':''}">${i<prog?'●':'○'}</span>`).join('');
+  const passed=prog>=3;
+  return `<div class="adj-task-h">📝 현재 과제 <span class="adj-tasknum">${taskNo}번째</span></div>
+    <div class="adj-task-name"><b>${esc(taskLabel)}</b> <span class="adj-task-val">내 ${stats[taskKey]||0}</span></div>
+    ${taskGame?`<div class="adj-task-game">⚽ ${esc(taskGame)}</div>`:''}
+    <div class="adj-task-prog">진행률 <span class="adj-dots">${dots}</span> <b>${prog}/3</b>${passed?' <span class="adj-up">✅ 통과</span>':''}</div>`;
 }
 // 조정 가이드: 이 선수의 과제와 연결해 어디를 올리면 좋은지
 function adjManual(name,stats){
@@ -7488,7 +7547,7 @@ function pageCalendar(){
 
   const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
 
-  return `<div class="page-h">📅 일정/기록</div>
+  return `<div class="game-skin"><div class="page-h">📅 일정/기록</div>
     <div class="cal-bar">
       <button onclick="calNav(-1)">◀</button>
       <b>${y}년 ${m+1}월</b>
@@ -7517,7 +7576,7 @@ function pageCalendar(){
     <div class="cal-diary-section" id="calDiarySection">
       <div class="page-h" style="margin-top:22px;">📝 훈련 일지</div>
       ${pageDiaryBody()}
-    </div>`;
+    </div></div>`;
 }
 // 달력에서 일지 배지 클릭 → 아래 일지 목록에서 해당 글 펼치고 스크롤
 function openDiaryOnCal(i){
@@ -11435,6 +11494,17 @@ function saveSnapCoverAdjust(){
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// 한글 조사 자동 (받침 유무 판별): josa('결정력','이','가') → '결정력이'
+function josa(word,withBatchim,withoutBatchim){
+  const w=String(word||'');
+  if(!w) return w;
+  const last=w.charCodeAt(w.length-1);
+  // 한글 음절 범위(가~힣)에서 (코드-0xAC00)%28 != 0 이면 받침 있음
+  let hasBatchim;
+  if(last>=0xAC00 && last<=0xD7A3){ hasBatchim=((last-0xAC00)%28)!==0; }
+  else { hasBatchim=false; } // 한글 아니면 받침 없음 취급
+  return w + (hasBatchim?withBatchim:withoutBatchim);
+}
 // 작성 후 약 6일 이내면 반짝이는 NEW 배지 HTML 반환 (아니면 빈 문자열)
 function newBadge(ts){
   const t=Number(ts)||0;
