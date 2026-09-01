@@ -34,6 +34,9 @@
   *, *::before, *::after{ font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif !important; }
   *{ font-weight:normal; }
   b, strong, .page-h, .nm, th{ font-weight:600 !important; }
+  /* 코치_NPC 성장일지: 도스폰트 강제 (전역 * !important를 이기려면 동일 셀렉터 구체성 필요) */
+  .dos-post, .dos-post *, .dos-post::before, .dos-post::after{ font-family:'DosStory','DungGeunMo',monospace !important; }
+  .fb-body.dos-post{ font-size:15px; line-height:2; letter-spacing:0.3px; }
   :root{
     --frame:#3aa0d8;--frame-dark:#2176a8;--tab:#4aaee2;--tab-active:#1c6fa0;
     --ink:#2a3b47;--line:#bfe0f2;--pink:#ff7fae;--news:#d94b8c;
@@ -562,6 +565,41 @@
   .tov-bar-fill{height:100%;border-radius:7px;}
   .tov-bar-v{flex:0 0 26px;text-align:right;font-size:13px;font-weight:800;color:#3a5566;}
   @media(max-width:760px){ .tov-top,.tov-mid{grid-template-columns:1fr;} }
+  /* 스탯 조정 화면 */
+  .adj-topbar{display:flex;align-items:center;gap:8px;background:#f3f0fb;border:2px solid #c4b0e8;padding:8px 12px;margin-bottom:10px;font-size:13px;font-weight:800;color:#5a3fb0;flex-wrap:wrap;}
+  .adj-topbar select{border:1.5px solid #b09ae0;border-radius:0;padding:3px 8px;font-family:inherit;font-size:13px;font-weight:700;color:#5a3fb0;background:#fff;cursor:pointer;}
+  .adj-hint{font-size:10px;color:#a99cc4;font-weight:400;}
+  .adj-main{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;align-items:start;}
+  .adj-group{margin-bottom:10px;}
+  .adj-ghead{font-size:13px;font-weight:800;margin:6px 0 4px;border-bottom:1px solid #eef;padding-bottom:2px;}
+  .adj-row{display:flex;align-items:center;gap:6px;margin:3px 0;}
+  .adj-name{flex:0 0 130px;font-size:12px;color:#3a5566;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .adj-imp{font-size:8px;color:#c4b0e8;letter-spacing:-1px;}
+  .adj-slider{flex:1;height:4px;cursor:pointer;}
+  .adj-num{flex:0 0 44px;border:1.5px solid #cfe0ee;border-radius:0;padding:2px 4px;font-size:12px;font-weight:700;text-align:center;font-family:inherit;color:#2176a8;}
+  .adj-right{position:sticky;top:10px;}
+  .adj-preview{background:#faf8ff;border-color:#c4b0e8;}
+  .adj-ovr{display:flex;align-items:center;gap:8px;justify-content:center;padding:8px;background:#f3f0fb;margin-bottom:8px;}
+  .adj-ovr span{font-size:12px;font-weight:800;color:#7c5cd0;letter-spacing:1px;}
+  .adj-ovr b{font-size:22px;color:#5a3fb0;font-weight:900;}
+  .adj-bestpos{text-align:center;font-size:13px;color:#3a5566;margin-bottom:8px;}
+  .adj-bestpos b{color:#5a3fb0;}
+  .adj-posbox{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .adj-posrow{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 8px;background:#fff;border:1px solid #e6ddf5;}
+  .adj-poslbl{flex:0 0 40px;font-weight:700;color:#5a7585;}
+  .adj-posval{flex:1;color:#2b3f4f;}
+  .adj-posval b{color:#1a6fc4;font-size:15px;}
+  .adj-up{color:#1a9d5a;font-weight:800;font-size:12px;}
+  .adj-dn{color:#e0662b;font-weight:800;font-size:12px;}
+  .adj-manual{background:#fffdf5;border:2px solid #f0c674;padding:8px;margin-bottom:10px;}
+  .adj-manual-h{font-size:12px;font-weight:800;color:#b7791f;margin-bottom:4px;}
+  .adj-manual-body{font-size:12px;color:#2b3f4f;line-height:1.6;}
+  .adj-mline{margin:3px 0;}
+  .adj-btns{display:flex;gap:6px;}
+  .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
+  .adj-save:active{transform:translate(2px,2px);box-shadow:none;}
+  .adj-reset{flex:0 0 auto;background:#fff;color:#8a7f99;border:2px dashed #c4b0e8;border-radius:0;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+  @media(max-width:760px){ .adj-main{grid-template-columns:1fr;} .adj-right{position:static;} }
   /* 멤버별 과제 현황 */
   .tov-taskbox{margin-top:10px;}
   .tov-tasklist{display:flex;flex-direction:column;gap:3px;}
@@ -5584,10 +5622,15 @@ function statRankSection(){
       <select onchange="srViewAs(this.value)">${opts}</select>
       ${myName!==meName?`<button class="px-btn" onclick="srViewAs('')">내 화면으로</button>`:''}
       <button class="px-btn" onclick="srTeamOverview()" style="margin-left:auto;background:#1a9d5a;border-color:#127a43;">📋 전체 한눈에 보기</button>
+      <button class="px-btn" onclick="srStatAdjust()" style="background:#7c5cd0;border-color:#5a3fb0;">🛠️ 스탯 조정하기</button>
     </div>`;
     // 전체 한눈에 보기 모드
     if(window._srOverview){
       return `<div class="srank-wrap">${adminBar}${teamOverviewHtml()}</div>`;
+    }
+    // 스탯 조정 모드
+    if(window._srAdjust){
+      return `<div class="srank-wrap">${adminBar}${statAdjustHtml()}</div>`;
     }
   }
   // --- 그룹별 능력치 (보기 전용) ---
@@ -5728,12 +5771,26 @@ function statRankSection(){
 function srViewAs(name){
   window._srViewAs = name||'';
   window._srOverview = false;
+  window._srAdjust = false;
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
 }
 // 관리자: 전체 한눈에 보기 토글
 function srTeamOverview(){
   window._srOverview = !window._srOverview;
+  window._srAdjust = false;
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 관리자: 스탯 조정하기 토글
+function srStatAdjust(){
+  window._srAdjust = !window._srAdjust;
+  window._srOverview = false;
+  if(window._srAdjust){
+    // 조정 대상: 현재 보고 있는 선수 or 첫 선수
+    window._adjName = srTargetName();
+    window._adjStats = null; // 편집 버퍼 (열 때 초기화)
+  }
   const c=document.getElementById('centerArea');
   if(c) c.innerHTML=pageRule();
 }
@@ -5867,6 +5924,145 @@ function memberTaskRows(){
       ${prevTask?`<div class="tov-trow-bot">이전 과제: ${esc(prevTask)}</div>`:''}
     </div>`;
   }).join('');
+}
+// ===== 관리자 스탯 조정 화면 (실시간 포지션 미리보기) =====
+function statAdjustHtml(){
+  const rank=statRanking2();
+  const names=rank.map(r=>r.name);
+  const cur=window._adjName||srTargetName()||names[0];
+  window._adjName=cur;
+  // 편집 버퍼: 없으면 현재 스탯 복사
+  if(!window._adjStats || window._adjTarget!==cur){
+    window._adjStats=Object.assign({}, getStats2(cur));
+    window._adjTarget=cur;
+  }
+  const buf=window._adjStats;
+  const orig=getStats2(cur);
+  const opts=names.map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+  // 포지션 점수 (원본 vs 편집본)
+  function posLine(label,pos,dir){
+    const o=posScore(orig,pos), n=posScore(buf,pos);
+    const diff=n-o;
+    const arrow=diff>0?`<span class="adj-up">▲${diff}</span>`:(diff<0?`<span class="adj-dn">▼${-diff}</span>`:'');
+    return `<div class="adj-posrow"><span class="adj-poslbl">${label}</span><span class="adj-posval">${o} → <b>${n}</b></span>${arrow}</div>`;
+  }
+  // OVR 미리보기
+  const ovrO=statOVR2(orig), ovrN=Math.max(posScore(buf,'피보'),posScore(buf,'아라'),posScore(buf,'픽소'));
+  const bestO=resolveBestPos(orig,cur), bestN_pos=(function(){const f=posScore(buf,'피보'),a=posScore(buf,'아라'),p=posScore(buf,'픽소');const mx=Math.max(f,a,p);return f===mx?'피보':(a===mx?'아라':'픽소');})();
+  // 그룹별 스탯 입력 (조정)
+  const groupInputs=SR_GROUPS.map(g=>{
+    const rows=g.keys.map(k=>{
+      const v=buf[k]||0;
+      const imp=abilityImp(k);
+      const impDot='●'.repeat(imp)+'○'.repeat(5-imp);
+      return `<div class="adj-row">
+        <span class="adj-name">${k} <span class="adj-imp" title="중요도">${impDot}</span></span>
+        <input type="range" min="0" max="100" value="${v}" class="adj-slider" oninput="adjSet('${jsStr(k)}',this.value)">
+        <input type="number" min="0" max="100" value="${v}" class="adj-num" onchange="adjSet('${jsStr(k)}',this.value)" id="adjnum_${jsStr(statKey(k))}">
+      </div>`;
+    }).join('');
+    return `<div class="adj-group">
+      <div class="adj-ghead" style="color:${g.color};">${g.label}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+  return `<div class="px-dash adj-wrap">
+    <div class="adj-topbar">
+      <span>🛠️ 스탯 조정</span>
+      <select onchange="adjPick(this.value)">${opts}</select>
+      <span class="adj-hint">*조정 후 미리보기를 확인하고 저장하세요</span>
+    </div>
+    <div class="adj-main">
+      <div class="adj-left">
+        <div class="px-box">
+          <div class="px-box-h">📊 능력치 조정</div>
+          ${groupInputs}
+        </div>
+      </div>
+      <div class="adj-right">
+        <div class="px-box adj-preview">
+          <div class="px-box-h">👁️ 실시간 미리보기</div>
+          <div class="adj-ovr">
+            <span>OVR</span>
+            <b>${ovrO} → ${ovrN}</b>
+            ${ovrN>ovrO?`<span class="adj-up">▲${ovrN-ovrO}</span>`:(ovrN<ovrO?`<span class="adj-dn">▼${ovrO-ovrN}</span>`:'')}
+          </div>
+          <div class="adj-bestpos">최적 포지션: <b>${bestO.label}</b> → <b>${bestN_pos}</b></div>
+          <div class="adj-posbox">
+            ${posLine('피보','피보')}
+            ${posLine('아라','아라')}
+            ${posLine('픽소','픽소')}
+          </div>
+          <div class="adj-manual">
+            <div class="adj-manual-h">💡 조정 가이드</div>
+            <div class="adj-manual-body">${adjManual(cur,orig)}</div>
+          </div>
+          <div class="adj-btns">
+            <button class="adj-save" onclick="adjSave()">💾 저장</button>
+            <button class="adj-reset" onclick="adjResetBuf()">↩️ 되돌리기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+// 조정 가이드: 이 선수의 과제와 연결해 어디를 올리면 좋은지
+function adjManual(name,stats){
+  const active=getActiveTask(name);
+  const tasks=pickTasks(stats,name);
+  let lines=[];
+  if(active){
+    let lbl=active.key;
+    const bt=BEGINNER_TASKS.find(t=>t.key===active.key);
+    if(bt) lbl=bt.label;
+    lines.push(`현재 과제는 <b>${lbl}</b>야. 이 과제를 잘 수행했다면 <b>${active.key} ${stats[active.key]||0}</b>점을 올려주는 걸 추천해.`);
+  }
+  // 포지션 핵심 중 낮은 것
+  const best=resolveBestPos(stats,name);
+  const core=POS_CORE_BONUS[best.pos]||[];
+  const low=core.map(k=>({k:k,v:stats[k]||0})).filter(x=>x.v>0).sort((a,b)=>a.v-b.v)[0];
+  if(low){
+    lines.push(`<b>${best.label}</b> 포지션을 더 살리려면 <b>${low.k} ${low.v}</b>를 올리면 포지션 점수가 오를 거야.`);
+  }
+  return lines.map(l=>`<div class="adj-mline">▸ ${l}</div>`).join('');
+}
+// 스탯 값 변경 (버퍼)
+function adjSet(key,val){
+  val=Math.max(0,Math.min(100,parseInt(val,10)||0));
+  if(!window._adjStats) return;
+  window._adjStats[key]=val;
+  // 숫자 입력과 슬라이더 동기화 + 미리보기 갱신
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 선수 변경
+function adjPick(name){
+  window._adjName=name;
+  window._adjStats=null; // 재로딩
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 버퍼 되돌리기
+function adjResetBuf(){
+  window._adjStats=Object.assign({}, getStats2(window._adjName));
+  const c=document.getElementById('centerArea');
+  if(c) c.innerHTML=pageRule();
+}
+// 저장 (member_stats2에 반영)
+function adjSave(){
+  const nm=window._adjName; if(!nm||!window._adjStats) return;
+  if(!confirm(nm+'님의 스탯을 저장할까요?')) return;
+  const key=statKey(nm);
+  const cur=(DATA.member_stats2&&DATA.member_stats2[key])||{};
+  const merged=Object.assign({}, cur, window._adjStats);
+  merged._ts=Date.now();
+  ROOT.child('member_stats2/'+key).set(merged).then(()=>{
+    if(!DATA.member_stats2) DATA.member_stats2={};
+    DATA.member_stats2[key]=merged;
+    alert('저장 완료!');
+    const c=document.getElementById('centerArea');
+    if(c) c.innerHTML=pageRule();
+  });
 }
 // 현재 조작 대상(관리자가 보는 선수 or 본인)
 function srTargetName(){
@@ -8592,8 +8788,8 @@ function pageFeedback(){
               ${canWrite?`<span class="fb-del" onclick="delFeedback('${jsStr(target)}','${f.id}')">삭제</span>`:''}
             </span>
           </div>
-          ${f.title?`<div class="fb-title-txt"${f._autoTask?` style="font-family:'DosStory','DungGeunMo',monospace;"`:''}>${esc(f.title)}</div>`:''}
-          <div class="fb-body"${f._autoTask?` style="font-family:'DosStory','DungGeunMo',monospace;font-size:15px;line-height:2;letter-spacing:0.3px;"`:''}>${snapViewBody(f.text||'')}</div>
+          ${f.title?`<div class="fb-title-txt${f._autoTask?' dos-post':''}">${esc(f.title)}</div>`:''}
+          <div class="fb-body${f._autoTask?' dos-post':''}">${snapViewBody(f.text||'')}</div>
           <div class="fb-react"><button class="fb-like ${liked?'on':''}" onclick="toggleFbLike('${jsStr(target)}','${f.id}')">${liked?'❤️':'🤍'} ${likes}</button> <span class="fb-cc">💬 ${cmtTotal(cmts)}</span></div>
           ${likedByRow}
           <div class="fb-cmt-list">${cmtHtml}</div>
