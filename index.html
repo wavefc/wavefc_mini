@@ -614,9 +614,10 @@
     box-shadow:3px 3px 0 #b9cfe0 !important;
   }
   .game-skin{ font-family:inherit; }
-  .game-skin .cal-grid{ padding:0; gap:2px; background:#1a3a5c; }
-  .game-skin .cal-h{ border-radius:0 !important; background:#eaf3fb; font-weight:800; color:#1a3a5c; border:1px solid #1a3a5c; }
+  .game-skin .cal-grid{ padding:0; gap:1px; background:#1a3a5c; }
+  .game-skin .cal-h{ border-radius:0 !important; background:#eaf3fb; font-weight:800; color:#1a3a5c; }
   .game-skin .cal-cell{ border-radius:0 !important; }
+  .game-skin .cal-cell.empty{ background:#eaf3fb; }
   .game-skin .cal-bar{ background:#eaf3fb; padding:8px 12px; }
   /* 월 이동 화살표 버튼 (화살표 다시 보이게) */
   .game-skin .cal-bar button{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; background:#fff; cursor:pointer; font-size:14px; font-weight:800; color:#1a3a5c; padding:2px 10px; min-width:32px; line-height:1.4; }
@@ -659,6 +660,8 @@
   .cal-bottom-col{ flex:1; min-width:0; }
   .cal-bottom-col.place-col{ display:flex; flex-direction:column; }
   @media (max-width:520px){ .cal-bottom-row{ flex-direction:column; } }
+  /* 2열 안에서는 일정공지 박스의 기본 위쪽 여백/선 제거 (오른쪽 위치안내와 상단 정렬) */
+  .cal-bottom-col.board-react-wrap{ margin-top:0 !important; padding-top:10px !important; border-top:0 !important; }
   /* 훈련 일지 보러가기 버튼 (일정 하단) */
   .diary-goto-btn{ display:block; width:100%; margin-top:14px; border:2px solid #1a3a5c; border-radius:0; background:#eaf3fb; color:#1a3a5c; font-weight:800; padding:12px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:15px; letter-spacing:0.5px; }
   .diary-goto-btn:hover{ background:#dceaf7; }
@@ -674,6 +677,18 @@
   .diary-skin .qna-send{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; font-weight:800; }
   .diary-skin .qna-send:active{ transform:translate(2px,2px); box-shadow:none; }
   .diary-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  /* ===== 출석현황 페이지 게임 스킨 ===== */
+  .att-skin .att-card{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; }
+  .att-skin .att-card-top{ background:#eaf3fb; border-color:#1a3a5c; }
+  .att-skin .att-card-yellow{ background:#fffdf5; border-color:#1a3a5c; }
+  .att-skin .att-card-t{ color:#1a3a5c; font-weight:800; }
+  .att-skin .att-table{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; border-collapse:separate; border-spacing:0; overflow:hidden; }
+  .att-skin .att-table th{ background:#eaf3fb; color:#1a3a5c; font-weight:800; border-bottom:2px solid #1a3a5c; }
+  .att-skin .att-table td{ border-bottom:1px solid #d4e2ef; }
+  .att-skin .att-table tr:last-child td{ border-bottom:0; }
+  .att-skin .cal-addbtn{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; background:#1a3a5c; color:#fff; font-weight:800; }
+  .att-skin .cal-addbtn:active{ transform:translate(2px,2px); box-shadow:none; }
+  .att-skin .att-emoji{ }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -1670,6 +1685,9 @@ function nameUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||ad
 function canViewAttend(){ const r=rankOf(me); return r==='exec'||r==='member'||r==='rookie'; }
 // 공지 작성·일정 등록 등 관리 권한: 임원 또는 관리자1
 function canManage(){ return rankOf(me)==='exec' || adminLevel()===1; }
+// 일정 추가·삭제 / 출석일 추가·삭제·수정 전용 권한: 지정된 임원 4명 또는 관리자1
+const SCHEDULE_ADMINS=['박지예','김서영','장윤ㅎ','조은비'];
+function canManageSchedule(){ return SCHEDULE_ADMINS.includes(me) || adminLevel()===1; }
 // 출석현황 이름 풀표시: 임원·멤버·관리자1 (새내기는 마스킹)
 function attendUnmasked(){ const r=rankOf(me); return r==='exec'||r==='member'||adminLevel()===1; }
 function rankImg(rank,size){
@@ -7633,7 +7651,7 @@ function pageCalendar(){
   const first=new Date(y,m,1);
   const startDow=first.getDay();
   const daysInMonth=new Date(y,m+1,0).getDate();
-  const isExec=canManage();
+  const isExec=canManageSchedule();
 
   // 날짜별 이벤트 매핑 (YYYY-M-D)
   const byDay={};
@@ -7664,6 +7682,10 @@ function pageCalendar(){
     cells+=`<div class="cal-cell ${isRed?'sun':''} ${dow===6?'sat':''} ${holi?'holiday':''} ${evs.length?'has-event':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
       <div class="cal-d">${d}</div>${holiBadge}${evHtml}${diaryBadge}</div>`;
   }
+  // 월 끝 이후 남는 칸도 빈 셀로 채워 7칸(한 주) 단위로 그리드 완성
+  const totalCells=startDow+daysInMonth;
+  const tail=(7-(totalCells%7))%7;
+  for(let i=0;i<tail;i++) cells+='<div class="cal-cell empty"></div>';
 
   return `<div class="game-skin"><div class="page-h">📅 일정/기록</div>
     <div class="cal-bar">
@@ -7718,7 +7740,7 @@ function calNav(delta){
 }
 // 일정 추가 팝업 열기 — dateKey("YYYY-M-D") 미리 채움(없으면 오늘)
 function openCalAdd(dateKey){
-  if(!canManage()) return;
+  if(!canManageSchedule()) return;
   // 종류 드롭다운 채우기
   const sel=document.getElementById('calMType');
   sel.innerHTML=ETYPES.map(e=>`<option value="${e.k}">${e.k}</option>`).join('');
@@ -7735,7 +7757,7 @@ function openCalAdd(dateKey){
 }
 function closeCalModal(){ document.getElementById('calModalBg').classList.remove('show'); }
 function saveCalFromModal(){
-  if(!canManage()) return;
+  if(!canManageSchedule()) return;
   const dVal=document.getElementById('calMDate').value; // "YYYY-MM-DD"
   if(!dVal){ document.getElementById('calMHint').textContent='날짜를 선택하세요.'; return; }
   const p=dVal.split('-').map(x=>parseInt(x,10));
@@ -7753,7 +7775,7 @@ function saveCalFromModal(){
   renderPage('cal');
 }
 function delCalEvent(i){
-  if(!canManage()) return;
+  if(!canManageSchedule()) return;
   if(!confirm('이 일정을 삭제할까요?')) return;
   const arr=DATA.calendar.slice();arr.splice(i,1);ROOT.child('calendar').set(arr);
 }
@@ -7830,8 +7852,8 @@ function monthTop6(monthKey){
   return top6;
 }
 function pageAttend(){
-  // 출석 입력·수정 권한: 임원 등급 또는 관리자1 모드만 (멤버·새내기는 보기 전용)
-  const isExec=(rankOf(me)==='exec')||(adminLevel()===1);
+  // 출석 입력·수정 권한: 지정된 임원 4명 또는 관리자1 모드만 (그 외는 보기 전용)
+  const isExec=canManageSchedule();
   // 출석현황 이름 마스킹: 임원·멤버·관리자1은 전체, 새내기는 가운데만
   const attUnmasked=attendUnmasked();
   function maskAttName(name){
@@ -8117,7 +8139,10 @@ function pageAttend(){
   const allStats=calcStats(allSessions).stats;
   const latestStats=calcStats(latestSessions).stats;
   const top6AllHtml=makeTop6Html(allStats);
-  const top6MonthHtml=makeTop6Html(latestStats);
+  // 이번 달 TOP6는 그 달 3번째 세션(훈련)을 진행한 뒤부터 노출
+  const top6MonthHtml=(latestSessions.length>=3)
+    ? makeTop6Html(latestStats)
+    : `<div style="font-size:12px;color:#9aa6ae;line-height:1.6;padding:4px 2px;">이번 달 3번째 훈련부터 순위가 공개돼요.<br>지금까지 ${latestSessions.length}번 진행했어요 (3번부터 표시).</div>`;
 
   // 삐용삐용 명단: 가장 최신 달의 순수 출석률(부상·개인사정·휴식 제외) 0~49% 멤버
   const yellowList=latestStats.filter(t=> t.pureRate!=null && t.pureRate<50).sort((a,b)=> a.pureRate-b.pureRate);
@@ -8128,7 +8153,7 @@ function pageAttend(){
   // 이번 달 일정 횟수: 관리자가 직접 지정한 값이 있으면 그걸, 없으면 자동 계산값
   const planCount=(DATA.month_plan_count||{})[curMonth];
   const showCount=(planCount!==undefined && planCount!==null && planCount!=='') ? planCount : sessionCount;
-  const canEditPlan=(rankOf(me)==='exec'||adminLevel()===1);
+  const canEditPlan=canManageSchedule();
   const summaryCards=`
     <div class="att-summary">
       <div class="att-card att-card-stat">
@@ -8196,14 +8221,14 @@ function pageAttend(){
     </div>`;
   }
 
-  return `<div class="page-h" style="font-size:24px;">✅ 출석 현황</div>
+  return `<div class="att-skin game-skin"><div class="page-h" style="font-size:24px;">✅ 출석 현황</div>
     ${summaryCards}
     ${controls}
     ${monthNav}
     <div style="overflow-x:auto;margin-top:8px;">
     <table class="lst att-table"><tr><th style="font-size:16px;">이름</th>${dateHeads||'<th>해당 기간 기록 없음</th>'}<th style="font-size:16px;">출석률</th></tr>
     ${rows||'<tr><td colspan=3>멤버현황에 등록된 멤버가 없습니다</td></tr>'}</table></div>
-    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">체험은 출석으로 인정, 결석·당일 결석(×(당일))·무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다. 풋살은 팀 활동이므로 꾸준한 출석이 가장 중요합니다. 최소 2회 출석 부탁드립니다.</div>':''}`;
+    ${isExec?'<div style="font-size:12px;color:#8aa;margin-top:6px;">체험은 출석으로 인정, 결석·당일 결석(×(당일))·무단·부상·개인사정은 결석(0%)으로 계산되며, 휴식중은 출석률에서 제외됩니다. 풋살은 팀 활동이므로 꾸준한 출석이 가장 중요합니다. 최소 2회 출석 부탁드립니다.</div>':''}</div>`;
 }
 function setAttView(mode){ attViewMode=mode; renderPage('attend'); }
 function attDateKey(d){
@@ -8256,7 +8281,7 @@ function migrateAttendanceYears(){
 }
 // 이번 달 일정 횟수 직접 지정 (자동 계산 대신). 비우면 자동값으로 복귀.
 function editMonthPlanCount(monthKey){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
+  if(!canManageSchedule()) return;
   const cur=(DATA.month_plan_count||{})[monthKey];
   const mLabel=attMonthLabel?attMonthLabel(monthKey):monthKey;
   const v=prompt(mLabel+' 일정 횟수를 직접 입력하세요.\n(보통 주4회 = 월 4회, 5회일 때도 있어요)\n\n비우고 확인하면 자동 계산으로 돌아갑니다.', cur!==undefined&&cur!==null?String(cur):'');
@@ -8274,7 +8299,7 @@ function editMonthPlanCount(monthKey){
   renderPage(currentPage);
 }
 function addAttendSession(){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
+  if(!canManageSchedule()) return; // 임원 또는 관리자1만
   const thisYear=new Date().getFullYear();
   const date=prompt('출석일을 입력하세요.\n연도를 포함하면 좋아요 (예: 2026-6-14 또는 6/14)\n연도 없이 넣으면 '+thisYear+'년으로 저장돼요.');
   if(!date) return;
@@ -8293,7 +8318,7 @@ function addAttendSession(){
 }
 // 칸 클릭 → 출석 상태 선택 팝업 띄우기
 function openAttPick(si, name, preJoin){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
+  if(!canManageSchedule()) return; // 임원 또는 관리자1만
   closeAttPick(); // 기존 팝업 닫기
   const arr=sortAttendance(DATA.attendance);
   const cur=(arr[si]&&arr[si].present)?arr[si].present[name]:undefined;
@@ -8319,7 +8344,7 @@ function openAttPick(si, name, preJoin){
 }
 function closeAttPick(){ const ov=document.getElementById('attPickOverlay'); if(ov) ov.remove(); }
 function setAttPick(si, name, val){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
+  if(!canManageSchedule()) return;
   const arr=sortAttendance(JSON.parse(JSON.stringify(DATA.attendance)));
   arr[si].present=arr[si].present||{};
   if(val===''){ delete arr[si].present[name]; }      // 지우기(미입력)
@@ -8331,13 +8356,13 @@ function setAttPick(si, name, val){
   if(currentPage==='attend') renderPage('attend'); // 다른 페이지 안 가도 바로 갱신
 }
 function delAttendSession(si){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return; // 임원 또는 관리자1만
+  if(!canManageSchedule()) return; // 임원 또는 관리자1만
   if(!confirm('이 출석일을 삭제할까요?')) return;
   const arr=sortAttendance(DATA.attendance);arr.splice(si,1);ROOT.child('attendance').set(arr);
 }
 // 출석일의 날짜·종류·장소 수정 (임원 또는 관리자1)
 function editAttendSession(si){
-  if(!(rankOf(me)==='exec'||adminLevel()===1)) return;
+  if(!canManageSchedule()) return;
   const arr=sortAttendance(DATA.attendance);
   const s=arr[si]; if(!s) return;
   const thisYear=new Date().getFullYear();
