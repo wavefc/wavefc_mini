@@ -701,6 +701,29 @@
   .notice-skin .qna-send{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; font-weight:800; }
   .notice-skin .qna-send:active{ transform:translate(2px,2px); box-shadow:none; }
   .notice-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  .notice-skin .nt-mega{ font-size:14px; vertical-align:middle; }
+  /* 공지 관리자 툴바 (절제된 게임 스킨) */
+  .nt-admin{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:10px; padding-top:8px; border-top:2px dashed #b9cfe0; }
+  .nt-admin-t{ font-size:10px; font-weight:800; color:#8aa; letter-spacing:1px; margin-right:2px; }
+  .nt-abtn{ background:#fff; border:2px solid #1a3a5c; border-radius:0; color:#1a3a5c; font-size:11px; font-weight:700; padding:3px 9px; cursor:pointer; font-family:inherit; box-shadow:2px 2px 0 #b9cfe0; }
+  .nt-abtn:active{ transform:translate(2px,2px); box-shadow:none; }
+  .nt-abtn.on{ background:#1a3a5c; color:#fff; }
+  .nt-abtn.danger{ border-color:#c0392b; color:#c0392b; box-shadow:2px 2px 0 #f0c0b8; }
+  .nt-abtn.danger:active{ transform:translate(2px,2px); box-shadow:none; }
+  /* ===== QnA 물병 게이지 (전체 중 내 질문 비율) ===== */
+  .qna-bottle-wrap{ display:flex; align-items:center; gap:8px; margin:6px 0 14px; }
+  .qna-bottle-ico{ font-size:22px; line-height:1; flex:0 0 auto; }
+  .qna-bottle{ position:relative; flex:1; height:26px; background:#eaf3fb; border:3px solid #1a3a5c; border-radius:0; overflow:hidden; box-shadow:3px 3px 0 #b9cfe0; }
+  .qna-bottle-fill{ position:absolute; left:0; top:0; bottom:0; background:repeating-linear-gradient(90deg,#1a3a5c 0,#1a3a5c 10px,#24507a 10px,#24507a 12px); transition:width .5s ease; min-width:0; }
+  .qna-bottle-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#1a3a5c; text-shadow:0 1px 0 #fff,0 -1px 0 #fff,1px 0 0 #fff,-1px 0 0 #fff; letter-spacing:0.5px; z-index:2; }
+  /* ===== QnA 게임 스킨 ===== */
+  .qna-skin .qna-ask{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; }
+  .qna-skin .qna-input{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  .qna-skin .qna-send{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; font-weight:800; }
+  .qna-skin .qna-send:active{ transform:translate(2px,2px); box-shadow:none; }
+  .qna-skin .qna-thread{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; background:#fff; }
+  .qna-skin .qna-badge{ border-radius:0 !important; }
+  .qna-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -954,12 +977,13 @@
   /* 하트 & 댓글 박스 */
   .react-box{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;}
   .react-bar{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
-  .heart-btn{background:#fff;border:1px solid var(--line);border-radius:16px;padding:3px 12px;cursor:pointer;font-size:14px;color:#c0392b;}
-  .heart-btn.on{background:#ffe9ef;border-color:#ffb3c8;}
+  .heart-btn{background:#fff;border:2px solid #1a3a5c;border-radius:0;padding:4px 12px;cursor:pointer;font-size:14px;color:#c0392b;font-weight:800;box-shadow:2px 2px 0 #b9cfe0;font-family:inherit;}
+  .heart-btn:active{transform:translate(2px,2px);box-shadow:none;}
+  .heart-btn.on{background:#ffe9ef;border-color:#e6197f;box-shadow:2px 2px 0 #f5b8d4;}
   .heart-btn b{font-size:13px;}
   .react-cc{font-size:12px;color:#8aa;}
   .rc-list{margin:4px 0;}
-  .rc-row{font-size:13px;color:#333;padding:4px 6px;border-radius:4px;background:#f6f9fb;margin-bottom:3px;line-height:1.5;}
+  .rc-row{font-size:13px;color:#333;padding:5px 8px;border-radius:0;background:#f6f9fb;margin-bottom:3px;line-height:1.5;border-left:3px solid #b9cfe0;}
   .rc-anon{font-size:11px;color:#5aa9e6;font-weight:700;margin-right:3px;}
   .rc-who{font-size:11px;color:#e6735a;font-weight:700;margin-right:3px;}
   .rc-likedby{font-size:11px;color:#c0563f;background:#fff3f0;border-radius:4px;padding:3px 7px;margin-bottom:4px;line-height:1.4;}
@@ -970,9 +994,10 @@
   .rc-replytoggle{font-size:10px;color:#2176a8;cursor:pointer;margin-left:6px;}
   .rc-reply{margin-left:18px;background:#eef4f8;font-size:12px;}
   .rcr-box{margin:2px 0 4px 18px;}
-  .rcr-input{display:flex;gap:4px;}
-  .rcr-input input{flex:1;min-width:0;padding:4px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;}
-  .rcr-input button{background:#7aa9cc;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:12px;}
+  .rcr-input{display:flex;gap:5px;}
+  .rcr-input input{flex:1;min-width:0;padding:5px 8px;border:2px solid #1a3a5c;border-radius:0;font-size:12px;font-family:inherit;}
+  .rcr-input button{background:#5a7896;color:#fff;border:2px solid #1a3a5c;border-radius:0;padding:5px 11px;cursor:pointer;font-size:12px;font-weight:800;box-shadow:2px 2px 0 #b9cfe0;font-family:inherit;}
+  .rcr-input button:active{transform:translate(2px,2px);box-shadow:none;}
   .board-react-wrap{margin-top:14px;padding-top:10px;border-top:2px solid var(--line);}
   .board-react-h{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:13px;color:var(--frame-dark);margin-bottom:6px;}
   .yt-embed{position:relative;width:100%;max-width:560px;aspect-ratio:16/9;margin:10px 0;border-radius:8px;overflow:hidden;background:#000;}
@@ -1016,9 +1041,10 @@
     .dv-row .dv-wide,.dv-row .dv-wide .dv-frame{width:100%;}
   }
   .yt-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-  .rc-input{display:flex;gap:4px;margin-top:4px;}
-  .rc-input input{flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:13px;}
-  .rc-input button{background:#5aa9e6;color:#fff;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:13px;}
+  .rc-input{display:flex;gap:5px;margin-top:6px;}
+  .rc-input input{flex:1;min-width:0;padding:6px 9px;border:2px solid #1a3a5c;border-radius:0;font-size:13px;font-family:inherit;}
+  .rc-input button{background:#1a3a5c;color:#fff;border:2px solid #1a3a5c;border-radius:0;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:800;box-shadow:2px 2px 0 #b9cfe0;font-family:inherit;}
+  .rc-input button:active{transform:translate(2px,2px);box-shadow:none;}
   /* 비밀댓글 / 비밀글 */
   .rc-seclabel{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:12px;color:#7a8a96;cursor:pointer;user-select:none;}
   .rc-seclabel input{margin:0;cursor:pointer;}
@@ -7168,11 +7194,12 @@ function pageNotice(){
   }
   function adminBtns(n){
     return isExec ? `
-      <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;">
-        <button class="qna-send sm" onclick="editNotice(${n._i})">수정</button>
-        <button class="qna-send sm" style="background:${n.pinned?'#9aa6ae':'#2e8b3d'};" onclick="togglePin(${n._i})">${n.pinned?'고정해제':'상단고정'}</button>
-        <button class="qna-send sm" style="background:${n.secret?'#2980b9':'#c0392b'};" onclick="toggleNoticeSecret(${n._i})">${n.secret?'🔓 공개로':'🔒 비공개로'}</button>
-        <button class="qna-send sm" style="background:#c0392b;" onclick="delNoticeBoard(${n._i})">삭제</button>
+      <div class="nt-admin">
+        <span class="nt-admin-t">관리</span>
+        <button class="nt-abtn" onclick="editNotice(${n._i})">✎ 수정</button>
+        <button class="nt-abtn${n.pinned?' on':''}" onclick="togglePin(${n._i})">${n.pinned?'고정해제':'📌 상단고정'}</button>
+        <button class="nt-abtn${n.secret?' on':''}" onclick="toggleNoticeSecret(${n._i})">${n.secret?'🔓 공개로':'🔒 비공개로'}</button>
+        <button class="nt-abtn danger" onclick="delNoticeBoard(${n._i})">🗑 삭제</button>
       </div>` : '';
   }
   function dstr(n){const t=n.ts?new Date(n.ts):null;return t?`${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`:'';}
@@ -7182,7 +7209,7 @@ function pageNotice(){
   const rowsHtml = list.length ? list.map(n=>{
     if(isExec && noticeEditing===n._i) return editForm(n);
     const opened = noticeOpen===n._i;
-    const pinLabel = n.pinned ? `<span class="nt-pinlabel">📢 고정</span> ` : '';
+    const pinLabel = n.pinned ? `<span class="nt-pinlabel">📢 고정</span> ` : '<span class="nt-mega">📢</span> ';
     return `
       <div class="qna-thread nt-row${n.pinned?' nt-pin':''}${n.secret?' nt-secret':''}" style="margin-bottom:8px;">
         <div class="qna-q" style="cursor:pointer;font-weight:600;" onclick="toggleNoticeOpen(${n._i})">
@@ -9475,11 +9502,25 @@ function pageQna(){
     qnaPager=`<div class="vpager rtl">${btns}</div>`;
   }
 
-  return `<div class="page-h">💬 QnA</div>
+  // 물병 게이지: 전체 질문 중 '내가 한 질문' 비율을 남색으로 채워 보여줌
+  const totalQ=(DATA.qna_threads||[]).length;
+  const myQ=me ? (DATA.qna_threads||[]).filter(t=>t && t.byKey && t.byKey===me).length : 0;
+  const pct = totalQ>0 ? Math.round((myQ/totalQ)*100) : 0;
+  const bottleGauge=`
+    <div class="qna-bottle-wrap">
+      <span class="qna-bottle-ico">🧪</span>
+      <div class="qna-bottle">
+        <div class="qna-bottle-fill" style="width:${pct}%;"></div>
+        <div class="qna-bottle-label">${me ? `내 질문 ${myQ} / 전체 ${totalQ}` : `전체 질문 ${totalQ}개`}</div>
+      </div>
+    </div>`;
+
+  return `<div class="qna-skin game-skin"><div class="page-h">💬 QnA</div>
+    ${bottleGauge}
     ${askBox}
     ${kbInfo}
     <div class="qna-list">${items||'<div style=\"color:#8aa;padding:16px;\">아직 등록된 질문이 없어요. 첫 질문을 남겨보세요!</div>'}</div>
-    ${qnaPager}`;
+    ${qnaPager}</div>`;
 }
 
 function bindQnaForm(){
