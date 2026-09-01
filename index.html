@@ -689,6 +689,18 @@
   .att-skin .cal-addbtn{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; background:#1a3a5c; color:#fff; font-weight:800; }
   .att-skin .cal-addbtn:active{ transform:translate(2px,2px); box-shadow:none; }
   .att-skin .att-emoji{ }
+  /* ===== 공지사항 페이지 게임 스킨 ===== */
+  .notice-skin .nt-row{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; background:#fff; padding:2px 10px; }
+  .notice-skin .nt-row.nt-pin{ background:#fffdf5; border-color:#b7791f !important; box-shadow:3px 3px 0 #f0dca8 !important; }
+  .notice-skin .nt-row.nt-secret{ background:#f6f8fa; }
+  .notice-skin .qna-q{ color:#1a3a5c; }
+  .notice-skin .nt-pinlabel{ display:inline-block; font-family:'DosStory','DungGeunMo',monospace; font-size:11px; font-weight:700; color:#fff; background:#b7791f; padding:1px 7px; letter-spacing:0.5px; vertical-align:middle; }
+  .notice-skin .qna-src{ color:#8aa; font-weight:700; }
+  .notice-skin .qna-ask{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; }
+  .notice-skin .qna-input{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  .notice-skin .qna-send{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:2px 2px 0 #b9cfe0; font-weight:800; }
+  .notice-skin .qna-send:active{ transform:translate(2px,2px); box-shadow:none; }
+  .notice-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -782,7 +794,7 @@
   .gt-card{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#2b3f4f;line-height:1.5;}
   .gt-head{font-size:14px;color:#1a3a5c;}
   .gt-head b{color:#d32f4a;}
-  .gt-num{display:inline-block;font-size:10px;background:#5a9bd4;color:#fff;padding:2px 7px;font-weight:700;border-radius:2px;vertical-align:middle;}
+  .gt-num{display:inline-block;font-size:10px;background:#1a3a5c;color:#ffe08a;padding:2px 8px;font-weight:800;border-radius:0;border:2px solid #1a3a5c;box-shadow:2px 2px 0 #b9cfe0;vertical-align:middle;letter-spacing:0.5px;}
   /* 코치_NPC 성장일지 (도스폰트) */
   .fb-body .dos-log, .dos-log{font-family:'DosStory','DungGeunMo',monospace !important;font-size:15px;line-height:2;color:#2b3f4f;letter-spacing:0.3px;}
   .dos-log b{color:#1a6fc4;}
@@ -5474,7 +5486,7 @@ function autoWriteGrowthLog(name, d){
     + (d.point?`&nbsp;&nbsp;▸ ${d.point} … 이것을 몸에 새겼다!<br>`:'')
     + (d.game?`&nbsp;&nbsp;▸ ${d.game} … 이것을 해냈다!<br>`:'')
     + `<br>${name}${josa(name,'은','는')} 3번의 시험을 모두 통과했다‼<br>`
-    + `성장의 증표가 기록되었다. 다음 과제로 나아간다!<br>`
+    + `성장의 증표가 기록되었다. 다음 퀘스트로 나아간다!<br>`
     + `…계속 성장하도록! 👏`
     + `<br><br><span style="color:#8a7fd0;font-weight:bold;">— 코치_NPC (${d.ymd})</span>`
     + `</div>`;
@@ -5643,9 +5655,9 @@ function growthTaskCard(stats,name){
   // 몇 번째 과제인지
   const hist=(DATA.member_task_history&&DATA.member_task_history[statKey(name)])||{};
   const doneCnt=Object.keys(hist).length;
-  const taskNoBadge=`<span class="gt-num">${doneCnt+1}번째 과제</span>`;
+  const taskNoBadge=`<span class="gt-num">⭐ 퀘스트 ${doneCnt+1}</span>`;
   const boxes=[0,1,2].map(i=>`<span class="gt-box${i<prog?' on':''}" onclick="bumpTaskProgress('${jsStr(main.key)}',${i+1})">${i<prog?'✓':'□'}</span>`).join('');
-  const nextBtn=passed?`<button class="gt-nextbtn" onclick="nextTask()">🎉 통과! 다음 과제 받기 →</button>`:'';
+  const nextBtn=passed?`<button class="gt-nextbtn" onclick="nextTask()">🎉 통과! 다음 퀘스트 받기 →</button>`:'';
   // 관리자 전용 리셋 버튼
   const isAdmin=(typeof adminLevel==='function' && adminLevel()===1);
   const resetBtn=isAdmin?`<button class="gt-resetbtn" onclick="resetTask()">🔄 과제 리셋 (첫 과제로)</button>`:'';
@@ -7170,21 +7182,22 @@ function pageNotice(){
   const rowsHtml = list.length ? list.map(n=>{
     if(isExec && noticeEditing===n._i) return editForm(n);
     const opened = noticeOpen===n._i;
+    const pinLabel = n.pinned ? `<span class="nt-pinlabel">📢 고정</span> ` : '';
     return `
-      <div class="qna-thread" style="margin-bottom:8px;">
+      <div class="qna-thread nt-row${n.pinned?' nt-pin':''}${n.secret?' nt-secret':''}" style="margin-bottom:8px;">
         <div class="qna-q" style="cursor:pointer;font-weight:600;" onclick="toggleNoticeOpen(${n._i})">
           <span style="color:var(--frame);font-size:12px;">${opened?'▼':'▶'}</span>
-          ${n.secret?'🔒 ':''}${n.pinned?'📌 ':'📢 '}${esc(n.title||'')}${newBadge(n.ts)}
+          ${n.secret?'🔒 ':''}${pinLabel}${esc(n.title||'')}${newBadge(n.ts)}
           <span class="qna-src" style="float:right;">${dstr(n)}</span>
         </div>
         ${opened?`<div class="qna-a" style="margin-top:8px;">${snapViewBody(n.text||'')}</div>${reactBox('notices',n._i)}${adminBtns(n)}`:''}
       </div>`;
   }).join('') : '<div style="color:#8aa;padding:16px;">등록된 공지가 없어요.</div>';
 
-  return `<div class="page-h">📢 공지사항</div>
+  return `<div class="notice-skin game-skin"><div class="page-h">📢 공지사항</div>
     ${writeToggle}
     ${writeBox}
-    <div class="qna-list">${rowsHtml}</div>`;
+    <div class="qna-list">${rowsHtml}</div></div>`;
 }
 function toggleNoticeWrite(){ noticeWriting=!noticeWriting; noticeEditing=null; renderPage('notice'); }
 function toggleNoticeOpen(i){ noticeOpen=(noticeOpen===i)?null:i; renderPage('notice'); }
@@ -8180,16 +8193,16 @@ function pageAttend(){
 
   // 보기 전환 + 월/기간 선택 UI
   const monthOpts=monthSet.map(k=>`<option value="${k}" ${k===curMonth?'selected':''}>${attMonthLabel(k)}</option>`).join('');
-  const tabStyle=on=>`padding:5px 14px;border-radius:14px;border:1px solid #cfe3d6;cursor:pointer;font-size:13px;${on?'background:#2e8b3d;color:#fff;':'background:#fff;color:#2e8b3d;'}`;
+  const tabStyle=on=>`padding:6px 16px;border-radius:0;border:2px solid #1a3a5c;cursor:pointer;font-size:13px;font-weight:800;box-shadow:2px 2px 0 #b9cfe0;${on?'background:#1a3a5c;color:#fff;':'background:#fff;color:#1a3a5c;'}`;
   const controls=`
     <div style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
       <span onclick="setAttView('month')" style="${tabStyle(attViewMode==='month')}">월별</span>
       <span onclick="setAttView('range')" style="${tabStyle(attViewMode==='range')}">기간 설정</span>
       ${attViewMode==='month'
-        ? `<select onchange="attMonth=this.value;renderPage('attend');" style="font-size:14px;padding:4px 8px;border-radius:8px;border:1px solid #cfe3d6;">${monthOpts||'<option>기록없음</option>'}</select>`
-        : `<input type="date" value="${attFrom}" onchange="attFrom=this.value;renderPage('attend');" style="font-size:13px;padding:3px 6px;border-radius:8px;border:1px solid #cfe3d6;">
+        ? `<select onchange="attMonth=this.value;renderPage('attend');" style="font-size:14px;padding:5px 10px;border-radius:0;border:2px solid #1a3a5c;font-weight:700;color:#1a3a5c;box-shadow:2px 2px 0 #b9cfe0;">${monthOpts||'<option>기록없음</option>'}</select>`
+        : `<input type="date" value="${attFrom}" onchange="attFrom=this.value;renderPage('attend');" style="font-size:13px;padding:4px 7px;border-radius:0;border:2px solid #1a3a5c;">
            <span style="color:#8aa;">~</span>
-           <input type="date" value="${attTo}" onchange="attTo=this.value;renderPage('attend');" style="font-size:13px;padding:3px 6px;border-radius:8px;border:1px solid #cfe3d6;">`}
+           <input type="date" value="${attTo}" onchange="attTo=this.value;renderPage('attend');" style="font-size:13px;padding:4px 7px;border-radius:0;border:2px solid #1a3a5c;">`}
     </div>`;
 
   const periodLabel=attViewMode==='month'
