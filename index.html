@@ -366,7 +366,7 @@
     .cal-cell{min-height:58px;padding:2px;}
     .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
     .cal-cell.has-diary{background:#f2f9ff;}
-    .cal-diary-badge{font-size:12px;font-weight:700;color:#2176a8;background:#e3f0fa;border-radius:5px;padding:2px 5px;margin-top:3px;display:inline-block;cursor:pointer;line-height:1.3;}
+    .cal-diary-badge{font-size:14px;font-weight:800;color:#1a6899;background:#e3f0fa;border-radius:5px;padding:3px 7px;margin-top:3px;display:inline-block;cursor:pointer;line-height:1.3;}
     .cal-diary-badge:hover{background:#c9e3f5;}
     .cal-diary-section{margin-top:8px;}
     /* 이벤트 카드: 글씨 확 작게, 세로로 쪼개지지 않게, 여백 최소화 */
@@ -661,7 +661,8 @@
   .cal-bottom-col.place-col{ display:flex; flex-direction:column; }
   @media (max-width:520px){ .cal-bottom-row{ flex-direction:column; } }
   /* 2열 안에서는 일정공지 박스의 기본 위쪽 여백/선 제거 (오른쪽 위치안내와 상단 정렬) */
-  .cal-bottom-col.board-react-wrap{ margin-top:0 !important; padding-top:10px !important; border-top:0 !important; }
+  .cal-bottom-col.board-react-wrap{ margin-top:0 !important; padding-top:10px; }
+  .game-skin .cal-bottom-col.board-react-wrap{ border-top:2px solid #1a3a5c !important; }
   /* 훈련 일지 보러가기 버튼 (일정 하단) */
   .diary-goto-btn{ display:block; width:100%; margin-top:14px; border:2px solid #1a3a5c; border-radius:0; background:#eaf3fb; color:#1a3a5c; font-weight:800; padding:12px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:15px; letter-spacing:0.5px; }
   .diary-goto-btn:hover{ background:#dceaf7; }
@@ -724,6 +725,29 @@
   .qna-skin .qna-thread{ border-radius:0 !important; border:2px solid #1a3a5c !important; box-shadow:3px 3px 0 #b9cfe0 !important; background:#fff; }
   .qna-skin .qna-badge{ border-radius:0 !important; }
   .qna-skin .heart-btn{ border-radius:0 !important; border:2px solid #1a3a5c !important; }
+  /* ===== 깜짝퀴즈 게임 스탯 패널 ===== */
+  .quiz-skin{ margin-bottom:14px; }
+  .qz-stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+  .qz-stat-card{ background:#fff; border:2px solid #1a3a5c; border-radius:0; box-shadow:3px 3px 0 #b9cfe0; padding:12px 10px; text-align:center; display:flex; flex-direction:column; justify-content:center; min-height:84px; }
+  .qz-stat-t{ font-size:12px; font-weight:800; color:#5a7585; margin-bottom:6px; }
+  .qz-stat-v{ font-size:30px; font-weight:900; color:#1a3a5c; line-height:1.1; }
+  .qz-stat-u{ font-size:13px; font-weight:800; margin-left:2px; }
+  .qz-bar{ margin-top:8px; height:12px; background:#eaf3fb; border:2px solid #1a3a5c; overflow:hidden; }
+  .qz-bar-fill{ height:100%; background:repeating-linear-gradient(90deg,#1a9d5a 0,#1a9d5a 8px,#22b86a 8px,#22b86a 10px); transition:width .5s ease; }
+  .qz-board{ background:#fff; border:2px solid #1a3a5c; border-radius:0; box-shadow:3px 3px 0 #b9cfe0; padding:12px 14px; }
+  .qz-board-h{ font-size:14px; font-weight:800; color:#1a3a5c; margin-bottom:8px; }
+  .qz-board-sub{ font-size:11px; font-weight:700; color:#8aa; }
+  .qz-rank-row{ display:flex; align-items:center; gap:8px; padding:5px 6px; border-bottom:1px dashed #d4e2ef; font-size:14px; }
+  .qz-rank-row:last-child{ border-bottom:0; }
+  .qz-rank-row.me{ background:#eaf3fb; }
+  .qz-rank-no{ flex:0 0 28px; text-align:center; font-size:16px; font-weight:900; color:#1a3a5c; }
+  .qz-rank-name{ flex:1 1 auto; font-weight:700; color:#2b3f4f; }
+  .qz-rank-rate{ flex:0 0 auto; font-weight:900; color:#1a9d5a; }
+  .qz-rank-cnt{ flex:0 0 auto; font-size:11px; color:#8aa; min-width:44px; text-align:right; }
+  @media(max-width:640px){
+    .qz-stat-grid{ grid-template-columns:1fr 1fr; }
+    .qz-stat-v{ font-size:26px; }
+  }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -1280,7 +1304,23 @@
   .att-table th,.att-table td{padding:8px 10px;white-space:nowrap;}
   .att-table td{font-size:15px;}
   .att-emoji{font-size:16px;vertical-align:middle;margin-left:2px;}
-  .att-summary{display:flex;gap:12px;margin:10px 0 4px;flex-wrap:wrap;align-items:stretch;}
+  .att-summary{display:grid;grid-template-columns:170px 170px 1fr;grid-auto-rows:minmax(0,auto);gap:12px;margin:10px 0 4px;align-items:stretch;}
+  /* 1행: 이번달일정 | 팀출석률 | 전체TOP6 */
+  .att-summary > .att-card:nth-child(1){grid-column:1;grid-row:1;}
+  .att-summary > .att-card:nth-child(2){grid-column:2;grid-row:1;}
+  .att-summary > .att-card:nth-child(3){grid-column:3;grid-row:1;}
+  /* 2행: 9월TOP6(2칸) | 삐용삐용 */
+  .att-summary > .att-card:nth-child(4){grid-column:1 / 3;grid-row:2;}
+  .att-summary > .att-card:nth-child(5){grid-column:3;grid-row:2;}
+  .att-summary > .att-card{width:auto !important;min-width:0 !important;flex:initial;}
+  @media(max-width:640px){
+    .att-summary{grid-template-columns:1fr 1fr;}
+    .att-summary > .att-card:nth-child(1){grid-column:1;grid-row:1;}
+    .att-summary > .att-card:nth-child(2){grid-column:2;grid-row:1;}
+    .att-summary > .att-card:nth-child(3){grid-column:1 / 3;grid-row:2;}
+    .att-summary > .att-card:nth-child(4){grid-column:1 / 3;grid-row:3;}
+    .att-summary > .att-card:nth-child(5){grid-column:1 / 3;grid-row:4;}
+  }
   .att-card{flex:0 0 auto;background:#fff;border:1px solid #e6ebf0;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
   .att-card-stat{width:170px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;}
   .att-card-t{font-size:14px;color:#9aa6ae;font-weight:700;margin-bottom:6px;}
@@ -3107,7 +3147,59 @@ function pageQuiz(){
 
   // 내 기록
   const mine=recs.filter(r=>r.user===me);
+
+  // ===== 게임 스탯 패널 =====
+  // 사용자별 참여/정답 집계
+  const qByUser={};
+  (DATA.quiz_records||[]).forEach(r=>{
+    if(!r||!r.user) return;
+    const u=(qByUser[r.user]=qByUser[r.user]||{t:0,o:0});
+    u.t++; if(r.correct) u.o++;
+  });
+  // 내 스탯
+  const myT=(qByUser[me]?qByUser[me].t:0);
+  const myO=(qByUser[me]?qByUser[me].o:0);
+  const myRate=myT?Math.round(myO/myT*100):0;
+  // 내 최고 연속정답(콤보): 내 기록을 시간순으로 훑음
+  const myChrono=(DATA.quiz_records||[]).filter(r=>r&&r.user===me).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  let myCombo=0, _cur=0;
+  myChrono.forEach(r=>{ if(r.correct){ _cur++; if(_cur>myCombo)myCombo=_cur; } else _cur=0; });
+  // 랭킹: 15회 이상 참여자만, 정답률 순(동점이면 정답 수 많은 순)
+  const MIN_Q=15;
+  const rankArr=Object.keys(qByUser)
+    .filter(u=>qByUser[u].t>=MIN_Q)
+    .map(u=>({u, t:qByUser[u].t, o:qByUser[u].o, rate:Math.round(qByUser[u].o/qByUser[u].t*100)}))
+    .sort((a,b)=> b.rate-a.rate || b.o-a.o);
+  const myRankIdx=rankArr.findIndex(x=>x.u===me);
+  const myRankTxt = myT<MIN_Q ? `${MIN_Q}회+부터` : (myRankIdx>=0?`${myRankIdx+1}위 / ${rankArr.length}명`:'-');
+  // 랭킹보드 TOP5
+  const medal=['🥇','🥈','🥉','4','5'];
+  const boardHtml = rankArr.slice(0,5).map((x,i)=>`
+    <div class="qz-rank-row${x.u===me?' me':''}">
+      <span class="qz-rank-no">${medal[i]}</span>
+      <span class="qz-rank-name">${esc(x.u)}${x.u===me?' <b>(나)</b>':''}</span>
+      <span class="qz-rank-rate">${x.rate}%</span>
+      <span class="qz-rank-cnt">${x.o}/${x.t}</span>
+    </div>`).join('') || `<div style="color:#8aa;font-size:12px;padding:8px;">아직 랭킹이 없어요 (${MIN_Q}회 이상 참여 필요).</div>`;
+
+  const gamePanel=`
+    <div class="quiz-skin game-skin">
+      <div class="qz-stat-grid">
+        <div class="qz-stat-card"><div class="qz-stat-t">🎯 내 참여</div><div class="qz-stat-v">${myT}<span class="qz-stat-u">회</span></div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">✅ 정답률</div><div class="qz-stat-v" style="color:#1a9d5a;">${myRate}<span class="qz-stat-u">%</span></div>
+          <div class="qz-bar"><div class="qz-bar-fill" style="width:${myRate}%;"></div></div>
+        </div>
+        <div class="qz-stat-card"><div class="qz-stat-t">🏆 내 랭킹</div><div class="qz-stat-v" style="color:#b7791f;font-size:22px;">${myRankTxt}</div></div>
+        <div class="qz-stat-card"><div class="qz-stat-t">🔥 최고 연속정답</div><div class="qz-stat-v" style="color:#e0503a;">${myCombo}<span class="qz-stat-u">콤보</span></div></div>
+      </div>
+      <div class="qz-board">
+        <div class="qz-board-h">🏅 정답률 랭킹 TOP5 <span class="qz-board-sub">(${MIN_Q}회 이상 참여)</span></div>
+        ${boardHtml}
+      </div>
+    </div>`;
+
   let html=`<div class="page-h">🎯 깜짝퀴즈 기록</div>`;
+  html+=gamePanel;
   html+=statCard('📌 '+esc(me)+'님의 기록', mine, false);
 
   // 관리자1: 전체 기록 + 사람별 요약
