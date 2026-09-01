@@ -642,10 +642,16 @@
   .botn-write input{ flex:1; border:2px solid #1a3a5c; border-radius:0; padding:6px 8px; font-family:inherit; font-size:13px; }
   .botn-write button{ border:2px solid #1a3a5c; border-radius:0; background:#e0662b; color:#fff; font-weight:800; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 #b9cfe0; font-family:inherit; }
   .botn-write button:active{ transform:translate(2px,2px); box-shadow:none; }
+  .game-skin .cal-h.sun{ color:#e6197f; }
+  .game-skin .cal-h.sat{ color:#2563eb; }
   /* 공휴일·위치 안내 버튼 */
-  .game-skin .cal-cell.holiday .cal-d{ color:#e6197f; font-weight:800; }
-  .cal-holi{ font-size:9px; color:#e6197f; font-weight:700; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .game-skin .place-toggle{ display:block; width:100%; border:2px solid #1a3a5c; border-radius:0; background:#fffdf5; color:#b7791f; font-weight:800; padding:8px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:13px; margin-bottom:10px; }
+  .game-skin .cal-cell.holiday .cal-d,
+  .game-skin .cal-cell.sun .cal-d{ color:#e6197f; font-weight:900; }
+  .game-skin .cal-cell.has-event .cal-d{ font-weight:900; color:#1a3a5c; }
+  .game-skin .cal-cell.sun.has-event .cal-d,
+  .game-skin .cal-cell.holiday.has-event .cal-d{ color:#e6197f; }
+  .cal-holi{ font-size:9px; color:#e6197f; font-weight:800; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .game-skin .place-toggle{ display:block; width:100%; border:2px solid #1a3a5c; border-radius:0; background:#fffdf5; color:#b7791f; font-weight:800; padding:8px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:13px; margin:14px 0 12px; }
   .game-skin .place-toggle:active{ transform:translate(3px,3px); box-shadow:none; }
   .game-skin .place-info{ margin-bottom:10px; }
   .adj-mline{margin:3px 0;}
@@ -7536,21 +7542,21 @@ function holidayName(y,m,d){
   return null;
 }
 const ETYPES=[
-  {k:'정기훈련',c:'#2176a8'},
-  {k:'친선경기',c:'#e6197f'},
-  {k:'특별훈련',c:'#7c5cd0'},
-  {k:'대회',c:'#d64545'},
+  {k:'정기훈련',c:'#2563eb'},
+  {k:'친선경기',c:'#db2777'},
+  {k:'특별훈련',c:'#7c3aed'},
+  {k:'대회',c:'#e11d48'},
   {k:'회식',c:'#d97706'},
-  {k:'기타',c:'#5a7585'}
+  {k:'기타',c:'#0f766e'}
 ];
 function etypeColor(t){const e=ETYPES.find(x=>x.k===t);return e?e.c:'#5a7585';}
 // 풋살장(장소)별 색상 우선, 없으면 일정종류 색
 function eventColor(e){
   const place=(e.place||'').replace(/\s/g,'');
-  if(/BJ/i.test(place)) return '#2e8b3d';      // BJ풋살장 = 초록
-  if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#e6197f'; // FC스퀘어 = 핑크
-  if(/내서/.test(place)) return '#2176a8';      // 내서 = 파랑
-  if(/석전/.test(place)) return '#d97706';      // 석전 = 주황
+  if(/BJ/i.test(place)) return '#16a34a';      // BJ = green
+  if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#db2777'; // 스퀘어 = pink
+  if(/내서/.test(place)) return '#2563eb';      // 내서 = blue
+  if(/석전/.test(place)) return '#d97706';      // 석전 = amber
   return etypeColor(e.etype);
 }
 // 시간 표시 축약: "20:00-22:00" → "8-10시", "20:00" → "8시"
@@ -7634,11 +7640,9 @@ function pageCalendar(){
     const holiBadge=holi?`<div class="cal-holi">${esc(holi)}</div>`:'';
     // 날짜 셀 클릭: 일지가 있으면 누구나 그 날 일지로 이동
     const cellClick = dLogs.length ? `onclick="openDiaryOnCal(${dLogs[0]._i})" style="cursor:pointer;"` : '';
-    cells+=`<div class="cal-cell ${isRed?'sun':''} ${dow===6?'sat':''} ${holi?'holiday':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
+    cells+=`<div class="cal-cell ${isRed?'sun':''} ${dow===6?'sat':''} ${holi?'holiday':''} ${evs.length?'has-event':''} ${dLogs.length?'has-diary':''}" ${cellClick}>
       <div class="cal-d">${d}</div>${holiBadge}${evHtml}${diaryBadge}</div>`;
   }
-
-  const legend=ETYPES.map(e=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:10px;height:10px;background:${e.c};display:inline-block;"></i>${e.k}</span>`).join('');
 
   return `<div class="game-skin"><div class="page-h">📅 일정/기록</div>
     <div class="cal-bar">
@@ -7648,14 +7652,6 @@ function pageCalendar(){
       ${isExec
         ? `<button onclick="openCalAdd()" style="margin-left:auto;font-family:'Escoredream','Pretendard','Malgun Gothic',sans-serif;font-size:11px;font-weight:700;background:var(--frame,#3f5a6e);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;">＋ 일정 추가</button>`
         : `<span style="margin-left:auto;font-size:12px;color:#8aa;">📝 표시된 날 → 훈련일지</span>`}
-    </div>
-    <div class="cal-legend">${legend}
-      <div style="margin-top:4px;">📍장소색:
-        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2e8b3d;display:inline-block;"></i>BJ</span>
-        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#2176a8;display:inline-block;"></i>내서</span>
-        <span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><i style="width:11px;height:11px;background:#d97706;display:inline-block;"></i>석전</span>
-        <span style="display:inline-flex;align-items:center;gap:3px;"><i style="width:11px;height:11px;background:#e6197f;display:inline-block;"></i>스퀘어</span>
-      </div>
     </div>
     <div class="cal-grid">
       <div class="cal-h sun">일</div><div class="cal-h">월</div><div class="cal-h">화</div><div class="cal-h">수</div><div class="cal-h">목</div><div class="cal-h">금</div><div class="cal-h sat">토</div>
