@@ -366,7 +366,7 @@
     .cal-cell{min-height:58px;padding:2px;}
     .cal-cell .cal-d{font-size:11px;margin-bottom:1px;}
     .cal-cell.has-diary{background:#f2f9ff;}
-    .cal-diary-badge{font-size:9px;font-weight:700;color:#2176a8;background:#e3f0fa;border-radius:5px;padding:1px 3px;margin-top:2px;display:inline-block;cursor:pointer;line-height:1.3;}
+    .cal-diary-badge{font-size:12px;font-weight:700;color:#2176a8;background:#e3f0fa;border-radius:5px;padding:2px 5px;margin-top:3px;display:inline-block;cursor:pointer;line-height:1.3;}
     .cal-diary-badge:hover{background:#c9e3f5;}
     .cal-diary-section{margin-top:8px;}
     /* 이벤트 카드: 글씨 확 작게, 세로로 쪼개지지 않게, 여백 최소화 */
@@ -651,9 +651,14 @@
   .game-skin .cal-cell.sun.has-event .cal-d,
   .game-skin .cal-cell.holiday.has-event .cal-d{ color:#e6197f; }
   .cal-holi{ font-size:9px; color:#e6197f; font-weight:800; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .game-skin .place-toggle{ display:block; width:100%; border:2px solid #1a3a5c; border-radius:0; background:#fffdf5; color:#b7791f; font-weight:800; padding:8px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:13px; margin:14px 0 12px; }
+  .game-skin .place-toggle{ display:block; width:100%; border:2px solid #1a3a5c; border-radius:0; background:#fffdf5; color:#b7791f; font-weight:800; padding:8px; cursor:pointer; box-shadow:3px 3px 0 #b9cfe0; font-family:inherit; font-size:13px; margin:0; }
   .game-skin .place-toggle:active{ transform:translate(3px,3px); box-shadow:none; }
-  .game-skin .place-info{ margin-bottom:10px; }
+  .game-skin .place-info{ margin:10px 0 0; }
+  /* 달력 아래: 왼쪽 일정공지 / 오른쪽 위치안내 2열 */
+  .cal-bottom-row{ display:flex; gap:10px; align-items:flex-start; margin-top:14px; }
+  .cal-bottom-col{ flex:1; min-width:0; }
+  .cal-bottom-col.place-col{ display:flex; flex-direction:column; }
+  @media (max-width:520px){ .cal-bottom-row{ flex-direction:column; } }
   .adj-mline{margin:3px 0;}
   .adj-btns{display:flex;gap:6px;}
   .adj-save{flex:1;background:#7c5cd0;color:#fff;border:2px solid #5a3fb0;border-radius:0;padding:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #5a3fb0;}
@@ -7542,7 +7547,7 @@ function holidayName(y,m,d){
   return null;
 }
 const ETYPES=[
-  {k:'정기훈련',c:'#2563eb'},
+  {k:'정기훈련',c:'#0891b2'},
   {k:'친선경기',c:'#db2777'},
   {k:'특별훈련',c:'#7c3aed'},
   {k:'대회',c:'#e11d48'},
@@ -7555,7 +7560,7 @@ function eventColor(e){
   const place=(e.place||'').replace(/\s/g,'');
   if(/BJ/i.test(place)) return '#16a34a';      // BJ = green
   if(/FC스퀘어|FC스퀘|스퀘어/i.test(place)) return '#db2777'; // 스퀘어 = pink
-  if(/내서/.test(place)) return '#2563eb';      // 내서 = blue
+  if(/내서/.test(place)) return '#0891b2';      // 내서 = cyan(청록)
   if(/석전/.test(place)) return '#d97706';      // 석전 = amber
   return etypeColor(e.etype);
 }
@@ -7657,14 +7662,18 @@ function pageCalendar(){
       <div class="cal-h sun">일</div><div class="cal-h">월</div><div class="cal-h">화</div><div class="cal-h">수</div><div class="cal-h">목</div><div class="cal-h">금</div><div class="cal-h sat">토</div>
       ${cells}
     </div>
-    <div class="place-info" id="placeInfoBox" style="display:none;">
-      <div class="place-row"><b style="color:#2e8b3d;">BJ풋살장</b> 마산회원구 삼호천길 352</div>
-      <div class="place-row"><b style="color:#2176a8;">내서스포츠</b> 마산회원구 내서읍 호원로 177</div>
-      <div class="place-row"><b style="color:#d97706;">석전동풋살장</b> 마산회원구 석전북3길 83</div>
-      <div class="place-row"><b style="color:#e6197f;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
+    <div class="cal-bottom-row">
+      <div class="cal-bottom-col board-react-wrap botn-wrap"><div class="board-react-h">📢 일정 공지</div>${botNoticeBox()}</div>
+      <div class="cal-bottom-col place-col">
+        <button class="place-toggle" onclick="var b=document.getElementById('placeInfoBox');b.style.display=b.style.display==='none'?'block':'none';this.textContent=(b.style.display==='none'?'📍 풋살장 위치 안내 보기':'📍 위치 안내 닫기');">📍 풋살장 위치 안내 보기</button>
+        <div class="place-info" id="placeInfoBox" style="display:none;">
+          <div class="place-row"><b style="color:#2e8b3d;">BJ풋살장</b> 마산회원구 삼호천길 352</div>
+          <div class="place-row"><b style="color:#0891b2;">내서스포츠</b> 마산회원구 내서읍 호원로 177</div>
+          <div class="place-row"><b style="color:#d97706;">석전동풋살장</b> 마산회원구 석전북3길 83</div>
+          <div class="place-row"><b style="color:#e6197f;">FC스퀘어</b> 경남 창원시 마산회원구 마산역광장로 28, 401호 <span style="color:#8aa;">(마산역 투썸 건물 4층)</span></div>
+        </div>
+      </div>
     </div>
-    <button class="place-toggle" onclick="var b=document.getElementById('placeInfoBox');b.style.display=b.style.display==='none'?'block':'none';this.textContent=(b.style.display==='none'?'📍 풋살장 위치 안내 보기':'📍 위치 안내 닫기');">📍 풋살장 위치 안내 보기</button>
-    <div class="board-react-wrap botn-wrap"><div class="board-react-h">📢 일정 공지</div>${botNoticeBox()}</div>
     <div class="cal-diary-section" id="calDiarySection">
       <div class="page-h" style="margin-top:22px;">📝 훈련 일지</div>
       ${pageDiaryBody()}
